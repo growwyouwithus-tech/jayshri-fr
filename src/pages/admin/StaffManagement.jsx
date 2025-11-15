@@ -27,8 +27,10 @@ import {
 } from '@mui/material'
 import { Add, Edit, Delete, CloudUpload, GetApp, Print, Search, FileDownload } from '@mui/icons-material'
 import apiService from '@/services/apiService'
+import mockApiService from '@/services/mockApiService'
 import errorService from '@/services/errorService'
 import toast from 'react-hot-toast'
+import axios from '@/api/axios'
 
 const StaffManagement = () => {
   const [staff, setStaff] = useState([])
@@ -56,76 +58,56 @@ const StaffManagement = () => {
     fetchRoles()
   }, [])
 
+  const normalizeUser = (user) => {
+    const role = user.role || user.roleId || {}
+    return {
+      ...user,
+      role,
+      roleId: role,
+      roleName: role?.name || user.roleName || 'Unassigned'
+    }
+  }
+
   const fetchStaff = async () => {
     try {
       setLoading(true)
-      
-      // Mock data for testing (remove when backend is ready)
-      const mockStaff = [
-        {
-          _id: '1',
-          name: 'Rajesh Kumar',
-          email: 'rajesh@jayshree.com',
-          phone: '+91 9876543214',
-          roleId: { _id: '2', name: 'Colony Manager' },
-          profileImage: 'https://via.placeholder.com/150',
-          status: 'active',
-          joiningDate: '2024-01-01',
-          salary: 50000
-        },
-        {
-          _id: '2',
-          name: 'Priya Sharma',
-          email: 'priya@jayshree.com',
-          phone: '+91 9876543215',
-          roleId: { _id: '3', name: 'Sales Executive' },
-          profileImage: 'https://via.placeholder.com/150',
-          status: 'active',
-          joiningDate: '2024-01-05',
-          salary: 35000
-        },
-        {
-          _id: '3',
-          name: 'Amit Patel',
-          email: 'amit@jayshree.com',
-          phone: '+91 9876543216',
-          roleId: { _id: '3', name: 'Sales Executive' },
-          profileImage: 'https://via.placeholder.com/150',
-          status: 'active',
-          joiningDate: '2024-01-10',
-          salary: 35000
-        }
-      ]
-      
-      setStaff(mockStaff)
-      
-      // Uncomment when backend is ready:
-      // const response = await apiService.staff.getAll()
-      // setStaff(response.data.data || [])
+      const { data } = await axios.get('/users')
+      const allUsers = (data?.data || []).map(normalizeUser)
+      let staffUsers = allUsers.filter(user => {
+        const roleName = user.roleName?.toLowerCase()
+        return ['manager', 'agent', 'lawyer'].includes(roleName)
+      })
+
+      if (staffUsers.length === 0) {
+        staffUsers = allUsers.filter(user => user.roleName?.toLowerCase() === 'admin')
+      }
+      setStaff(staffUsers)
+      setLoading(false)
     } catch (error) {
-      errorService.handleApiError(error, 'Failed to fetch staff')
-    } finally {
+      console.error('Failed to fetch staff:', error)
+      if ([401, 403].includes(error.response?.status)) {
+        try {
+          const mock = await mockApiService.staff.getAll()
+          const fallbackUsers = (mock?.data?.data || []).map(normalizeUser)
+          setStaff(fallbackUsers)
+        } catch (mockError) {
+          console.error('Failed to load mock staff:', mockError)
+          toast.error('Failed to fetch staff')
+        }
+      } else {
+        toast.error('Failed to fetch staff')
+      }
       setLoading(false)
     }
   }
 
   const fetchRoles = async () => {
     try {
-      // Mock roles data
-      const mockRoles = [
-        { _id: '1', name: 'Super Admin' },
-        { _id: '2', name: 'Colony Manager' },
-        { _id: '3', name: 'Sales Executive' },
-        { _id: '4', name: 'Accountant' }
-      ]
-      
-      setRoles(mockRoles)
-      
-      // Uncomment when backend is ready:
-      // const response = await apiService.roles.getAll()
-      // setRoles(response.data.data || [])
+      const { data } = await axios.get('/users/roles/all')
+      setRoles(data.data || [])
     } catch (error) {
-      errorService.handleApiError(error, 'Failed to fetch roles')
+      console.error('Failed to fetch roles:', error)
+      toast.error('Failed to fetch roles')
     }
   }
 
@@ -164,39 +146,27 @@ const StaffManagement = () => {
   }
 
   const handleSubmit = async () => {
-    // Validate passwords match
     if (!editMode && formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match')
       return
     }
 
-    try {
-      const payload = new FormData()
-      payload.append('name', formData.name)
-      payload.append('email', formData.email)
-      payload.append('phone', formData.phone)
-      payload.append('roleId', formData.roleId)
-      
-      if (formData.password) {
-        payload.append('password', formData.password)
-      }
-      
-      if (formData.profileImage) {
-        payload.append('profileImage', formData.profileImage)
-      }
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      role: formData.roleId,
+      ...(formData.password ? { password: formData.password } : {})
+    }
 
+    try {
       if (editMode) {
-        await axios.put(`/staff/${currentStaff._id}`, payload, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        await axios.put(`/users/${currentStaff._id}`, payload)
         toast.success('Staff updated successfully')
       } else {
-        await axios.post('/staff', payload, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        await axios.post('/users', payload)
         toast.success('Staff created successfully')
       }
-      
       handleCloseDialog()
       fetchStaff()
     } catch (error) {
@@ -208,11 +178,15 @@ const StaffManagement = () => {
     if (!window.confirm('Are you sure you want to delete this staff member?')) return
 
     try {
-      await axios.delete(`/staff/${id}`)
+      await axios.delete(`/users/${id}`)
       toast.success('Staff deleted successfully')
       fetchStaff()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Delete failed')
+      if ([401, 403].includes(error.response?.status)) {
+        toast.error('Not allowed to delete staff with current role')
+      } else {
+        toast.error(error.response?.data?.message || 'Delete failed')
+      }
     }
   }
 
@@ -397,7 +371,7 @@ const StaffManagement = () => {
                   </TableCell>
                   <TableCell>{staffMember.phone}</TableCell>
                   <TableCell>{staffMember.email}</TableCell>
-                  <TableCell>{staffMember.roleId?.name || 'admin'}</TableCell>
+                  <TableCell>{staffMember.role?.name || staffMember.roleId?.name || staffMember.roleName || '-'}</TableCell>
                   <TableCell align="right">
                     <IconButton size="small" onClick={() => handleOpenDialog(staffMember)} sx={{ color: 'orange' }}>
                       <Edit fontSize="small" />

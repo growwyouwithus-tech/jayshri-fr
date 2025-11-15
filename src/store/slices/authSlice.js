@@ -8,11 +8,10 @@ import api from '@/api/axios'
 
 // Initial state
 const initialState = {
-  user: null,
+  user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
   token: localStorage.getItem('token'),
-  refreshToken: localStorage.getItem('refreshToken'),
   isAuthenticated: !!localStorage.getItem('token'),
-  loading: !!localStorage.getItem('token'), // Only load if token exists
+  loading: false, // Don't start with loading state
   error: null,
 }
 
@@ -26,14 +25,12 @@ export const register = createAsyncThunk(
       const data = response.data.data || response.data
       
       // Save tokens to localStorage
-      localStorage.setItem('token', data.accessToken)
-      localStorage.setItem('refreshToken', data.refreshToken)
+      localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       
       return {
         user: data.user,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
+        token: data.token,
       }
     } catch (error) {
       console.error('Registration error:', error)
@@ -51,14 +48,12 @@ export const login = createAsyncThunk(
       const data = response.data.data || response.data
       
       // Save tokens to localStorage
-      localStorage.setItem('token', data.accessToken)
-      localStorage.setItem('refreshToken', data.refreshToken)
+      localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       
       return {
         user: data.user,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
+        token: data.token,
       }
     } catch (error) {
       console.error('Login error:', error)
@@ -99,7 +94,7 @@ export const checkAuth = createAsyncThunk(
           _id: 'demo123',
           name: 'Demo User',
           email: localStorage.getItem('email') || 'demo@example.com',
-          roleId: { name: 'Buyer' },
+          role: { name: 'Buyer' },
         }
         return { user: demoUser }
       }
@@ -135,10 +130,8 @@ const authSlice = createSlice({
         state.loading = false
         state.isAuthenticated = true
         state.user = action.payload.user
-        state.token = action.payload.accessToken
-        state.refreshToken = action.payload.refreshToken
-        localStorage.setItem('token', action.payload.accessToken)
-        localStorage.setItem('refreshToken', action.payload.refreshToken)
+        state.token = action.payload.token
+        localStorage.setItem('token', action.payload.token)
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false
@@ -154,10 +147,8 @@ const authSlice = createSlice({
         state.loading = false
         state.isAuthenticated = true
         state.user = action.payload.user
-        state.token = action.payload.accessToken
-        state.refreshToken = action.payload.refreshToken
-        localStorage.setItem('token', action.payload.accessToken)
-        localStorage.setItem('refreshToken', action.payload.refreshToken)
+        state.token = action.payload.token
+        localStorage.setItem('token', action.payload.token)
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false
@@ -171,20 +162,18 @@ const authSlice = createSlice({
       .addCase(logout.fulfilled, (state) => {
         state.user = null
         state.token = null
-        state.refreshToken = null
         state.isAuthenticated = false
         state.loading = false
         localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
       })
       .addCase(logout.rejected, (state) => {
         state.user = null
         state.token = null
-        state.refreshToken = null
         state.isAuthenticated = false
         state.loading = false
         localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
       })
       
       // Check Auth
@@ -201,7 +190,8 @@ const authSlice = createSlice({
         state.isAuthenticated = false
         state.user = null
         state.token = null
-        state.refreshToken = null
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
       })
   },
 })

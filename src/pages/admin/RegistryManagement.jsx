@@ -42,7 +42,7 @@ const RegistryManagement = () => {
     try {
       const url = status ? `/registry?status=${status}` : '/registry'
       const { data } = await axios.get(url)
-      setRegistries(data.data.registries)
+      setRegistries(data.data || [])
       setLoading(false)
     } catch (error) {
       toast.error('Failed to fetch registries')

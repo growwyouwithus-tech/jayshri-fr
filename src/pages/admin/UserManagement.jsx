@@ -6,6 +6,7 @@ import {
 } from '@mui/material'
 import { Add, Edit, Delete, Block, CheckCircle } from '@mui/icons-material'
 import axios from '@/api/axios'
+import mockApiService from '@/services/mockApiService'
 import toast from 'react-hot-toast'
 
 const UserManagement = () => {
@@ -32,30 +33,41 @@ const UserManagement = () => {
   const fetchCities = async () => {
     try {
       const { data } = await axios.get('/cities')
-      setCities(data.data.cities || [])
+      setCities(data?.data || [])
     } catch (error) {
       console.error('Failed to fetch cities:', error)
       toast.error('Failed to fetch cities')
     }
   }
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (filters = {}) => {
     try {
       setLoading(true)
-      const { data } = await axios.get('/users')
-      setUsers(data.data.users || [])
+      const query = new URLSearchParams(filters).toString()
+      const { data } = await axios.get(`/users${query ? `?${query}` : ''}`)
+      setUsers(data.data || [])
       setLoading(false)
     } catch (error) {
       console.error('Failed to fetch users:', error)
-      toast.error('Failed to fetch users')
+      if ([401, 403].includes(error.response?.status)) {
+        try {
+          const mock = await mockApiService.users.getAll()
+          setUsers(mock?.data?.data || [])
+        } catch (mockError) {
+          console.error('Failed to load mock users:', mockError)
+          toast.error('Failed to fetch users')
+        }
+      } else {
+        toast.error('Failed to fetch users')
+      }
       setLoading(false)
     }
   }
 
   const fetchRoles = async () => {
     try {
-      const { data } = await axios.get('/roles')
-      setRoles(data.data.roles || [])
+      const { data } = await axios.get('/users/roles/all')
+      setRoles(data.data || [])
     } catch (error) {
       console.error('Failed to fetch roles:', error)
       toast.error('Failed to fetch roles')
@@ -144,7 +156,7 @@ const UserManagement = () => {
           value={filterCity}
           onChange={(e) => setFilterCity(e.target.value)}
           sx={{ minWidth: 150 }}
-          displayEmpty
+          SelectProps={{ displayEmpty: true }}
         >
           <MenuItem value="">-- Filter by City --</MenuItem>
           {cities.map((city) => (
@@ -160,7 +172,7 @@ const UserManagement = () => {
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
           sx={{ minWidth: 150 }}
-          displayEmpty
+          SelectProps={{ displayEmpty: true }}
         >
           <MenuItem value="">-- Filter by Type --</MenuItem>
           {roles.map((role) => (

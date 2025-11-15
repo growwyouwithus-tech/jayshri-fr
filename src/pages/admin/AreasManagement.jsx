@@ -40,25 +40,21 @@ const AreasManagement = () => {
   })
 
   useEffect(() => {
-    fetchAreas()
+    // Backend does not provide /areas; keep empty to avoid 404
+    setAreas([])
     fetchCities()
+    setLoading(false)
   }, [])
 
   const fetchAreas = async () => {
-    try {
-      const { data } = await axios.get('/areas')
-      setAreas(data.data.areas || [])
-      setLoading(false)
-    } catch (error) {
-      toast.error('Failed to fetch areas')
-      setLoading(false)
-    }
+    // No-op: areas API not available
+    setAreas([])
   }
 
   const fetchCities = async () => {
     try {
       const { data } = await axios.get('/cities')
-      setCities(data.data.cities || [])
+      setCities(data.data || [])
     } catch (error) {
       console.error('Failed to fetch cities')
     }
@@ -89,31 +85,11 @@ const AreasManagement = () => {
   }
 
   const handleSubmit = async () => {
-    try {
-      if (editMode) {
-        await axios.put(`/areas/${currentArea._id}`, formData)
-        toast.success('Area updated successfully')
-      } else {
-        await axios.post('/areas', formData)
-        toast.success('Area created successfully')
-      }
-      handleCloseDialog()
-      fetchAreas()
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Operation failed')
-    }
+    toast.error('Areas API not available')
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this area?')) return
-
-    try {
-      await axios.delete(`/areas/${id}`)
-      toast.success('Area deleted successfully')
-      fetchAreas()
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Delete failed')
-    }
+    toast.error('Areas API not available')
   }
 
   const handleApply = () => {

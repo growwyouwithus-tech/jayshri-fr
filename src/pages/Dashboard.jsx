@@ -13,16 +13,16 @@ const Dashboard = () => {
   const { user } = useSelector((state) => state.auth)
 
   useEffect(() => {
-    if (user?.roleId?.name) {
+    if (user?.role?.name) {
       const roleRoutes = {
         'Buyer': '/buyer/dashboard',
-        'Super Admin': '/admin/dashboard',
-        'Colony Manager': '/admin/dashboard',
+        'Admin': '/admin/dashboard',
+        'Manager': '/admin/dashboard',
         'Lawyer': '/lawyer/dashboard',
-        'Broker/Agent': '/agent/dashboard',
+        'Agent': '/agent/dashboard',
       }
 
-      const route = roleRoutes[user.roleId.name]
+      const route = roleRoutes[user.role.name]
       if (route) {
         navigate(route, { replace: true })
       }

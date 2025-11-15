@@ -3,7 +3,7 @@ import api from '@/api/axios'
 
 const initialState = {
   plots: [],
-  currentPlot: null,
+  selectedPlot: null,
   loading: false,
   error: null,
 }
@@ -20,6 +20,20 @@ export const fetchPlots = createAsyncThunk(
   }
 )
 
+export const fetchPlotById = createAsyncThunk(
+  'plot/fetchPlotById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/plots/${id}`)
+      console.log('Single Plot Response:', response.data)
+      return response.data.data.plot
+    } catch (error) {
+      console.error('Fetch plot error:', error)
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch plot details')
+    }
+  }
+)
+
 const plotSlice = createSlice({
   name: 'plot',
   initialState,
@@ -28,11 +42,12 @@ const plotSlice = createSlice({
       state.error = null
     },
     setCurrentPlot: (state, action) => {
-      state.currentPlot = action.payload
+      state.selectedPlot = action.payload
     },
   },
   extraReducers: (builder) => {
     builder
+      // 🔵 Fetch all plots
       .addCase(fetchPlots.pending, (state) => {
         state.loading = true
       })
@@ -43,6 +58,22 @@ const plotSlice = createSlice({
       .addCase(fetchPlots.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
+      })
+
+      // 🔵 Fetch single plot by ID
+      .addCase(fetchPlotById.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchPlotById.fulfilled, (state, action) => {
+        state.loading = false
+        state.selectedPlot = action.payload
+        state.error = null
+      })
+      .addCase(fetchPlotById.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+        state.selectedPlot = null
       })
   },
 })

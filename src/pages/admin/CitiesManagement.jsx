@@ -46,40 +46,12 @@ const CitiesManagement = () => {
   const fetchCities = async () => {
     try {
       setLoading(true)
-      
-      // Mock data for testing (remove when backend is ready)
-      const mockCities = [
-        {
-          _id: '1',
-          name: 'Mumbai',
-          tagline: 'City of Dreams',
-          priority: 1,
-          createdAt: '2024-01-01'
-        },
-        {
-          _id: '2',
-          name: 'Pune',
-          tagline: 'Oxford of the East',
-          priority: 2,
-          createdAt: '2024-01-02'
-        },
-        {
-          _id: '3',
-          name: 'Nashik',
-          tagline: 'Wine Capital of India',
-          priority: 3,
-          createdAt: '2024-01-03'
-        }
-      ]
-      
-      setCities(mockCities)
-      
-      // Uncomment when backend is ready:
-      // const response = await apiService.cities.getAll()
-      // setCities(response.data.data || [])
+      const response = await apiService.cities.getAll()
+      setCities(response.data.data || [])
+      setLoading(false)
     } catch (error) {
-      errorService.handleApiError(error, 'Failed to fetch cities')
-    } finally {
+      console.error('Failed to fetch cities:', error)
+      setCities([])
       setLoading(false)
     }
   }

@@ -1,21 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Box, Typography, Grid, Card, CardContent, CircularProgress, Paper } from '@mui/material'
-import { Business, Home, Receipt, TrendingUp, People, Description } from '@mui/icons-material'
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { Business, Home, Receipt, TrendingUp } from '@mui/icons-material'
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import axios from '@/api/axios'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({
-    totalColonies: 0,
-    totalPlots: 0,
-    activeBookings: 0,
-    totalRevenue: 0,
-    availablePlots: 0,
-    soldPlots: 0
-  })
+  const [stats, setStats] = useState(null)
+  const [plotStatusData, setPlotStatusData] = useState([])
+  const [revenueData, setRevenueData] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchDashboardStats()
@@ -23,39 +19,81 @@ const AdminDashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      // Simulated data - replace with actual API calls
+      setLoading(true)
+      setError(null)
+      const [coloniesRes, bookingsRes] = await Promise.all([
+        axios.get('/colonies'),
+        axios.get('/bookings')
+      ])
+
+      const colonies = coloniesRes?.data?.data?.colonies || []
+      const bookings = bookingsRes?.data?.data || []
+
+      const totalColonies = colonies.length
+      const totalPlots = colonies.reduce((sum, colony) => sum + (colony.totalPlots || colony.plotStats?.total || 0), 0)
+      const availablePlots = colonies.reduce((sum, colony) => sum + (colony.availablePlots || colony.plotStats?.available || 0), 0)
+      const soldPlots = colonies.reduce((sum, colony) => sum + (colony.soldPlots || colony.plotStats?.sold || 0), 0)
+      const reservedPlots = colonies.reduce((sum, colony) => sum + (colony.blockedPlots || colony.plotStats?.reserved || 0), 0)
+      const bookedPlots = bookings.filter((booking) => booking.status === 'confirmed' || booking.status === 'pending').length
+      const totalRevenue = bookings.reduce((sum, booking) => sum + (booking.totalAmount || 0), 0)
+
       setStats({
-        totalColonies: 1,
-        totalPlots: 10,
-        activeBookings: 3,
-        totalRevenue: 15000000,
-        availablePlots: 7,
-        soldPlots: 3
+        totalColonies,
+        totalPlots,
+        activeBookings: bookings.filter((booking) => booking.status === 'pending').length,
+        totalRevenue,
+        availablePlots,
+        bookedPlots,
+        soldPlots,
+        reservedPlots
       })
+
+      const statusData = [
+        { name: 'Available', value: availablePlots },
+        { name: 'Booked', value: bookedPlots },
+        { name: 'Sold', value: soldPlots },
+        { name: 'Reserved', value: reservedPlots }
+      ].filter((item) => item.value > 0)
+      setPlotStatusData(statusData)
+
+      const revenueByMonth = bookings.reduce((acc, booking) => {
+        if (!booking.createdAt || !booking.totalAmount) return acc
+        const date = new Date(booking.createdAt)
+        const monthKey = date.toLocaleString('default', { month: 'short' })
+        const monthEntry = acc.find((entry) => entry.month === monthKey)
+        if (monthEntry) {
+          monthEntry.revenue += booking.totalAmount
+        } else {
+          acc.push({ month: monthKey, revenue: booking.totalAmount })
+        }
+        return acc
+      }, [])
+      const sortedRevenue = revenueByMonth.sort((a, b) => {
+        const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month)
+      })
+      setRevenueData(sortedRevenue)
+
       setLoading(false)
     } catch (error) {
       console.error('Failed to fetch stats:', error)
+      setError(error.response?.data?.message || 'Failed to load dashboard')
       setLoading(false)
     }
   }
-
-  const plotStatusData = [
-    { name: 'Available', value: stats.availablePlots },
-    { name: 'Booked', value: stats.activeBookings },
-    { name: 'Sold', value: stats.soldPlots },
-  ]
-
-  const revenueData = [
-    { month: 'Jan', revenue: 2000000 },
-    { month: 'Feb', revenue: 3500000 },
-    { month: 'Mar', revenue: 4200000 },
-    { month: 'Apr', revenue: 5500000 },
-  ]
 
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <Typography color="error">{error}</Typography>
       </Box>
     )
   }
@@ -74,7 +112,7 @@ const AdminDashboard = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="h4" color="white" fontWeight="bold">
-                    {stats.totalColonies}
+                    {stats?.totalColonies || 0}
                   </Typography>
                   <Typography variant="body2" color="rgba(255,255,255,0.8)">
                     Total Colonies
@@ -92,7 +130,7 @@ const AdminDashboard = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="h4" color="white" fontWeight="bold">
-                    {stats.totalPlots}
+                    {stats?.totalPlots || 0}
                   </Typography>
                   <Typography variant="body2" color="rgba(255,255,255,0.8)">
                     Total Plots
@@ -110,7 +148,7 @@ const AdminDashboard = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="h4" color="white" fontWeight="bold">
-                    {stats.activeBookings}
+                    {stats?.activeBookings || 0}
                   </Typography>
                   <Typography variant="body2" color="rgba(255,255,255,0.8)">
                     Active Bookings
@@ -128,7 +166,14 @@ const AdminDashboard = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="h4" color="white" fontWeight="bold">
-                    ₹{(stats.totalRevenue / 10000000).toFixed(1)}Cr
+                    {stats.totalRevenue > 0 
+                      ? stats.totalRevenue >= 10000000 
+                        ? `₹${(stats.totalRevenue / 10000000).toFixed(2)}Cr`
+                        : stats.totalRevenue >= 100000
+                          ? `₹${(stats.totalRevenue / 100000).toFixed(2)}L`
+                          : `₹${stats.totalRevenue.toLocaleString('en-IN')}`
+                      : '₹0'
+                    }
                   </Typography>
                   <Typography variant="body2" color="rgba(255,255,255,0.8)">
                     Total Revenue
@@ -146,16 +191,34 @@ const AdminDashboard = () => {
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" mb={2}>Revenue Trend</Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => `₹${(value / 100000).toFixed(1)}L`} />
-                <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+            {revenueData && revenueData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={revenueData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis 
+                    tickFormatter={(value) => {
+                      if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`
+                      if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`
+                      return `₹${(value / 1000).toFixed(0)}K`
+                    }}
+                  />
+                  <Tooltip 
+                    formatter={(value) => {
+                      if (value >= 10000000) return [`₹${(value / 10000000).toFixed(2)}Cr`, 'Revenue']
+                      if (value >= 100000) return [`₹${(value / 100000).toFixed(2)}L`, 'Revenue']
+                      return [`₹${value.toLocaleString('en-IN')}`, 'Revenue']
+                    }}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} name="Revenue" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                <Typography color="text.secondary">No revenue data available</Typography>
+              </Box>
+            )}
           </Paper>
         </Grid>
 

@@ -8,20 +8,14 @@ import mockApiService from './mockApiService'
  */
 
 // Check if we should use mock data (for development)
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' || false
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' && import.meta.env.MODE !== 'production'
 
 // Helper function to try real API first, fallback to mock
 const withFallback = async (realApiCall, mockApiCall) => {
   if (USE_MOCK_DATA) {
     return mockApiCall()
   }
-  
-  try {
-    return await realApiCall()
-  } catch (error) {
-    console.warn('Real API failed, falling back to mock data:', error.message)
-    return mockApiCall()
-  }
+  return realApiCall()
 }
 
 export const apiService = {
@@ -91,23 +85,41 @@ export const apiService = {
   plots: {
     getAll: (params = {}) => api.get('/plots', { params }),
     getById: (id) => api.get(`/plots/${id}`),
-    getByColony: (colonyId) => api.get(`/plots?colonyId=${colonyId}`),
+    getByColony: (colonyId) => api.get(`/plots/colony/${colonyId}`),
     create: (data) => api.post('/plots', data),
     update: (id, data) => api.put(`/plots/${id}`, data),
     delete: (id) => api.delete(`/plots/${id}`),
-    updateStatus: (id, status) => api.patch(`/plots/${id}/status`, { status })
+    updateStatus: (id, status) => api.put(`/plots/${id}`, { status })
   },
 
   // ============ PROPERTIES ============
   properties: {
-    getAll: (params = {}) => api.get('/properties', { params }),
-    getById: (id) => api.get(`/properties/${id}`),
-    create: (data) => api.post('/properties', data),
-    update: (id, data) => api.put(`/properties/${id}`, data),
-    delete: (id) => api.delete(`/properties/${id}`),
-    uploadImages: (id, formData) => api.post(`/properties/${id}/images`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    getAll: (params = {}) => withFallback(
+      () => api.get('/properties', { params }),
+      () => Promise.resolve({ data: { data: [] } })
+    ),
+    getById: (id) => withFallback(
+      () => api.get(`/properties/${id}`),
+      () => Promise.resolve({ data: { data: null } })
+    ),
+    create: (data) => withFallback(
+      () => api.post('/properties', data),
+      () => mockApiService.plots.create(data)
+    ),
+    update: (id, data) => withFallback(
+      () => api.put(`/properties/${id}`, data),
+      () => mockApiService.plots.update(id, data)
+    ),
+    delete: (id) => withFallback(
+      () => api.delete(`/properties/${id}`),
+      () => mockApiService.plots.delete(id)
+    ),
+    uploadImages: (id, formData) => withFallback(
+      () => api.post(`/properties/${id}/images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }),
+      () => Promise.resolve({ data: { data: [] } })
+    )
   },
 
   // ============ USERS ============
@@ -175,8 +187,8 @@ export const apiService = {
     create: (data) => api.post('/bookings', data),
     update: (id, data) => api.put(`/bookings/${id}`, data),
     delete: (id) => api.delete(`/bookings/${id}`),
-    updateStatus: (id, status) => api.patch(`/bookings/${id}/status`, { status }),
-    updatePaymentStatus: (id, paymentStatus) => api.patch(`/bookings/${id}/payment-status`, { paymentStatus }),
+    updateStatus: (id, status) => api.put(`/bookings/${id}`, { status }),
+    cancel: (id, reason) => api.put(`/bookings/${id}/cancel`, { reason }),
     addPaymentReceipt: (id, receiptData) => api.post(`/bookings/${id}/receipts`, receiptData),
     deletePaymentReceipt: (bookingId, receiptId) => api.delete(`/bookings/${bookingId}/receipts/${receiptId}`)
   },
@@ -184,23 +196,23 @@ export const apiService = {
   // ============ ROLES ============
   roles: {
     getAll: () => withFallback(
-      () => api.get('/roles'),
+      () => api.get('/users/roles/all'),
       () => mockApiService.roles.getAll()
     ),
     getById: (id) => withFallback(
-      () => api.get(`/roles/${id}`),
+      () => api.get(`/users/roles/${id}`),
       () => mockApiService.roles.getById(id)
     ),
     create: (data) => withFallback(
-      () => api.post('/roles', data),
+      () => api.post('/users/roles', data),
       () => mockApiService.roles.create(data)
     ),
     update: (id, data) => withFallback(
-      () => api.put(`/roles/${id}`, data),
+      () => api.put(`/users/roles/${id}`, data),
       () => mockApiService.roles.update(id, data)
     ),
     delete: (id) => withFallback(
-      () => api.delete(`/roles/${id}`),
+      () => api.delete(`/users/roles/${id}`),
       () => mockApiService.roles.delete(id)
     )
   },

@@ -7,6 +7,7 @@ import { TrendingUp, Payment, HourglassEmpty } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
+import { deriveCommissionsFromBookings } from '@/utils/commissionUtils'
 
 const AgentCommissions = () => {
   const [commissions, setCommissions] = useState([])
@@ -24,10 +25,12 @@ const AgentCommissions = () => {
 
   const fetchCommissions = async () => {
     try {
-      const { data } = await axios.get('/commissions')
-      const comms = data.data.commissions
+      const { data } = await axios.get('/bookings')
+      const bookings = Array.isArray(data?.data) ? data.data : data?.data?.bookings || []
+      const comms = deriveCommissionsFromBookings(bookings)
+        .filter((commission) => commission.agent?._id === data?.currentUserId || commission.agent?._id === bookings[0]?.agent?._id)
       setCommissions(comms)
-      
+
       setStats({
         total: comms.reduce((sum, c) => sum + (c.finalAmount || 0), 0),
         pending: comms.filter(c => c.status === 'pending').reduce((sum, c) => sum + (c.finalAmount || 0), 0),
@@ -138,7 +141,7 @@ const AgentCommissions = () => {
             ) : (
               commissions.map((comm) => (
                 <TableRow key={comm._id}>
-                  <TableCell>{comm.bookingId?.bookingNumber}</TableCell>
+                  <TableCell>{comm.bookingNumber}</TableCell>
                   <TableCell>₹{comm.saleAmount?.toLocaleString()}</TableCell>
                   <TableCell>{comm.commissionRate}%</TableCell>
                   <TableCell>₹{comm.commissionAmount?.toLocaleString()}</TableCell>

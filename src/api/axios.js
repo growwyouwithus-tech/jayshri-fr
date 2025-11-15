@@ -2,11 +2,12 @@ import axios from 'axios'
 
 /**
  * Axios Instance Configuration
- * Handles API requests with authentication
+ * Handles API requests with authentication and enhanced error handling
  */
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
+  timeout: 30000, // 30 seconds timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -25,16 +26,29 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`
       }
     }
+    
+    // Log request in development
+    if (import.meta.env.DEV) {
+      console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`)
+    }
+    
     return config
   },
   (error) => {
+    console.error('[API Request Error]', error)
     return Promise.reject(error)
   }
 )
 
-// Response interceptor - Handle token refresh
+// Response interceptor - Handle errors and token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful response in development
+    if (import.meta.env.DEV) {
+      console.log(`[API Response] ${response.status} ${response.config.url}`, response.data)
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
 
@@ -46,45 +60,48 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
+    // Log error in development
+    if (import.meta.env.DEV) {
+      console.error('[API Error]', {
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        url: error.config?.url,
+        data: error.response?.data
+      })
+    }
 
-      try {
-        const refreshToken = localStorage.getItem('refreshToken')
-        
-        // Check if demo token
-        if (refreshToken && refreshToken.startsWith('demo-refresh-token')) {
-          // Demo mode - don't logout
-          return Promise.reject(error)
-        }
-        
-        if (!refreshToken) {
-          throw new Error('No refresh token')
-        }
+    // Handle network errors
+    if (!error.response) {
+      console.error('[Network Error] Unable to connect to server')
+      return Promise.reject({
+        message: 'Unable to connect to server. Please check your connection.',
+        code: 'NETWORK_ERROR'
+      })
+    }
 
-        // Try to refresh token
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL || '/api/v1'}/auth/refresh`,
-          { refreshToken }
-        )
-
-        const { accessToken } = response.data.data
-        localStorage.setItem('token', accessToken)
-
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`
-        return api(originalRequest)
-      } catch (refreshError) {
-        // Refresh failed, logout user (but not for demo mode)
-        const token = localStorage.getItem('token')
-        if (!token || !token.startsWith('demo-admin-token')) {
-          localStorage.removeItem('token')
-          localStorage.removeItem('refreshToken')
+    // If error is 401, logout user
+    if (error.response?.status === 401) {
+      const token = localStorage.getItem('token')
+      // Don't logout for demo tokens or if already on login page
+      if (!token || (!token.startsWith('demo-admin-token') && !token.startsWith('demo-token-'))) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        // Only redirect if not already on login page
+        if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login'
         }
-        return Promise.reject(refreshError)
       }
+      return Promise.reject(error)
+    }
+
+    // If error is 403, show unauthorized message
+    if (error.response?.status === 403) {
+      console.warn('[Forbidden] You do not have permission to access this resource')
+    }
+
+    // If error is 500, log server error
+    if (error.response?.status === 500) {
+      console.error('[Server Error] Internal server error occurred')
     }
 
     return Promise.reject(error)

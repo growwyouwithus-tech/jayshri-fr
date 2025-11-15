@@ -92,7 +92,7 @@ const MainLayout = () => {
 
   // Navigation items based on role
   const getNavigationItems = () => {
-    const roleName = user?.roleId?.name
+    const roleName = user?.role?.name
 
     const commonItems = [
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
@@ -124,28 +124,7 @@ const MainLayout = () => {
         { text: 'Calculator', icon: <Calculate />, path: '/admin/calculator' },
         { text: 'Settings', icon: <AdminPanelSettings />, path: '/admin/settings' },
       ],
-      'Super Admin': [
-        { text: 'Land Purchase', icon: <Business />, path: '/admin/colonies' },
-        { 
-          text: 'Properties', 
-          icon: <Home />, 
-          path: '/admin/properties',
-          submenu: [
-            { text: 'All Properties', path: '/admin/properties' },
-            { text: 'All Cities', path: '/admin/cities' },
-            { text: 'All Areas', path: '/admin/areas' }
-          ]
-        },
-        { text: 'Plots', icon: <Home />, path: '/admin/plots' },
-        { text: 'Bookings', icon: <Receipt />, path: '/admin/bookings' },
-        { text: 'Commissions', icon: <TrendingUp />, path: '/admin/commissions' },
-        { text: 'Users', icon: <People />, path: '/admin/users' },
-        { text: 'Roles', icon: <AdminPanelSettings />, path: '/admin/roles' },
-        { text: 'Staff Management', icon: <AdminPanelSettings />, path: '/admin/staff' },
-        { text: 'Calculator', icon: <Calculate />, path: '/admin/calculator' },
-        { text: 'Settings', icon: <AdminPanelSettings />, path: '/admin/settings' },
-      ],
-      'Colony Manager': [
+      'Manager': [
         { text: 'Land Purchase', icon: <Business />, path: '/admin/colonies' },
         { text: 'Plots', icon: <Home />, path: '/admin/plots' },
         { text: 'Bookings', icon: <Receipt />, path: '/admin/bookings' },
@@ -155,7 +134,7 @@ const MainLayout = () => {
       'Lawyer': [
         { text: 'Registry Documents', icon: <Gavel />, path: '/lawyer/registry' },
       ],
-      'Broker/Agent': [
+      'Agent': [
         { text: 'My Sales', icon: <Receipt />, path: '/agent/dashboard' },
         { text: 'Commissions', icon: <TrendingUp />, path: '/agent/commissions' },
       ],
@@ -341,7 +320,7 @@ const MainLayout = () => {
           
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h5" fontWeight={700} gutterBottom>
-              {user?.roleId?.name} Dashboard
+              {user?.role?.name} Dashboard
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Stay on top of colony performance and plot activity at a glance.
@@ -368,7 +347,7 @@ const MainLayout = () => {
                   {user?.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {user?.roleId?.name}
+                  {user?.role?.name}
                 </Typography>
               </Box>
             </Box>
@@ -419,6 +398,7 @@ const MainLayout = () => {
               boxSizing: 'border-box', 
               width: DRAWER_WIDTH,
               borderRadius: 0,
+              bgcolor: 'primary.main',
             },
           }}
         >
@@ -432,6 +412,7 @@ const MainLayout = () => {
               boxSizing: 'border-box', 
               width: DRAWER_WIDTH,
               borderRadius: 0,
+              bgcolor: 'primary.main',
             },
           }}
           open

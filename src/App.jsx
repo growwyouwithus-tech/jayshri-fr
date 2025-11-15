@@ -47,9 +47,18 @@ import AgentCommissions from '@/pages/agent/AgentCommissions'
 import Profile from '@/pages/Profile'
 import Notifications from '@/pages/Notifications'
 
+// Customer Pages
+import CustomerHome from './pages/customer/Home'
+import CustomerColonies from './pages/customer/Colonies'
+import CustomerColonyDetails from './pages/customer/ColonyDetails'
+import CustomerPlotDetails from './pages/customer/PlotDetails'
+
 // Common Pages
 import NotFound from './pages/NotFound'
 import Unauthorized from './pages/Unauthorized'
+
+// Test Component
+import TestAPI from './components/TestAPI'
 
 // Route Guards
 import PrivateRoute from './components/guards/PrivateRoute'
@@ -64,9 +73,12 @@ function App() {
   const { isAuthenticated, loading, user } = useSelector((state) => state.auth)
 
   useEffect(() => {
-    // Check authentication on app load
-    dispatch(checkAuth())
-  }, [dispatch])
+    // Check authentication on app load only if token exists
+    const token = localStorage.getItem('token')
+    if (token && !user) {
+      dispatch(checkAuth())
+    }
+  }, [dispatch, user])
 
   if (loading) {
     return (
@@ -110,22 +122,22 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin">
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<RoleRoute roles={['Super Admin', 'Colony Manager']}><AdminDashboard /></RoleRoute>} />
-          <Route path="colonies" element={<RoleRoute roles={['Super Admin', 'Colony Manager']}><ColonyManagement /></RoleRoute>} />
-          <Route path="plots" element={<RoleRoute roles={['Super Admin', 'Colony Manager']}><PlotManagement /></RoleRoute>} />
-          <Route path="bookings" element={<RoleRoute roles={['Super Admin', 'Colony Manager', 'Sales Executive']}><BookingManagement /></RoleRoute>} />
-          <Route path="registry" element={<RoleRoute roles={['Super Admin', 'Colony Manager']}><RegistryManagement /></RoleRoute>} />
-          <Route path="commissions" element={<RoleRoute roles={['Super Admin', 'Accountant']}><CommissionManagement /></RoleRoute>} />
-          <Route path="properties" element={<RoleRoute roles={['Super Admin', 'Colony Manager']}><PropertyManagement /></RoleRoute>} />
-          <Route path="cities" element={<RoleRoute roles={['Super Admin']}><CitiesManagement /></RoleRoute>} />
-          <Route path="areas" element={<RoleRoute roles={['Super Admin']}><AreasManagement /></RoleRoute>} />
-          <Route path="users" element={<RoleRoute roles={['Super Admin']}><UserManagement /></RoleRoute>} />
-          <Route path="staff" element={<RoleRoute roles={['Super Admin']}><StaffManagement /></RoleRoute>} />
-          <Route path="bookings/:id" element={<RoleRoute roles={['Super Admin', 'Colony Manager']}><BookingDetail /></RoleRoute>} />
-          <Route path="land-purchase" element={<RoleRoute roles={['Super Admin']}><ColonyManagement /></RoleRoute>} />
-          <Route path="settings" element={<RoleRoute roles={['Super Admin']}><Settings /></RoleRoute>} />
-          <Route path="roles" element={<RoleRoute roles={['Super Admin']}><RoleManagement /></RoleRoute>} />
-          <Route path="calculator" element={<RoleRoute roles={['Super Admin', 'Colony Manager']}><Calculator /></RoleRoute>} />
+          <Route path="dashboard" element={<RoleRoute roles={['Admin', 'Manager']}><AdminDashboard /></RoleRoute>} />
+          <Route path="colonies" element={<RoleRoute roles={['Admin', 'Manager']}><ColonyManagement /></RoleRoute>} />
+          <Route path="plots" element={<RoleRoute roles={['Admin', 'Manager']}><PlotManagement /></RoleRoute>} />
+          <Route path="bookings" element={<RoleRoute roles={['Admin', 'Manager', 'Agent']}><BookingManagement /></RoleRoute>} />
+          <Route path="registry" element={<RoleRoute roles={['Admin', 'Manager']}><RegistryManagement /></RoleRoute>} />
+          <Route path="commissions" element={<RoleRoute roles={['Admin', 'Manager']}><CommissionManagement /></RoleRoute>} />
+          <Route path="properties" element={<RoleRoute roles={['Admin', 'Manager']}><PropertyManagement /></RoleRoute>} />
+          <Route path="cities" element={<RoleRoute roles={['Admin']}><CitiesManagement /></RoleRoute>} />
+          <Route path="areas" element={<RoleRoute roles={['Admin']}><AreasManagement /></RoleRoute>} />
+          <Route path="users" element={<RoleRoute roles={['Admin']}><UserManagement /></RoleRoute>} />
+          <Route path="staff" element={<RoleRoute roles={['Admin']}><StaffManagement /></RoleRoute>} />
+          <Route path="bookings/:id" element={<RoleRoute roles={['Admin', 'Manager']}><BookingDetail /></RoleRoute>} />
+          <Route path="land-purchase" element={<RoleRoute roles={['Admin']}><ColonyManagement /></RoleRoute>} />
+          <Route path="settings" element={<RoleRoute roles={['Admin']}><Settings /></RoleRoute>} />
+          <Route path="roles" element={<RoleRoute roles={['Admin']}><RoleManagement /></RoleRoute>} />
+          <Route path="calculator" element={<RoleRoute roles={['Admin', 'Manager']}><Calculator /></RoleRoute>} />
         </Route>
 
         {/* Lawyer Routes */}
@@ -138,10 +150,29 @@ function App() {
         {/* Agent Routes */}
         <Route path="/agent">
           <Route index element={<Navigate to="/agent/dashboard" replace />} />
-          <Route path="dashboard" element={<RoleRoute roles={['Broker/Agent']}><AgentDashboard /></RoleRoute>} />
-          <Route path="commissions" element={<RoleRoute roles={['Broker/Agent']}><AgentCommissions /></RoleRoute>} />
+          <Route path="dashboard" element={<RoleRoute roles={['Agent']}><AgentDashboard /></RoleRoute>} />
+          <Route path="commissions" element={<RoleRoute roles={['Agent']}><AgentCommissions /></RoleRoute>} />
+        </Route>
+
+        {/* Customer Routes - Public Access */}
+        <Route path="/customer">
+          <Route index element={<CustomerHome />} />
+          <Route path="colonies" element={<CustomerColonies />} />
+          <Route path="properties/:id" element={<CustomerColonyDetails />} />
+          <Route path="plots/:id" element={<CustomerPlotDetails />} />
         </Route>
       </Route>
+
+      {/* Public Customer Routes */}
+      <Route path="/customer">
+        <Route index element={<CustomerHome />} />
+        <Route path="colonies" element={<CustomerColonies />} />
+        <Route path="properties/:id" element={<CustomerColonyDetails />} />
+        <Route path="plots/:id" element={<CustomerPlotDetails />} />
+      </Route>
+
+      {/* Test Route */}
+      <Route path="/test-api" element={<TestAPI />} />
 
       {/* Error Routes */}
       <Route path="/unauthorized" element={<Unauthorized />} />

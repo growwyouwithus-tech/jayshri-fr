@@ -29,6 +29,50 @@ const RoleManagement = () => {
   
   const availableActions = ['create', 'read', 'update', 'delete']
 
+  const mapPermissionsFromApi = (permissions = []) => {
+    if (!Array.isArray(permissions)) return []
+    const moduleMap = new Map()
+
+    const addPermission = (module, action) => {
+      if (!availableModules.includes(module) || !availableActions.includes(action)) return
+      if (!moduleMap.has(module)) moduleMap.set(module, new Set())
+      moduleMap.get(module).add(action)
+    }
+
+    permissions.forEach((perm) => {
+      if (perm === 'all') {
+        availableModules.forEach((module) => {
+          availableActions.forEach((action) => addPermission(module, action))
+        })
+        return
+      }
+      if (typeof perm !== 'string') return
+      const [module, action] = perm.split('_')
+      if (module && action) {
+        addPermission(module, action)
+      }
+    })
+
+    return Array.from(moduleMap.entries()).map(([module, actionsSet]) => ({
+      module,
+      actions: Array.from(actionsSet)
+    }))
+  }
+
+  const mapPermissionsToApi = (permissions = []) => {
+    if (!Array.isArray(permissions)) return []
+    const flattened = new Set()
+    permissions.forEach((perm) => {
+      if (!perm?.module || !Array.isArray(perm.actions)) return
+      perm.actions.forEach((action) => {
+        if (availableModules.includes(perm.module) && availableActions.includes(action)) {
+          flattened.add(`${perm.module}_${action}`)
+        }
+      })
+    })
+    return Array.from(flattened)
+  }
+
   useEffect(() => {
     fetchRoles()
   }, [])
@@ -36,8 +80,12 @@ const RoleManagement = () => {
   const fetchRoles = async () => {
     try {
       setLoading(true)
-      const { data } = await axios.get('/roles')
-      setRoles(data.data.roles || [])
+      const { data } = await axios.get('/users/roles/all')
+      const roleList = Array.isArray(data.data) ? data.data : []
+      setRoles(roleList.map((role) => ({
+        ...role,
+        permissions: mapPermissionsFromApi(role.permissions)
+      })))
       setLoading(false)
     } catch (error) {
       console.error('Failed to fetch roles:', error)
@@ -104,10 +152,16 @@ const RoleManagement = () => {
   const handleSubmit = async () => {
     try {
       if (editMode) {
-        await axios.put(`/roles/${currentRole._id}`, formData)
+        await axios.put(`/users/roles/${currentRole._id}`, {
+          ...formData,
+          permissions: mapPermissionsToApi(formData.permissions)
+        })
         toast.success('Role updated successfully')
       } else {
-        await axios.post('/roles', formData)
+        await axios.post('/users/roles', {
+          ...formData,
+          permissions: mapPermissionsToApi(formData.permissions)
+        })
         toast.success('Role created successfully')
       }
       handleCloseDialog()
@@ -121,7 +175,7 @@ const RoleManagement = () => {
     if (!window.confirm('Are you sure you want to delete this role?')) return
     
     try {
-      await axios.delete(`/roles/${id}`)
+      await axios.delete(`/users/roles/${id}`)
       toast.success('Role deleted successfully')
       fetchRoles()
     } catch (error) {
@@ -152,13 +206,13 @@ const RoleManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {roles.map((role) => (
+            {(Array.isArray(roles) ? roles : []).map((role) => (
               <TableRow key={role._id}>
                 <TableCell><strong>{role.name}</strong></TableCell>
                 <TableCell>{role.description || '-'}</TableCell>
                 <TableCell>
-                  {role.permissions.map((perm, idx) => (
-                    <Chip key={idx} label={`${perm.module}: ${perm.actions.join(', ')}`} size="small" sx={{ m: 0.5 }} />
+                  {(Array.isArray(role.permissions) ? role.permissions : []).map((perm, idx) => (
+                    <Chip key={idx} label={`${perm.module}: ${(perm.actions || []).join(', ')}`} size="small" sx={{ m: 0.5 }} />
                   ))}
                 </TableCell>
                 <TableCell>

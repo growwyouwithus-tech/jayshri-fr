@@ -10,14 +10,13 @@ export const authService = {
   login: async (credentials) => {
     try {
       const response = await api.post('/auth/login', credentials)
-      const { accessToken, refreshToken, user } = response.data.data
+      const { token, user } = response.data.data
       
       // Store tokens and user data
-      localStorage.setItem('token', accessToken)
-      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
       
-      return { success: true, data: { user, accessToken } }
+      return { success: true, data: { user, token } }
     } catch (error) {
       return { 
         success: false, 

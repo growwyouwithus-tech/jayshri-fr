@@ -23,6 +23,7 @@ import { CheckCircle, Payment } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
+import { deriveCommissionsFromBookings } from '@/utils/commissionUtils'
 
 const CommissionManagement = () => {
   const [commissions, setCommissions] = useState([])
@@ -43,12 +44,17 @@ const CommissionManagement = () => {
 
   const fetchCommissions = async (status = '') => {
     try {
-      const url = status ? `/commissions?status=${status}` : '/commissions'
-      const { data } = await axios.get(url)
-      setCommissions(data.data.commissions)
+      setLoading(true)
+      const { data } = await axios.get('/bookings')
+      const bookings = Array.isArray(data?.data) ? data.data : data?.data?.bookings || []
+      const derived = deriveCommissionsFromBookings(bookings)
+      const filtered = status ? derived.filter((c) => c.status === status) : derived
+      setCommissions(filtered)
       setLoading(false)
     } catch (error) {
-      toast.error('Failed to fetch commissions')
+      console.error('Failed to derive commissions:', error)
+      toast.error('Failed to load commissions')
+      setCommissions([])
       setLoading(false)
     }
   }
@@ -161,8 +167,30 @@ const CommissionManagement = () => {
             ) : (
               commissions.map((commission) => (
                 <TableRow key={commission._id}>
-                  <TableCell>{commission.agentId?.name}</TableCell>
-                  <TableCell>{commission.bookingId?.bookingNumber}</TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">
+                        {commission.agent?.name || 'Unknown Agent'}
+                      </Typography>
+                      {commission.agent?.email && (
+                        <Typography variant="caption" color="text.secondary">
+                          {commission.agent.email}
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">
+                        {commission.bookingNumber || 'N/A'}
+                      </Typography>
+                      {commission.createdAt && (
+                        <Typography variant="caption" color="text.secondary">
+                          {format(new Date(commission.createdAt), 'dd MMM yyyy')}
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell>₹{commission.saleAmount?.toLocaleString()}</TableCell>
                   <TableCell>{commission.commissionRate}%</TableCell>
                   <TableCell>₹{commission.commissionAmount?.toLocaleString()}</TableCell>

@@ -25,6 +25,7 @@ import {
 } from '@mui/material'
 import { CheckCircle, Cancel, Visibility, GetApp, Print, FileDownload } from '@mui/icons-material'
 import axios from '@/api/axios'
+import mockApiService from '@/services/mockApiService'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 
@@ -53,11 +54,21 @@ const BookingManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get('/users')
-      setUsers(data.data.users || [])
+      const { data } = await axios.get('/users?role=buyer')
+      setUsers(Array.isArray(data?.data) ? data.data : [])
     } catch (error) {
       console.error('Failed to fetch users:', error)
-      toast.error('Failed to fetch users')
+      if ([401, 403].includes(error.response?.status)) {
+        try {
+          const mock = await mockApiService.users.getAll()
+          setUsers(mock?.data?.data || [])
+        } catch (mockError) {
+          console.error('Failed to load mock users:', mockError)
+          toast.error('Failed to fetch users')
+        }
+      } else {
+        toast.error('Failed to fetch users')
+      }
     }
   }
 
@@ -119,12 +130,31 @@ const BookingManagement = () => {
     toast.info('Excel export functionality would be implemented here')
   }
 
+  const normalizeBooking = (booking) => {
+    const user = booking.userId || booking.buyer
+    const plot = booking.plotId || booking.plot
+    const paymentStatus = booking.paymentStatus || booking.payment?.status || 'pending'
+
+    return {
+      ...booking,
+      userId: user,
+      plotId: plot,
+      totalAmount: booking.totalAmount ?? booking.finalAmount ?? 0,
+      discount: booking.discount ?? booking.discountAmount ?? 0,
+      paymentStatus,
+      status: booking.status || 'pending',
+      createdAt: booking.createdAt || booking.bookingDate
+    }
+  }
+
   const fetchBookings = async (status = '') => {
     try {
       setLoading(true)
       const url = status ? `/bookings?status=${status}` : '/bookings'
       const { data } = await axios.get(url)
-      setBookings(data.data.bookings || [])
+      const list = Array.isArray(data?.data) ? data.data : data?.data?.bookings || []
+      const normalized = list.map(normalizeBooking)
+      setBookings(normalized)
       setLoading(false)
     } catch (error) {
       console.error('Failed to fetch bookings:', error)

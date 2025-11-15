@@ -8,11 +8,11 @@ import { useSelector } from 'react-redux'
 const RoleRoute = ({ children, roles }) => {
   const { user } = useSelector((state) => state.auth)
 
-  if (!user || !user.roleId) {
+  if (!user || !user.role) {
     return <Navigate to="/unauthorized" replace />
   }
 
-  const hasRole = roles.includes(user.roleId.name)
+  const hasRole = roles.includes(user.role.name)
 
   return hasRole ? children : <Navigate to="/unauthorized" replace />
 }
