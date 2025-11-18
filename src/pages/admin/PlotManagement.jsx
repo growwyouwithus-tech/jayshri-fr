@@ -70,6 +70,14 @@ const PlotManagement = () => {
     facing: '',
     status: 'available',
     ownerType: 'owner',
+    // Booking/Sale details
+    customerName: '',
+    customerNumber: '',
+    modeOfPayment: '',
+    transactionDate: '',
+    paidAmount: '',
+    paymentSlip: null,
+    registryDocument: null,
   })
 
   const toNumber = (value) => {
@@ -198,7 +206,7 @@ const PlotManagement = () => {
       ? Number(newPlot.totalPrice)
       : Math.round(area * pricePerSqFt)
 
-    return {
+    const payload = {
       plotNumber: newPlot.plotNo,
       colony: newPlot.colonyId,
       area,
@@ -219,6 +227,17 @@ const PlotManagement = () => {
         right: toNumber(newPlot.rightSide),
       },
     }
+
+    // Add booking/sale details if status is booked or sold
+    if (newPlot.status === 'booked' || newPlot.status === 'sold') {
+      payload.customerName = newPlot.customerName
+      payload.customerNumber = newPlot.customerNumber
+      payload.modeOfPayment = newPlot.modeOfPayment
+      payload.transactionDate = newPlot.transactionDate
+      payload.paidAmount = newPlot.paidAmount ? Number(newPlot.paidAmount) : 0
+    }
+
+    return payload
   }
 
   useEffect(() => {
@@ -265,7 +284,7 @@ const PlotManagement = () => {
   const openAddDialog = () => setAddDialogOpen(true)
   const closeAddDialog = () => {
     setAddDialogOpen(false)
-    setNewPlot({ colonyId: '', plotNo: '', frontSide: '', backSide: '', leftSide: '', rightSide: '', areaGaj: '', pricePerGaj: '', totalPrice: '', facing: '', status: 'available', ownerType: 'owner' })
+    setNewPlot({ colonyId: '', plotNo: '', frontSide: '', backSide: '', leftSide: '', rightSide: '', areaGaj: '', pricePerGaj: '', totalPrice: '', facing: '', status: 'available', ownerType: 'owner', customerName: '', customerNumber: '', modeOfPayment: '', transactionDate: '', paidAmount: '', paymentSlip: null, registryDocument: null })
   }
 
   const openEditDialog = (plot) => {
@@ -284,6 +303,13 @@ const PlotManagement = () => {
       facing: plot.facing || '',
       status: plot.status || 'available',
       ownerType: plot.ownerType || 'owner',
+      customerName: plot.customerName || '',
+      customerNumber: plot.customerNumber || '',
+      modeOfPayment: plot.modeOfPayment || '',
+      transactionDate: plot.transactionDate || '',
+      paidAmount: plot.paidAmount?.toString() || '',
+      paymentSlip: null,
+      registryDocument: null,
     })
     setEditDialogOpen(true)
   }
@@ -291,7 +317,7 @@ const PlotManagement = () => {
   const closeEditDialog = () => {
     setEditDialogOpen(false)
     setEditingPlotId(null)
-    setNewPlot({ colonyId: '', plotNo: '', frontSide: '', backSide: '', leftSide: '', rightSide: '', areaGaj: '', pricePerGaj: '', totalPrice: '', facing: '', status: 'available', ownerType: 'owner' })
+    setNewPlot({ colonyId: '', plotNo: '', frontSide: '', backSide: '', leftSide: '', rightSide: '', areaGaj: '', pricePerGaj: '', totalPrice: '', facing: '', status: 'available', ownerType: 'owner', customerName: '', customerNumber: '', modeOfPayment: '', transactionDate: '', paidAmount: '', paymentSlip: null, registryDocument: null })
   }
 
   // Calculate area using the formula: ((front + back) / 2) * ((left + right) / 2) / 9
@@ -367,7 +393,32 @@ const PlotManagement = () => {
       setLoading(true)
       const payload = buildPlotPayload()
       
-      const response = await axios.post('/plots', payload)
+      // Create FormData if there's a file to upload
+      const formData = new FormData()
+      
+      // Append all payload fields
+      Object.keys(payload).forEach(key => {
+        if (typeof payload[key] === 'object' && payload[key] !== null) {
+          formData.append(key, JSON.stringify(payload[key]))
+        } else {
+          formData.append(key, payload[key])
+        }
+      })
+      
+      // Append files if exist
+      if (newPlot.paymentSlip) {
+        formData.append('paymentSlip', newPlot.paymentSlip)
+      }
+      if (newPlot.registryDocument) {
+        formData.append('registryDocument', newPlot.registryDocument)
+      }
+      
+      const response = await axios.post('/plots', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
       if (response.data.success) {
         toast.success('Plot added successfully')
         fetchPlots(filterColony)
@@ -388,7 +439,32 @@ const PlotManagement = () => {
       setLoading(true)
       const payload = buildPlotPayload()
       
-      const response = await axios.put(`/plots/${editingPlotId}`, payload)
+      // Create FormData if there's a file to upload
+      const formData = new FormData()
+      
+      // Append all payload fields
+      Object.keys(payload).forEach(key => {
+        if (typeof payload[key] === 'object' && payload[key] !== null) {
+          formData.append(key, JSON.stringify(payload[key]))
+        } else {
+          formData.append(key, payload[key])
+        }
+      })
+      
+      // Append files if exist
+      if (newPlot.paymentSlip) {
+        formData.append('paymentSlip', newPlot.paymentSlip)
+      }
+      if (newPlot.registryDocument) {
+        formData.append('registryDocument', newPlot.registryDocument)
+      }
+      
+      const response = await axios.put(`/plots/${editingPlotId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
       if (response.data.success) {
         toast.success('Plot updated successfully')
         fetchPlots(filterColony)
@@ -670,6 +746,108 @@ const PlotManagement = () => {
                 </MenuItem>
               ))}
             </TextField>
+
+            {/* Conditional fields for Booked/Sold status */}
+            {(newPlot.status === 'booked' || newPlot.status === 'sold') && (
+              <Box sx={{ p: 2, bgcolor: '#fff3e0', borderRadius: 1, border: '1px solid #ffb74d' }}>
+                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#e65100' }}>
+                  {newPlot.status === 'booked' ? 'Booking Details' : 'Sale Details'}
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    size="small"
+                    label="Customer Name"
+                    value={newPlot.customerName}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, customerName: e.target.value }))}
+                    required
+                  />
+                  <TextField
+                    size="small"
+                    label="Customer Number"
+                    type="tel"
+                    value={newPlot.customerNumber}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))}
+                    required
+                  />
+                  <TextField
+                    size="small"
+                    select
+                    label="Mode of Payment"
+                    value={newPlot.modeOfPayment}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, modeOfPayment: e.target.value }))}
+                    required
+                  >
+                    <MenuItem value="cash">Cash</MenuItem>
+                    <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                    <MenuItem value="upi">UPI</MenuItem>
+                    <MenuItem value="cheque">Cheque</MenuItem>
+                    <MenuItem value="card">Card</MenuItem>
+                  </TextField>
+                  <TextField
+                    size="small"
+                    label="Transaction Date & Time"
+                    type="datetime-local"
+                    value={newPlot.transactionDate}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, transactionDate: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    required
+                  />
+                  <TextField
+                    size="small"
+                    label="Amount Paid"
+                    type="number"
+                    value={newPlot.paidAmount}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))}
+                    required
+                  />
+                  <Box>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      size="small"
+                    >
+                      Upload Payment Slip/Screenshot
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*,.pdf"
+                        onChange={(e) => setNewPlot((s) => ({ ...s, paymentSlip: e.target.files[0] }))}
+                      />
+                    </Button>
+                    {newPlot.paymentSlip && (
+                      <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                        ✓ {newPlot.paymentSlip.name}
+                      </Typography>
+                    )}
+                  </Box>
+                  {newPlot.status === 'sold' && (
+                    <Box>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        size="small"
+                        color="secondary"
+                      >
+                        Upload Registry Document
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*,.pdf"
+                          onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
+                        />
+                      </Button>
+                      {newPlot.registryDocument && (
+                        <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                          ✓ {newPlot.registryDocument.name}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
@@ -809,6 +987,108 @@ const PlotManagement = () => {
                 </MenuItem>
               ))}
             </TextField>
+
+            {/* Conditional fields for Booked/Sold status */}
+            {(newPlot.status === 'booked' || newPlot.status === 'sold') && (
+              <Box sx={{ p: 2, bgcolor: '#fff3e0', borderRadius: 1, border: '1px solid #ffb74d' }}>
+                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#e65100' }}>
+                  {newPlot.status === 'booked' ? 'Booking Details' : 'Sale Details'}
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    size="small"
+                    label="Customer Name"
+                    value={newPlot.customerName}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, customerName: e.target.value }))}
+                    required
+                  />
+                  <TextField
+                    size="small"
+                    label="Customer Number"
+                    type="tel"
+                    value={newPlot.customerNumber}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))}
+                    required
+                  />
+                  <TextField
+                    size="small"
+                    select
+                    label="Mode of Payment"
+                    value={newPlot.modeOfPayment}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, modeOfPayment: e.target.value }))}
+                    required
+                  >
+                    <MenuItem value="cash">Cash</MenuItem>
+                    <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                    <MenuItem value="upi">UPI</MenuItem>
+                    <MenuItem value="cheque">Cheque</MenuItem>
+                    <MenuItem value="card">Card</MenuItem>
+                  </TextField>
+                  <TextField
+                    size="small"
+                    label="Transaction Date & Time"
+                    type="datetime-local"
+                    value={newPlot.transactionDate}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, transactionDate: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    required
+                  />
+                  <TextField
+                    size="small"
+                    label="Amount Paid"
+                    type="number"
+                    value={newPlot.paidAmount}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))}
+                    required
+                  />
+                  <Box>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      size="small"
+                    >
+                      Upload Payment Slip/Screenshot
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*,.pdf"
+                        onChange={(e) => setNewPlot((s) => ({ ...s, paymentSlip: e.target.files[0] }))}
+                      />
+                    </Button>
+                    {newPlot.paymentSlip && (
+                      <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                        ✓ {newPlot.paymentSlip.name}
+                      </Typography>
+                    )}
+                  </Box>
+                  {newPlot.status === 'sold' && (
+                    <Box>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        size="small"
+                        color="secondary"
+                      >
+                        Upload Registry Document
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*,.pdf"
+                          onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
+                        />
+                      </Button>
+                      {newPlot.registryDocument && (
+                        <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                          ✓ {newPlot.registryDocument.name}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>

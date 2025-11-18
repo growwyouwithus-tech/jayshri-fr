@@ -56,8 +56,8 @@ const Login = () => {
       {/* Jayshree Properties Logo */}
       <Box display="flex" justifyContent="center" mb={3}>
         <img 
-          src="/logo.png" 
-          alt="Jayshree Properties" 
+          src="/JAISHRI GROUP.png" 
+          alt="Jayshri Properties" 
           style={{ width: '200px', height: 'auto' }}
         />
       </Box>

@@ -157,8 +157,8 @@ const MainLayout = () => {
         <Stack direction="row" spacing={2} alignItems="center" width="100%">
           <Box
             component="img"
-            src="/logo.png"
-            alt="Jayshree Properties"
+            src="/JAISHRI GROUP.png"
+            alt="Jayshri Properties"
             sx={{
               width: 48,
               height: 48,
@@ -170,7 +170,7 @@ const MainLayout = () => {
           />
           <Box>
             <Typography variant="h6" fontWeight={700} sx={{ color: '#fff' }}>
-              Jayshree Properties
+              Jayshri Properties
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
               Smart Plot Management
