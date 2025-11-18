@@ -44,7 +44,7 @@ const FACING_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { label: 'Available', value: 'available' },
-  { label: 'Blocked', value: 'blocked' },
+  { label: 'Booked', value: 'booked' },
   { label: 'Sold', value: 'sold' },
   { label: 'Reserved', value: 'reserved' },
 ]
