@@ -23,6 +23,7 @@ import {
 import { Add, Edit, Delete, Visibility } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
+import { validateRequired, validateNumeric, validatePhone, validateMinLength, validateURL } from '@/utils/validation'
 
 const ColonyManagement = () => {
   const [colonies, setColonies] = useState([])
@@ -61,6 +62,16 @@ const ColonyManagement = () => {
   })
   
   const [newSeller, setNewSeller] = useState({ name: '', address: '', mobile: '' })
+  const [errors, setErrors] = useState({})
+
+  // Clear error for a specific field
+  const clearError = (fieldName) => {
+    setErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[fieldName]
+      return newErrors
+    })
+  }
 
   const SQFT_PER_GAJ = 9
 
@@ -111,7 +122,10 @@ const ColonyManagement = () => {
       setLoading(false)
     } catch (error) {
       console.error('Failed to fetch colonies:', error)
-      toast.error('Failed to fetch colonies')
+      toast.error('Failed to fetch colonies. Please try again.', {
+        position: 'top-right',
+        autoClose: 4000,
+      })
       setLoading(false)
     }
   }
@@ -164,6 +178,7 @@ const ColonyManagement = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false)
     setCurrentColony(null)
+    setErrors({}) // Clear all errors
     // Reset new seller form
     setNewSeller({ name: '', address: '', mobile: '' })
   }
@@ -189,12 +204,111 @@ const ColonyManagement = () => {
       const avgWidth = (parseFloat(left) + parseFloat(right)) / 2
       const areaFeet = avgLength * avgWidth
       const areaGaj = areaFeet / 9
-      return { areaFeet: areaFeet.toFixed(2), areaGaj: areaGaj.toFixed(2) }
+      return { areaFeet: areaFeet.toFixed(3), areaGaj: areaGaj.toFixed(3) }
     }
     return null
   }
 
+  // Validate colony form
+  const validateForm = () => {
+    const newErrors = {}
+    let isValid = true
+
+    // Required fields validation
+    const nameError = validateRequired(formData.name, 'Colony Name') || 
+                      validateMinLength(formData.name, 3, 'Colony Name')
+    if (nameError) {
+      newErrors.name = nameError
+      isValid = false
+    }
+
+    const addressError = validateRequired(formData.address, 'Address') ||
+                         validateMinLength(formData.address, 10, 'Address')
+    if (addressError) {
+      newErrors.address = addressError
+      isValid = false
+    }
+
+    const plotPrefixError = validateRequired(formData.plotPrefix, 'Plot Prefix')
+    if (plotPrefixError) {
+      newErrors.plotPrefix = plotPrefixError
+      isValid = false
+    }
+
+    // Numeric validations
+    if (formData.purchasePrice) {
+      const priceError = validateNumeric(formData.purchasePrice, 'Purchase Price')
+      if (priceError) {
+        newErrors.purchasePrice = priceError
+        isValid = false
+      }
+    }
+
+    if (formData.basePricePerGaj) {
+      const basePriceError = validateNumeric(formData.basePricePerGaj, 'Base Price per Gaj')
+      if (basePriceError) {
+        newErrors.basePricePerGaj = basePriceError
+        isValid = false
+      }
+    }
+
+    // Side measurements validation
+    const { front, back, left, right } = formData.sideMeasurements
+    if (front) {
+      const frontError = validateNumeric(front, 'Front Side')
+      if (frontError) {
+        newErrors.frontSide = frontError
+        isValid = false
+      }
+    }
+    if (back) {
+      const backError = validateNumeric(back, 'Back Side')
+      if (backError) {
+        newErrors.backSide = backError
+        isValid = false
+      }
+    }
+    if (left) {
+      const leftError = validateNumeric(left, 'Left Side')
+      if (leftError) {
+        newErrors.leftSide = leftError
+        isValid = false
+      }
+    }
+    if (right) {
+      const rightError = validateNumeric(right, 'Right Side')
+      if (rightError) {
+        newErrors.rightSide = rightError
+        isValid = false
+      }
+    }
+
+    // Layout URL validation
+    if (formData.layoutUrl) {
+      const urlError = validateURL(formData.layoutUrl)
+      if (urlError) {
+        newErrors.layoutUrl = urlError
+        isValid = false
+      }
+    }
+
+    setErrors(newErrors)
+
+    // Show first error in toast
+    if (!isValid) {
+      const firstError = Object.values(newErrors)[0]
+      toast.error(firstError, {
+        position: 'top-right',
+        autoClose: 4000,
+      })
+    }
+
+    return isValid
+  }
+
   const handleSubmit = async () => {
+    // Validate form first
+    if (!validateForm()) return
     try {
       if (!formData.address) {
         toast.error('Address is required')
@@ -224,28 +338,44 @@ const ColonyManagement = () => {
 
       if (editMode) {
         await axios.put(`/colonies/${currentColony._id}`, payload)
-        toast.success('Colony updated successfully')
+        toast.success('Colony updated successfully! ✅', {
+          position: 'top-right',
+          autoClose: 3000,
+        })
       } else {
         await axios.post('/colonies', payload)
-        toast.success('Colony created successfully')
+        toast.success('Colony created successfully! 🎉', {
+          position: 'top-right',
+          autoClose: 3000,
+        })
       }
 
       handleCloseDialog()
       fetchColonies()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Operation failed')
+      console.error('Error saving colony:', error)
+      toast.error(error.response?.data?.message || 'Failed to save colony. Please try again.', {
+        position: 'top-right',
+        autoClose: 4000,
+      })
     }
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this colony?')) return
-
-    try {
-      await axios.delete(`/colonies/${id}`)
-      toast.success('Colony deleted successfully')
-      fetchColonies()
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Delete failed')
+    if (window.confirm('Are you sure you want to delete this colony?')) {
+      try {
+        await axios.delete(`/colonies/${id}`)
+        toast.success('Colony deleted successfully! 🗑️', {
+          position: 'top-right',
+          autoClose: 3000,
+        })
+        fetchColonies()
+      } catch (error) {
+        toast.error('Failed to delete colony. Please try again.', {
+          position: 'top-right',
+          autoClose: 4000,
+        })
+      }
     }
   }
 
@@ -374,9 +504,14 @@ const ColonyManagement = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Colony Name"
+                label="Colony Name *"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value })
+                  clearError('name')
+                }}
+                error={!!errors.name}
+                helperText={errors.name}
                 required
               />
             </Grid>
@@ -394,9 +529,14 @@ const ColonyManagement = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Address"
+                label="Address *"
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, address: e.target.value })
+                  clearError('address')
+                }}
+                error={!!errors.address}
+                helperText={errors.address}
                 required
               />
             </Grid>
@@ -410,10 +550,15 @@ const ColonyManagement = () => {
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="Purchase Price (₹)"
+                label="Purchase Price (₹) (Optional)"
                 type="number"
                 value={formData.purchasePrice}
-                onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, purchasePrice: e.target.value })
+                  clearError('purchasePrice')
+                }}
+                error={!!errors.purchasePrice}
+                helperText={errors.purchasePrice}
                 placeholder="Total purchase amount"
               />
             </Grid>
@@ -581,20 +726,29 @@ const ColonyManagement = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Layout Image URL"
+                label="Layout Image URL (Optional)"
                 value={formData.layoutUrl}
-                onChange={(e) => setFormData({ ...formData, layoutUrl: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, layoutUrl: e.target.value })
+                  clearError('layoutUrl')
+                }}
+                error={!!errors.layoutUrl}
+                helperText={errors.layoutUrl}
                 placeholder="https://example.com/layout-image.jpg"
-                required
               />
             </Grid>
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="Base Price per Gaj"
+                label="Base Price per Gaj (Optional)"
                 type="number"
                 value={formData.basePricePerGaj}
-                onChange={(e) => setFormData({ ...formData, basePricePerGaj: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, basePricePerGaj: e.target.value })
+                  clearError('basePricePerGaj')
+                }}
+                error={!!errors.basePricePerGaj}
+                helperText={errors.basePricePerGaj}
               />
             </Grid>
             <Grid item xs={6}>
@@ -618,10 +772,16 @@ const ColonyManagement = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Plot Prefix (e.g., JSR-)"
+                label="Plot Prefix (e.g., JSR-) *"
                 value={formData.plotPrefix}
-                onChange={(e) => setFormData({ ...formData, plotPrefix: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, plotPrefix: e.target.value })
+                  clearError('plotPrefix')
+                }}
+                error={!!errors.plotPrefix}
+                helperText={errors.plotPrefix}
                 placeholder="JSR-"
+                required
               />
             </Grid>
             

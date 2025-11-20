@@ -24,6 +24,7 @@ import { Add, Edit, Delete } from '@mui/icons-material'
 import apiService from '@/services/apiService'
 import errorService from '@/services/errorService'
 import toast from 'react-hot-toast'
+import { validateRequired, validateMinLength, validateNumeric } from '@/utils/validation'
 
 const CitiesManagement = () => {
   const [cities, setCities] = useState([])
@@ -39,6 +40,15 @@ const CitiesManagement = () => {
     tagline: '',
     priority: 0
   })
+  const [errors, setErrors] = useState({})
+
+  const clearError = (fieldName) => {
+    setErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[fieldName]
+      return newErrors
+    })
+  }
 
   useEffect(() => {
     fetchCities()
@@ -83,9 +93,50 @@ const CitiesManagement = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false)
     setCurrentCity(null)
+    setErrors({}) // Clear errors
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+    let isValid = true
+
+    const nameError = validateRequired(formData.name, 'City Name') ||
+                      validateMinLength(formData.name, 2, 'City Name')
+    if (nameError) {
+      newErrors.name = nameError
+      isValid = false
+    }
+
+    const stateError = validateRequired(formData.state, 'State') ||
+                       validateMinLength(formData.state, 2, 'State')
+    if (stateError) {
+      newErrors.state = stateError
+      isValid = false
+    }
+
+    if (formData.priority) {
+      const priorityError = validateNumeric(formData.priority, 'Priority')
+      if (priorityError) {
+        newErrors.priority = priorityError
+        isValid = false
+      }
+    }
+
+    setErrors(newErrors)
+
+    if (!isValid) {
+      const firstError = Object.values(newErrors)[0]
+      toast.error(firstError, {
+        position: 'top-right',
+        autoClose: 4000,
+      })
+    }
+
+    return isValid
   }
 
   const handleSubmit = async () => {
+    if (!validateForm()) return
     try {
       if (editMode) {
         await apiService.cities.update(currentCity._id, formData)
@@ -213,34 +264,49 @@ const CitiesManagement = () => {
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="City Name"
+                label="City Name *"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value })
+                  clearError('name')
+                }}
+                error={!!errors.name}
+                helperText={errors.name}
                 required
               />
             </Grid>
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="State"
+                label="State *"
                 value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, state: e.target.value })
+                  clearError('state')
+                }}
+                error={!!errors.state}
+                helperText={errors.state}
                 required
               />
             </Grid>
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="Priority"
+                label="Priority (Optional)"
                 type="number"
                 value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, priority: e.target.value })
+                  clearError('priority')
+                }}
+                error={!!errors.priority}
+                helperText={errors.priority}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Tagline"
+                label="Tagline (Optional)"
                 value={formData.tagline}
                 onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
                 multiline

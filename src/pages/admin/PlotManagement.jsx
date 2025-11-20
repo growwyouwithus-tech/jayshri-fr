@@ -27,7 +27,7 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
-import { Add, Edit, Delete } from '@mui/icons-material'
+import { Add, Edit, Delete, Visibility } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -67,6 +67,9 @@ const PlotManagement = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editingPlotId, setEditingPlotId] = useState(null)
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [viewingPlot, setViewingPlot] = useState(null)
+  const [errors, setErrors] = useState({})
   const [newPlot, setNewPlot] = useState({
     colonyId: '',
     plotNo: '',
@@ -176,7 +179,7 @@ const PlotManagement = () => {
   const sqFtToGaj = (sqft) => {
     const num = toNumber(sqft)
     if (!num) return ''
-    return Math.round((num / 9) * 100) / 100
+    return Math.round((num / 9) * 1000) / 1000
   }
 
   const pricePerGajToSqFt = (pricePerGaj) => {
@@ -188,7 +191,7 @@ const PlotManagement = () => {
   const pricePerSqFtToGaj = (pricePerSqFt) => {
     const num = toNumber(pricePerSqFt)
     if (!num) return ''
-    return Math.round(num * 9 * 100) / 100
+    return Math.round(num * 9 * 1000) / 1000
   }
 
   const isNumericInput = (value) => value !== '' && !Number.isNaN(Number(value))
@@ -203,8 +206,8 @@ const PlotManagement = () => {
     if (!isNumericInput(totalPrice) || !isNumericInput(areaGaj) || Number(areaGaj) === 0) return ''
     const price = Number(totalPrice) / Number(areaGaj)
     if (!Number.isFinite(price)) return ''
-    const formatted = price.toFixed(2)
-    return formatted.endsWith('.00') ? parseInt(formatted, 10).toString() : formatted
+    const formatted = price.toFixed(3)
+    return formatted.endsWith('.000') ? parseInt(formatted, 10).toString() : formatted
   }
 
   const normalizePlotFromApi = (plot) => {
@@ -314,6 +317,7 @@ const PlotManagement = () => {
   const openAddDialog = () => setAddDialogOpen(true)
   const closeAddDialog = () => {
     setAddDialogOpen(false)
+    setErrors({}) // Clear all errors
     setNewPlot({ 
       colonyId: '', 
       plotNo: '', 
@@ -387,6 +391,7 @@ const PlotManagement = () => {
   const closeEditDialog = () => {
     setEditDialogOpen(false)
     setEditingPlotId(null)
+    setErrors({}) // Clear all errors
     setNewPlot({ 
       colonyId: '', 
       plotNo: '', 
@@ -422,12 +427,12 @@ const PlotManagement = () => {
 
   // Calculate area using the formula: ((front + back) / 2) * ((left + right) / 2) / 9
   const calculateArea = (front, back, left, right) => {
-    if (!front || !back || !left || !right) return 0
+    if (!front || !back || !left || !right) return null
     const avgLength = (Number(front) + Number(back)) / 2
     const avgWidth = (Number(left) + Number(right)) / 2
     const areaSqFt = avgLength * avgWidth
     const areaGaj = areaSqFt / 9 // 1 gaj = 9 sq ft
-    return Math.round(areaGaj * 100) / 100 // Round to 2 decimal places
+    return Math.round(areaGaj * 1000) / 1000 // Round to 3 decimal places
   }
 
   const handleSideMeasurementChange = (side, value) => {
@@ -466,24 +471,128 @@ const PlotManagement = () => {
     })
   }
 
+  /**
+   * Comprehensive form validation with detailed error messages
+   * @returns {boolean} - True if form is valid, false otherwise
+   */
   const validatePlotForm = () => {
-    if (!newPlot.colonyId || !newPlot.plotNo) {
-      toast.error('Please provide colony and plot number')
-      return false
+    const newErrors = {}
+    let isValid = true
+
+    // Basic Plot Information Validation
+    const colonyError = validateRequired(newPlot.colonyId, 'Colony')
+    if (colonyError) {
+      newErrors.colonyId = colonyError
+      isValid = false
     }
-    if (!newPlot.frontSide || !newPlot.backSide || !newPlot.leftSide || !newPlot.rightSide) {
-      toast.error('Please provide all four sides measurements')
-      return false
+
+    const plotNoError = validateRequired(newPlot.plotNo, 'Plot Number')
+    if (plotNoError) {
+      newErrors.plotNo = plotNoError
+      isValid = false
     }
-    if (!newPlot.pricePerGaj) {
-      toast.error('Please provide price per gaj')
-      return false
+
+    // Dimensions Validation
+    const frontSideError = validateRequired(newPlot.frontSide, 'Front Side') || 
+                          validateNumeric(newPlot.frontSide, 'Front Side')
+    if (frontSideError) {
+      newErrors.frontSide = frontSideError
+      isValid = false
     }
-    if (!newPlot.facing) {
-      toast.error('Please select facing')
-      return false
+
+    const backSideError = validateRequired(newPlot.backSide, 'Back Side') || 
+                         validateNumeric(newPlot.backSide, 'Back Side')
+    if (backSideError) {
+      newErrors.backSide = backSideError
+      isValid = false
     }
-    return true
+
+    const leftSideError = validateRequired(newPlot.leftSide, 'Left Side') || 
+                         validateNumeric(newPlot.leftSide, 'Left Side')
+    if (leftSideError) {
+      newErrors.leftSide = leftSideError
+      isValid = false
+    }
+
+    const rightSideError = validateRequired(newPlot.rightSide, 'Right Side') || 
+                          validateNumeric(newPlot.rightSide, 'Right Side')
+    if (rightSideError) {
+      newErrors.rightSide = rightSideError
+      isValid = false
+    }
+
+    // Pricing Validation
+    const pricePerGajError = validateRequired(newPlot.pricePerGaj, 'Price per Gaj') || 
+                            validateNumeric(newPlot.pricePerGaj, 'Price per Gaj')
+    if (pricePerGajError) {
+      newErrors.pricePerGaj = pricePerGajError
+      isValid = false
+    }
+
+    // Facing Validation
+    const facingError = validateRequired(newPlot.facing, 'Facing')
+    if (facingError) {
+      newErrors.facing = facingError
+      isValid = false
+    }
+
+    // Sale/Booking Details Validation (only if status is booked or sold)
+    if (newPlot.status === 'booked' || newPlot.status === 'sold') {
+      const customerNameError = validateRequired(newPlot.customerName, 'Customer Name') ||
+                               validateMinLength(newPlot.customerName, 2, 'Customer Name')
+      if (customerNameError) {
+        newErrors.customerName = customerNameError
+        isValid = false
+      }
+
+      const customerNumberError = validateRequired(newPlot.customerNumber, 'Customer Number') ||
+                                 validatePhone(newPlot.customerNumber)
+      if (customerNumberError) {
+        newErrors.customerNumber = customerNumberError
+        isValid = false
+      }
+
+      const customerAddressError = validateRequired(newPlot.customerShortAddress, 'Customer Short Address') ||
+                                  validateMinLength(newPlot.customerShortAddress, 5, 'Customer Short Address')
+      if (customerAddressError) {
+        newErrors.customerShortAddress = customerAddressError
+        isValid = false
+      }
+
+      // Optional field validations (only validate if filled)
+      if (newPlot.finalPrice) {
+        const finalPriceError = validateNumeric(newPlot.finalPrice, 'Final Price')
+        if (finalPriceError) {
+          newErrors.finalPrice = finalPriceError
+          isValid = false
+        }
+      }
+
+      if (newPlot.paidAmount) {
+        const paidAmountError = validateNumeric(newPlot.paidAmount, 'Amount Paid')
+        if (paidAmountError) {
+          newErrors.paidAmount = paidAmountError
+          isValid = false
+        }
+      }
+    }
+
+    setErrors(newErrors)
+
+    // Show appropriate toast messages
+    if (!isValid) {
+      const firstError = Object.values(newErrors)[0]
+      toast.error(firstError, {
+        position: 'top-right',
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      })
+    }
+
+    return isValid
   }
 
   const handleAddPlot = async () => {
@@ -520,13 +629,28 @@ const PlotManagement = () => {
       })
       
       if (response.data.success) {
-        toast.success('Plot added successfully')
+        toast.success('Plot added successfully! 🎉', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        })
         fetchPlots(filterColony)
         closeAddDialog()
       }
     } catch (error) {
       console.error('Failed to add plot:', error)
-      toast.error(error.response?.data?.message || 'Failed to add plot')
+      const errorMessage = error.response?.data?.message || 'Failed to add plot. Please try again.'
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      })
     } finally {
       setLoading(false)
     }
@@ -566,13 +690,28 @@ const PlotManagement = () => {
       })
       
       if (response.data.success) {
-        toast.success('Plot updated successfully')
+        toast.success('Plot updated successfully! ✅', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        })
         fetchPlots(filterColony)
         closeEditDialog()
       }
     } catch (error) {
       console.error('Failed to update plot:', error)
-      toast.error(error.response?.data?.message || 'Failed to update plot')
+      const errorMessage = error.response?.data?.message || 'Failed to update plot. Please try again.'
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      })
     } finally {
       setLoading(false)
     }
@@ -582,10 +721,24 @@ const PlotManagement = () => {
     if (window.confirm('Are you sure you want to delete this plot?')) {
       try {
         await axios.delete(`/plots/${plotId}`)
-        toast.success('Plot deleted successfully')
+        toast.success('Plot deleted successfully! 🗑️', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        })
         fetchPlots(filterColony)
       } catch (error) {
-        toast.error('Failed to delete plot')
+        toast.error('Failed to delete plot. Please try again.', {
+          position: 'top-right',
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        })
       }
     }
   }
@@ -602,6 +755,87 @@ const PlotManagement = () => {
   }
 
   const getFacingLabel = (value) => FACING_OPTIONS.find((opt) => opt.value === value)?.label || value
+
+  // ============================================
+  // VALIDATION FUNCTIONS (Reusable)
+  // ============================================
+  
+  /**
+   * Validates if a field is empty
+   * @param {string} value - Field value
+   * @param {string} fieldName - Name of the field for error message
+   * @returns {string|null} - Error message or null if valid
+   */
+  const validateRequired = (value, fieldName) => {
+    if (!value || value.toString().trim() === '') {
+      return `${fieldName} is required`
+    }
+    return null
+  }
+
+  /**
+   * Validates phone number format (10 digits)
+   * @param {string} value - Phone number
+   * @returns {string|null} - Error message or null if valid
+   */
+  const validatePhone = (value) => {
+    if (!value) return null
+    const phoneRegex = /^[0-9]{10}$/
+    if (!phoneRegex.test(value)) {
+      return 'Phone number must be exactly 10 digits'
+    }
+    return null
+  }
+
+  /**
+   * Validates numeric fields
+   * @param {string} value - Numeric value
+   * @param {string} fieldName - Field name for error message
+   * @returns {string|null} - Error message or null if valid
+   */
+  const validateNumeric = (value, fieldName) => {
+    if (!value) return null
+    if (isNaN(value) || Number(value) <= 0) {
+      return `${fieldName} must be a valid positive number`
+    }
+    return null
+  }
+
+  /**
+   * Validates minimum length
+   * @param {string} value - Field value
+   * @param {number} minLength - Minimum required length
+   * @param {string} fieldName - Field name for error message
+   * @returns {string|null} - Error message or null if valid
+   */
+  const validateMinLength = (value, minLength, fieldName) => {
+    if (!value) return null
+    if (value.toString().trim().length < minLength) {
+      return `${fieldName} must be at least ${minLength} characters`
+    }
+    return null
+  }
+
+  /**
+   * Clears error for a specific field
+   * @param {string} fieldName - Name of the field
+   */
+  const clearError = (fieldName) => {
+    setErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[fieldName]
+      return newErrors
+    })
+  }
+
+  /**
+   * Sets error for a specific field
+   * @param {string} fieldName - Name of the field
+   * @param {string} errorMessage - Error message
+   */
+  const setFieldError = (fieldName, errorMessage) => {
+    setErrors(prev => ({ ...prev, [fieldName]: errorMessage }))
+  }
 
   if (loading) {
     return (
@@ -676,9 +910,9 @@ const PlotManagement = () => {
                       <Chip label="Owner" size="small" />
                     )}
                   </TableCell>
-                  <TableCell>{plot.areaGaj}</TableCell>
-                  <TableCell>₹{plot.pricePerGaj?.toLocaleString()}</TableCell>
-                  <TableCell>₹{plot.totalPrice?.toLocaleString()}</TableCell>
+                  <TableCell>{Number(plot.areaGaj).toFixed(3)}</TableCell>
+                  <TableCell>₹{Number(plot.pricePerGaj).toFixed(3)}</TableCell>
+                  <TableCell>₹{Number(plot.totalPrice).toFixed(3)}</TableCell>
                   <TableCell>{getFacingLabel(plot.facing)}</TableCell>
                   <TableCell>
                     <Chip
@@ -689,6 +923,18 @@ const PlotManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="info"
+                        startIcon={<Visibility />}
+                        onClick={() => {
+                          setViewingPlot(plot)
+                          setViewDialogOpen(true)
+                        }}
+                      >
+                        View
+                      </Button>
                       <Button
                         size="small"
                         variant="outlined"
@@ -720,13 +966,16 @@ const PlotManagement = () => {
         <DialogTitle>Add New Plot</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <FormControl size="small">
-              <InputLabel id="colony-select-label">Colony</InputLabel>
+            <FormControl size="small" error={!!errors.colonyId} required>
+              <InputLabel id="colony-select-label">Colony *</InputLabel>
               <Select
                 labelId="colony-select-label"
                 value={newPlot.colonyId}
-                label="Colony"
-                onChange={(e) => setNewPlot((s) => ({ ...s, colonyId: e.target.value }))}
+                label="Colony *"
+                onChange={(e) => {
+                  setNewPlot((s) => ({ ...s, colonyId: e.target.value }))
+                  clearError('colonyId')
+                }}
               >
                 {colonies.map((c) => (
                   <MenuItem key={c._id} value={c._id}>
@@ -734,6 +983,11 @@ const PlotManagement = () => {
                   </MenuItem>
                 ))}
               </Select>
+              {errors.colonyId && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                  {errors.colonyId}
+                </Typography>
+              )}
             </FormControl>
 
             {renderSellerInfoSection(newPlot.colonyId)}
@@ -750,52 +1004,87 @@ const PlotManagement = () => {
               </RadioGroup>
             </FormControl>
 
-            <TextField size="small" label="Plot Number" value={newPlot.plotNo} onChange={(e) => setNewPlot((s) => ({ ...s, plotNo: e.target.value }))} />
+            <TextField 
+              size="small" 
+              label="Plot Number *" 
+              value={newPlot.plotNo} 
+              onChange={(e) => {
+                setNewPlot((s) => ({ ...s, plotNo: e.target.value }))
+                clearError('plotNo')
+              }}
+              error={!!errors.plotNo}
+              helperText={errors.plotNo}
+              required
+            />
             
             {/* Side Measurements */}
             <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
               <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
-                Plot Dimensions (in feet)
+                Plot Dimensions (in feet) *
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <TextField 
                     fullWidth
                     size="small" 
-                    label="Front Side (ft)" 
+                    label="Front Side (ft) *" 
                     type="number"
                     value={newPlot.frontSide} 
-                    onChange={(e) => handleSideMeasurementChange('frontSide', e.target.value)} 
+                    onChange={(e) => {
+                      handleSideMeasurementChange('frontSide', e.target.value)
+                      clearError('frontSide')
+                    }}
+                    error={!!errors.frontSide}
+                    helperText={errors.frontSide}
+                    required
                   />
                 </Grid>
                 <Grid item xs={6}>
                   <TextField 
                     fullWidth
                     size="small" 
-                    label="Back Side (ft)" 
+                    label="Back Side (ft) *" 
                     type="number"
                     value={newPlot.backSide} 
-                    onChange={(e) => handleSideMeasurementChange('backSide', e.target.value)} 
+                    onChange={(e) => {
+                      handleSideMeasurementChange('backSide', e.target.value)
+                      clearError('backSide')
+                    }}
+                    error={!!errors.backSide}
+                    helperText={errors.backSide}
+                    required
                   />
                 </Grid>
                 <Grid item xs={6}>
                   <TextField 
                     fullWidth
                     size="small" 
-                    label="Left Side (ft)" 
+                    label="Left Side (ft) *" 
                     type="number"
                     value={newPlot.leftSide} 
-                    onChange={(e) => handleSideMeasurementChange('leftSide', e.target.value)} 
+                    onChange={(e) => {
+                      handleSideMeasurementChange('leftSide', e.target.value)
+                      clearError('leftSide')
+                    }}
+                    error={!!errors.leftSide}
+                    helperText={errors.leftSide}
+                    required
                   />
                 </Grid>
                 <Grid item xs={6}>
                   <TextField 
                     fullWidth
                     size="small" 
-                    label="Right Side (ft)" 
+                    label="Right Side (ft) *" 
                     type="number"
                     value={newPlot.rightSide} 
-                    onChange={(e) => handleSideMeasurementChange('rightSide', e.target.value)} 
+                    onChange={(e) => {
+                      handleSideMeasurementChange('rightSide', e.target.value)
+                      clearError('rightSide')
+                    }}
+                    error={!!errors.rightSide}
+                    helperText={errors.rightSide}
+                    required
                   />
                 </Grid>
               </Grid>
@@ -809,26 +1098,36 @@ const PlotManagement = () => {
 
             <TextField 
               size="small" 
-              label="Price per Gaj" 
+              label="Price per Gaj *" 
               type="number" 
               value={newPlot.pricePerGaj} 
-              onChange={(e) => updatePricingFromPricePerGaj(e.target.value)} 
+              onChange={(e) => {
+                updatePricingFromPricePerGaj(e.target.value)
+                clearError('pricePerGaj')
+              }}
+              error={!!errors.pricePerGaj}
+              helperText={errors.pricePerGaj}
+              required
             />
             <TextField
               size="small"
-              label="Total Price"
+              label="Total Price (Auto-calculated)"
               type="number"
               value={newPlot.totalPrice}
               onChange={(e) => updatePricingFromTotal(e.target.value)}
+              InputProps={{ readOnly: true }}
             />
             
-            <FormControl size="small">
-              <InputLabel id="facing-select-label">Facing</InputLabel>
+            <FormControl size="small" error={!!errors.facing} required>
+              <InputLabel id="facing-select-label">Facing *</InputLabel>
               <Select
                 labelId="facing-select-label"
                 value={newPlot.facing}
-                label="Facing"
-                onChange={(e) => setNewPlot((s) => ({ ...s, facing: e.target.value }))}
+                label="Facing *"
+                onChange={(e) => {
+                  setNewPlot((s) => ({ ...s, facing: e.target.value }))
+                  clearError('facing')
+                }}
               >
                 <MenuItem value="">Select Facing</MenuItem>
                 {FACING_OPTIONS.map((option) => (
@@ -837,6 +1136,11 @@ const PlotManagement = () => {
                   </MenuItem>
                 ))}
               </Select>
+              {errors.facing && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                  {errors.facing}
+                </Typography>
+              )}
             </FormControl>
 
             <TextField size="small" select label="Status" value={newPlot.status} onChange={(e) => setNewPlot((s) => ({ ...s, status: e.target.value }))}>
@@ -856,29 +1160,45 @@ const PlotManagement = () => {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <TextField
                     size="small"
-                    label="Customer Name"
+                    label="Customer Name *"
                     value={newPlot.customerName}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, customerName: e.target.value }))}
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, customerName: e.target.value }))
+                      clearError('customerName')
+                    }}
+                    error={!!errors.customerName}
+                    helperText={errors.customerName}
                     required
                   />
                   <TextField
                     size="small"
-                    label="Customer Number"
+                    label="Customer Number *"
                     type="tel"
                     value={newPlot.customerNumber}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))}
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))
+                      clearError('customerNumber')
+                    }}
+                    error={!!errors.customerNumber}
+                    helperText={errors.customerNumber}
+                    placeholder="10 digit mobile number"
                     required
                   />
                   <TextField
                     size="small"
-                    label="Customer Short Address"
+                    label="Customer Short Address *"
                     value={newPlot.customerShortAddress}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))}
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))
+                      clearError('customerShortAddress')
+                    }}
+                    error={!!errors.customerShortAddress}
+                    helperText={errors.customerShortAddress}
                     required
                   />
                   <TextField
                     size="small"
-                    label="Registry Date"
+                    label="Registry Date (Optional)"
                     type="date"
                     value={newPlot.registryDate}
                     onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
@@ -894,7 +1214,7 @@ const PlotManagement = () => {
                   />
                   <TextField
                     size="small"
-                    label="More Information"
+                    label="More Information (Optional)"
                     multiline
                     rows={2}
                     value={newPlot.moreInformation}
@@ -902,22 +1222,27 @@ const PlotManagement = () => {
                   />
                   <TextField
                     size="small"
-                    label="Final Price"
+                    label="Final Price (Optional)"
                     type="number"
                     value={newPlot.finalPrice}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))}
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))
+                      clearError('finalPrice')
+                    }}
+                    error={!!errors.finalPrice}
+                    helperText={errors.finalPrice}
                   />
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <TextField
                       size="small"
-                      label="Agent Name"
+                      label="Agent Name (Optional)"
                       value={newPlot.agentName}
                       onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
                       sx={{ flex: 1 }}
                     />
                     <TextField
                       size="small"
-                      label="Agent Code"
+                      label="Agent Code (Optional)"
                       value={newPlot.agentCode}
                       onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
                       sx={{ flex: 1 }}
@@ -926,14 +1251,14 @@ const PlotManagement = () => {
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <TextField
                       size="small"
-                      label="Advocate Name"
+                      label="Advocate Name (Optional)"
                       value={newPlot.advocateName}
                       onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
                       sx={{ flex: 1 }}
                     />
                     <TextField
                       size="small"
-                      label="Advocate Code"
+                      label="Advocate Code (Optional)"
                       value={newPlot.advocateCode}
                       onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
                       sx={{ flex: 1 }}
@@ -942,7 +1267,7 @@ const PlotManagement = () => {
                   <TextField
                     size="small"
                     select
-                    label="Tahsil"
+                    label="Tahsil (Optional)"
                     value={newPlot.tahsil}
                     onChange={(e) => setNewPlot((s) => ({ ...s, tahsil: e.target.value }))}
                   >
@@ -956,11 +1281,11 @@ const PlotManagement = () => {
                   <TextField
                     size="small"
                     select
-                    label="Mode of Payment"
+                    label="Mode of Payment (Optional)"
                     value={newPlot.modeOfPayment}
                     onChange={(e) => setNewPlot((s) => ({ ...s, modeOfPayment: e.target.value }))}
-                    required
                   >
+                    <MenuItem value="">Select Mode</MenuItem>
                     <MenuItem value="cash">Cash</MenuItem>
                     <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
                     <MenuItem value="upi">UPI</MenuItem>
@@ -969,20 +1294,23 @@ const PlotManagement = () => {
                   </TextField>
                   <TextField
                     size="small"
-                    label="Transaction Date & Time"
+                    label="Transaction Date & Time (Optional)"
                     type="datetime-local"
                     value={newPlot.transactionDate}
                     onChange={(e) => setNewPlot((s) => ({ ...s, transactionDate: e.target.value }))}
                     InputLabelProps={{ shrink: true }}
-                    required
                   />
                   <TextField
                     size="small"
-                    label="Amount Paid"
+                    label="Amount Paid (Optional)"
                     type="number"
                     value={newPlot.paidAmount}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))}
-                    required
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))
+                      clearError('paidAmount')
+                    }}
+                    error={!!errors.paidAmount}
+                    helperText={errors.paidAmount}
                   />
                   <Box>
                     <Button
@@ -991,7 +1319,7 @@ const PlotManagement = () => {
                       fullWidth
                       size="small"
                     >
-                      Upload Payment Slip/Screenshot
+                      Upload Payment Slip/Screenshot (Optional)
                       <input
                         type="file"
                         hidden
@@ -1014,7 +1342,7 @@ const PlotManagement = () => {
                         size="small"
                         color="secondary"
                       >
-                        Upload Registry Document
+                        Upload Registry Document (Optional)
                         <input
                           type="file"
                           hidden
@@ -1181,29 +1509,45 @@ const PlotManagement = () => {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <TextField
                     size="small"
-                    label="Customer Name"
+                    label="Customer Name *"
                     value={newPlot.customerName}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, customerName: e.target.value }))}
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, customerName: e.target.value }))
+                      clearError('customerName')
+                    }}
+                    error={!!errors.customerName}
+                    helperText={errors.customerName}
                     required
                   />
                   <TextField
                     size="small"
-                    label="Customer Number"
+                    label="Customer Number *"
                     type="tel"
                     value={newPlot.customerNumber}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))}
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))
+                      clearError('customerNumber')
+                    }}
+                    error={!!errors.customerNumber}
+                    helperText={errors.customerNumber}
+                    placeholder="10 digit mobile number"
                     required
                   />
                   <TextField
                     size="small"
-                    label="Customer Short Address"
+                    label="Customer Short Address *"
                     value={newPlot.customerShortAddress}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))}
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))
+                      clearError('customerShortAddress')
+                    }}
+                    error={!!errors.customerShortAddress}
+                    helperText={errors.customerShortAddress}
                     required
                   />
                   <TextField
                     size="small"
-                    label="Registry Date"
+                    label="Registry Date (Optional)"
                     type="date"
                     value={newPlot.registryDate}
                     onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
@@ -1219,7 +1563,7 @@ const PlotManagement = () => {
                   />
                   <TextField
                     size="small"
-                    label="More Information"
+                    label="More Information (Optional)"
                     multiline
                     rows={2}
                     value={newPlot.moreInformation}
@@ -1227,22 +1571,27 @@ const PlotManagement = () => {
                   />
                   <TextField
                     size="small"
-                    label="Final Price"
+                    label="Final Price (Optional)"
                     type="number"
                     value={newPlot.finalPrice}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))}
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))
+                      clearError('finalPrice')
+                    }}
+                    error={!!errors.finalPrice}
+                    helperText={errors.finalPrice}
                   />
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <TextField
                       size="small"
-                      label="Agent Name"
+                      label="Agent Name (Optional)"
                       value={newPlot.agentName}
                       onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
                       sx={{ flex: 1 }}
                     />
                     <TextField
                       size="small"
-                      label="Agent Code"
+                      label="Agent Code (Optional)"
                       value={newPlot.agentCode}
                       onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
                       sx={{ flex: 1 }}
@@ -1251,14 +1600,14 @@ const PlotManagement = () => {
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <TextField
                       size="small"
-                      label="Advocate Name"
+                      label="Advocate Name (Optional)"
                       value={newPlot.advocateName}
                       onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
                       sx={{ flex: 1 }}
                     />
                     <TextField
                       size="small"
-                      label="Advocate Code"
+                      label="Advocate Code (Optional)"
                       value={newPlot.advocateCode}
                       onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
                       sx={{ flex: 1 }}
@@ -1267,7 +1616,7 @@ const PlotManagement = () => {
                   <TextField
                     size="small"
                     select
-                    label="Tahsil"
+                    label="Tahsil (Optional)"
                     value={newPlot.tahsil}
                     onChange={(e) => setNewPlot((s) => ({ ...s, tahsil: e.target.value }))}
                   >
@@ -1281,11 +1630,11 @@ const PlotManagement = () => {
                   <TextField
                     size="small"
                     select
-                    label="Mode of Payment"
+                    label="Mode of Payment (Optional)"
                     value={newPlot.modeOfPayment}
                     onChange={(e) => setNewPlot((s) => ({ ...s, modeOfPayment: e.target.value }))}
-                    required
                   >
+                    <MenuItem value="">Select Mode</MenuItem>
                     <MenuItem value="cash">Cash</MenuItem>
                     <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
                     <MenuItem value="upi">UPI</MenuItem>
@@ -1294,20 +1643,23 @@ const PlotManagement = () => {
                   </TextField>
                   <TextField
                     size="small"
-                    label="Transaction Date & Time"
+                    label="Transaction Date & Time (Optional)"
                     type="datetime-local"
                     value={newPlot.transactionDate}
                     onChange={(e) => setNewPlot((s) => ({ ...s, transactionDate: e.target.value }))}
                     InputLabelProps={{ shrink: true }}
-                    required
                   />
                   <TextField
                     size="small"
-                    label="Amount Paid"
+                    label="Amount Paid (Optional)"
                     type="number"
                     value={newPlot.paidAmount}
-                    onChange={(e) => setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))}
-                    required
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))
+                      clearError('paidAmount')
+                    }}
+                    error={!!errors.paidAmount}
+                    helperText={errors.paidAmount}
                   />
                   <Box>
                     <Button
@@ -1316,7 +1668,7 @@ const PlotManagement = () => {
                       fullWidth
                       size="small"
                     >
-                      Upload Payment Slip/Screenshot
+                      Upload Payment Slip/Screenshot (Optional)
                       <input
                         type="file"
                         hidden
@@ -1339,7 +1691,7 @@ const PlotManagement = () => {
                         size="small"
                         color="secondary"
                       >
-                        Upload Registry Document
+                        Upload Registry Document (Optional)
                         <input
                           type="file"
                           hidden
@@ -1362,6 +1714,234 @@ const PlotManagement = () => {
         <DialogActions>
           <Button onClick={closeEditDialog}>Cancel</Button>
           <Button variant="contained" onClick={handleEditPlot}>Update Plot</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* View Plot Details Dialog */}
+      <Dialog 
+        open={viewDialogOpen} 
+        onClose={() => {
+          setViewDialogOpen(false)
+          setViewingPlot(null)
+        }} 
+        fullWidth 
+        maxWidth="md"
+      >
+        <DialogTitle>Plot Details</DialogTitle>
+        <DialogContent>
+          {viewingPlot && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+              {/* Basic Information */}
+              <Box>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+                  Basic Information
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">Plot Number</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.plotNo}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">Colony</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.colonyId?.name || 'N/A'}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">Status</Typography>
+                    <Chip 
+                      label={viewingPlot.status.toUpperCase()} 
+                      color={getStatusColor(viewingPlot.status)} 
+                      size="small"
+                      sx={{ mt: 0.5 }}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">Owner Type</Typography>
+                    <Chip 
+                      label={viewingPlot.ownerType === 'seller' ? 'Seller' : 'Owner'} 
+                      size="small"
+                      color={viewingPlot.ownerType === 'seller' ? 'info' : 'default'}
+                      sx={{ mt: 0.5 }}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">Facing</Typography>
+                    <Typography variant="body1" fontWeight={600}>{getFacingLabel(viewingPlot.facing)}</Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Dimensions */}
+              <Box>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+                  Dimensions
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Front Side</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.sideMeasurements?.front || 'N/A'} ft</Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Back Side</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.sideMeasurements?.back || 'N/A'} ft</Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Left Side</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.sideMeasurements?.left || 'N/A'} ft</Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Right Side</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.sideMeasurements?.right || 'N/A'} ft</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">Total Area</Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: 'success.main' }}>
+                      {Number(viewingPlot.areaGaj).toFixed(3)} Gaj ({gajToSqFt(viewingPlot.areaGaj).toFixed(3)} sq ft)
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Pricing */}
+              <Box>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+                  Pricing
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={4}>
+                    <Typography variant="body2" color="text.secondary">Price per Gaj</Typography>
+                    <Typography variant="body1" fontWeight={600}>₹{Number(viewingPlot.pricePerGaj).toFixed(3)}</Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography variant="body2" color="text.secondary">Price per Sq Ft</Typography>
+                    <Typography variant="body1" fontWeight={600}>₹{pricePerGajToSqFt(viewingPlot.pricePerGaj).toFixed(3)}</Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography variant="body2" color="text.secondary">Total Price</Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: 'error.main' }}>
+                      ₹{Number(viewingPlot.totalPrice).toFixed(3)}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Sale/Booking Details */}
+              {(viewingPlot.status === 'booked' || viewingPlot.status === 'sold') && (
+                <Box sx={{ p: 2, bgcolor: '#fff3e0', borderRadius: 1 }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: '#e65100' }}>
+                    {viewingPlot.status === 'booked' ? 'Booking Details' : 'Sale Details'}
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {viewingPlot.customerName && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Customer Name</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.customerName}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.customerNumber && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Customer Number</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.customerNumber}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.customerShortAddress && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2" color="text.secondary">Customer Short Address</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.customerShortAddress}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.customerFullAddress && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2" color="text.secondary">Customer Full Address</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.customerFullAddress}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.registryDate && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Registry Date</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {new Date(viewingPlot.registryDate).toLocaleDateString()}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.finalPrice && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Final Price</Typography>
+                        <Typography variant="body1" fontWeight={600}>₹{viewingPlot.finalPrice?.toLocaleString()}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.agentName && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Agent Name</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.agentName}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.agentCode && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Agent Code</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.agentCode}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.advocateName && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Advocate Name</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.advocateName}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.advocateCode && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Advocate Code</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.advocateCode}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.tahsil && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Tahsil</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {TAHSIL_OPTIONS.find(t => t.value === viewingPlot.tahsil)?.label || viewingPlot.tahsil}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.modeOfPayment && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Mode of Payment</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {viewingPlot.modeOfPayment.replace('_', ' ').toUpperCase()}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.transactionDate && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Transaction Date & Time</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {new Date(viewingPlot.transactionDate).toLocaleString()}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.paidAmount && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Amount Paid</Typography>
+                        <Typography variant="body1" fontWeight={600}>₹{viewingPlot.paidAmount?.toLocaleString()}</Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.moreInformation && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2" color="text.secondary">More Information</Typography>
+                        <Typography variant="body1" fontWeight={600}>{viewingPlot.moreInformation}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setViewDialogOpen(false)
+            setViewingPlot(null)
+          }}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

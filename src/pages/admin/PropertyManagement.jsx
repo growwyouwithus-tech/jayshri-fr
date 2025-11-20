@@ -576,7 +576,7 @@ const PropertyManagement = () => {
                 {formData.roads.map((road, index) => (
                   <Paper key={index} sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography>
-                      <strong>{road.name}</strong>: {road.lengthFt} ft × {road.widthFt} ft = {((road.lengthFt * road.widthFt) / 9).toFixed(2)} Gaj
+                      <strong>{road.name}</strong>: {road.lengthFt} ft × {road.widthFt} ft = {((road.lengthFt * road.widthFt) / 9).toFixed(3)} Gaj
                     </Typography>
                     <IconButton size="small" color="error" onClick={() => removeRoad(index)}>
                       <Delete />
@@ -628,7 +628,7 @@ const PropertyManagement = () => {
                 {formData.parks.map((park, index) => (
                   <Paper key={index} sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography>
-                      <strong>{park.name}</strong>: {park.lengthFt} ft × {park.widthFt} ft = {((park.lengthFt * park.widthFt) / 9).toFixed(2)} Gaj
+                      <strong>{park.name}</strong>: {park.lengthFt} ft × {park.widthFt} ft = {((park.lengthFt * park.widthFt) / 9).toFixed(3)} Gaj
                     </Typography>
                     <IconButton size="small" color="error" onClick={() => removePark(index)}>
                       <Delete />
