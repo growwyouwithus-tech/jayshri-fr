@@ -90,46 +90,50 @@ const MainLayout = () => {
     }))
   }
 
-  // Navigation items based on role
+  // Check if user has permission
+  const hasPermission = (permission) => {
+    if (!user?.role) return false
+    const permissions = user.role.permissions || []
+    
+    // Admin has all permissions
+    if (permissions.includes('all')) return true
+    
+    // Handle string format: ["plots_create", "plots_read"]
+    if (permissions.includes(permission)) return true
+    
+    // Handle object format: [{"module":"plots","actions":["create","read"]}]
+    const [module, action] = permission.split('_')
+    if (module && action) {
+      const modulePermission = permissions.find(p => 
+        typeof p === 'object' && p.module === module
+      )
+      if (modulePermission && modulePermission.actions?.includes(action)) {
+        return true
+      }
+    }
+    
+    return false
+  }
+
+  // Navigation items based on role and permissions
   const getNavigationItems = () => {
     const roleName = user?.role?.name
+    
+    // Debug logging
+    console.log('🔍 Navigation Debug:')
+    console.log('User:', user?.name)
+    console.log('Role:', roleName)
+    console.log('Permissions:', user?.role?.permissions)
 
     const commonItems = [
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     ]
 
+    // Hardcoded items for specific roles (backward compatibility)
     const roleSpecificItems = {
       'Buyer': [
         { text: 'Explore Colonies', icon: <Home />, path: '/buyer/colonies' },
         { text: 'My Bookings', icon: <Receipt />, path: '/buyer/bookings' },
-      ],
-      'Admin': [
-        { text: 'Land Purchase', icon: <Business />, path: '/admin/colonies' },
-        { 
-          text: 'Properties', 
-          icon: <Home />, 
-          path: '/admin/properties',
-          submenu: [
-            { text: 'All Properties', path: '/admin/properties' },
-            { text: 'All Cities', path: '/admin/cities' },
-            { text: 'All Areas', path: '/admin/areas' }
-          ]
-        },
-        { text: 'Plots', icon: <Home />, path: '/admin/plots' },
-        { text: 'Bookings', icon: <Receipt />, path: '/admin/bookings' },
-        { text: 'Commissions', icon: <TrendingUp />, path: '/admin/commissions' },
-        { text: 'Users', icon: <People />, path: '/admin/users' },
-        { text: 'Roles', icon: <AdminPanelSettings />, path: '/admin/roles' },
-        { text: 'Staff Management', icon: <AdminPanelSettings />, path: '/admin/staff' },
-        { text: 'Calculator', icon: <Calculate />, path: '/admin/calculator' },
-        { text: 'Settings', icon: <AdminPanelSettings />, path: '/admin/settings' },
-      ],
-      'Manager': [
-        { text: 'Land Purchase', icon: <Business />, path: '/admin/colonies' },
-        { text: 'Plots', icon: <Home />, path: '/admin/plots' },
-        { text: 'Bookings', icon: <Receipt />, path: '/admin/bookings' },
-        { text: 'Registry', icon: <Description />, path: '/admin/registry' },
-        { text: 'Calculator', icon: <Calculate />, path: '/admin/calculator' },
       ],
       'Lawyer': [
         { text: 'Registry Documents', icon: <Gavel />, path: '/lawyer/registry' },
@@ -140,7 +144,82 @@ const MainLayout = () => {
       ],
     }
 
-    return [...commonItems, ...(roleSpecificItems[roleName] || [])]
+    // If role has specific hardcoded items, use them
+    if (roleSpecificItems[roleName]) {
+      return [...commonItems, ...roleSpecificItems[roleName]]
+    }
+
+    // Dynamic items based on permissions for Admin, Manager, Colony Manager and custom roles
+    const dynamicItems = []
+
+    // Colonies (check both colony_read and colonies_read)
+    if (hasPermission('colony_read') || hasPermission('colonies_read') || hasPermission('colony_create') || hasPermission('colonies_create')) {
+      dynamicItems.push({ text: 'Land Purchase', icon: <Business />, path: '/admin/colonies' })
+    }
+
+    // Properties submenu
+    if (hasPermission('colony_read') || hasPermission('colonies_read')) {
+      const propertiesSubmenu = []
+      if (hasPermission('colony_read') || hasPermission('colonies_read')) propertiesSubmenu.push({ text: 'All Properties', path: '/admin/properties' })
+      if (hasPermission('city_read') || hasPermission('cities_read')) propertiesSubmenu.push({ text: 'All Cities', path: '/admin/cities' })
+      if (hasPermission('city_read') || hasPermission('cities_read')) propertiesSubmenu.push({ text: 'All Areas', path: '/admin/areas' })
+      
+      if (propertiesSubmenu.length > 0) {
+        dynamicItems.push({ 
+          text: 'Properties', 
+          icon: <Home />, 
+          path: '/admin/properties',
+          submenu: propertiesSubmenu
+        })
+      }
+    }
+
+    // Plots (check both plot_read and plots_read)
+    if (hasPermission('plot_read') || hasPermission('plots_read') || hasPermission('plot_create') || hasPermission('plots_create')) {
+      dynamicItems.push({ text: 'Plots', icon: <Home />, path: '/admin/plots' })
+    }
+
+    // Bookings (check both booking_read and bookings_read)
+    if (hasPermission('booking_read') || hasPermission('bookings_read') || hasPermission('booking_create') || hasPermission('bookings_create')) {
+      dynamicItems.push({ text: 'Bookings', icon: <Receipt />, path: '/admin/bookings' })
+    }
+
+    // Registry (check both registry_read and registries_read)
+    if (hasPermission('registry_read') || hasPermission('registries_read') || hasPermission('registry_create') || hasPermission('registries_create')) {
+      dynamicItems.push({ text: 'Registry', icon: <Description />, path: '/admin/registry' })
+    }
+
+    // Commissions
+    if (hasPermission('commissions_read') || hasPermission('commission_read')) {
+      dynamicItems.push({ text: 'Commissions', icon: <TrendingUp />, path: '/admin/commissions' })
+    }
+
+    // Users (check both user_read and users_read)
+    if (hasPermission('user_read') || hasPermission('users_read')) {
+      dynamicItems.push({ text: 'Users', icon: <People />, path: '/admin/users' })
+    }
+
+    // Roles (check both role_read and roles_read)
+    if (hasPermission('role_read') || hasPermission('roles_read')) {
+      dynamicItems.push({ text: 'Roles', icon: <AdminPanelSettings />, path: '/admin/roles' })
+    }
+
+    // Staff Management
+    if (hasPermission('user_read') || hasPermission('users_read')) {
+      dynamicItems.push({ text: 'Staff Management', icon: <AdminPanelSettings />, path: '/admin/staff' })
+    }
+
+    // Calculator
+    if (hasPermission('colony_read') || hasPermission('colonies_read') || hasPermission('calculator_read')) {
+      dynamicItems.push({ text: 'Calculator', icon: <Calculate />, path: '/admin/calculator' })
+    }
+
+    // Settings
+    if (hasPermission('settings_read') || hasPermission('setting_read')) {
+      dynamicItems.push({ text: 'Settings', icon: <AdminPanelSettings />, path: '/admin/settings' })
+    }
+
+    return [...commonItems, ...dynamicItems]
   }
 
   const drawer = (

@@ -42,6 +42,16 @@ const FACING_OPTIONS = [
   { label: 'South-West', value: 'southwest' },
 ]
 
+const TAHSIL_OPTIONS = [
+  { label: 'Agra', value: 'agra' },
+  { label: 'Fatehabad', value: 'fatehabad' },
+  { label: 'Kheragarh', value: 'kheragarh' },
+  { label: 'Bah', value: 'bah' },
+  { label: 'Pinahat', value: 'pinahat' },
+  { label: 'Achhnera', value: 'achhnera' },
+  { label: 'Etmadpur', value: 'etmadpur' },
+]
+
 const STATUS_OPTIONS = [
   { label: 'Available', value: 'available' },
   { label: 'Booked', value: 'booked' },
@@ -73,6 +83,16 @@ const PlotManagement = () => {
     // Booking/Sale details
     customerName: '',
     customerNumber: '',
+    customerShortAddress: '',
+    customerFullAddress: '',
+    registryDate: '',
+    moreInformation: '',
+    finalPrice: '',
+    agentName: '',
+    agentCode: '',
+    advocateName: '',
+    advocateCode: '',
+    tahsil: '',
     modeOfPayment: '',
     transactionDate: '',
     paidAmount: '',
@@ -232,6 +252,16 @@ const PlotManagement = () => {
     if (newPlot.status === 'booked' || newPlot.status === 'sold') {
       payload.customerName = newPlot.customerName
       payload.customerNumber = newPlot.customerNumber
+      payload.customerShortAddress = newPlot.customerShortAddress
+      payload.customerFullAddress = newPlot.customerFullAddress
+      payload.registryDate = newPlot.registryDate
+      payload.moreInformation = newPlot.moreInformation
+      payload.finalPrice = newPlot.finalPrice ? Number(newPlot.finalPrice) : 0
+      payload.agentName = newPlot.agentName
+      payload.agentCode = newPlot.agentCode
+      payload.advocateName = newPlot.advocateName
+      payload.advocateCode = newPlot.advocateCode
+      payload.tahsil = newPlot.tahsil
       payload.modeOfPayment = newPlot.modeOfPayment
       payload.transactionDate = newPlot.transactionDate
       payload.paidAmount = newPlot.paidAmount ? Number(newPlot.paidAmount) : 0
@@ -284,7 +314,37 @@ const PlotManagement = () => {
   const openAddDialog = () => setAddDialogOpen(true)
   const closeAddDialog = () => {
     setAddDialogOpen(false)
-    setNewPlot({ colonyId: '', plotNo: '', frontSide: '', backSide: '', leftSide: '', rightSide: '', areaGaj: '', pricePerGaj: '', totalPrice: '', facing: '', status: 'available', ownerType: 'owner', customerName: '', customerNumber: '', modeOfPayment: '', transactionDate: '', paidAmount: '', paymentSlip: null, registryDocument: null })
+    setNewPlot({ 
+      colonyId: '', 
+      plotNo: '', 
+      frontSide: '', 
+      backSide: '', 
+      leftSide: '', 
+      rightSide: '', 
+      areaGaj: '', 
+      pricePerGaj: '', 
+      totalPrice: '', 
+      facing: '', 
+      status: 'available', 
+      ownerType: 'owner', 
+      customerName: '', 
+      customerNumber: '', 
+      customerShortAddress: '',
+      customerFullAddress: '',
+      registryDate: '',
+      moreInformation: '',
+      finalPrice: '',
+      agentName: '',
+      agentCode: '',
+      advocateName: '',
+      advocateCode: '',
+      tahsil: '',
+      modeOfPayment: '', 
+      transactionDate: '', 
+      paidAmount: '', 
+      paymentSlip: null, 
+      registryDocument: null 
+    })
   }
 
   const openEditDialog = (plot) => {
@@ -305,6 +365,16 @@ const PlotManagement = () => {
       ownerType: plot.ownerType || 'owner',
       customerName: plot.customerName || '',
       customerNumber: plot.customerNumber || '',
+      customerShortAddress: plot.customerShortAddress || '',
+      customerFullAddress: plot.customerFullAddress || '',
+      registryDate: plot.registryDate || '',
+      moreInformation: plot.moreInformation || '',
+      finalPrice: plot.finalPrice?.toString() || '',
+      agentName: plot.agentName || '',
+      agentCode: plot.agentCode || '',
+      advocateName: plot.advocateName || '',
+      advocateCode: plot.advocateCode || '',
+      tahsil: plot.tahsil || '',
       modeOfPayment: plot.modeOfPayment || '',
       transactionDate: plot.transactionDate || '',
       paidAmount: plot.paidAmount?.toString() || '',
@@ -317,7 +387,37 @@ const PlotManagement = () => {
   const closeEditDialog = () => {
     setEditDialogOpen(false)
     setEditingPlotId(null)
-    setNewPlot({ colonyId: '', plotNo: '', frontSide: '', backSide: '', leftSide: '', rightSide: '', areaGaj: '', pricePerGaj: '', totalPrice: '', facing: '', status: 'available', ownerType: 'owner', customerName: '', customerNumber: '', modeOfPayment: '', transactionDate: '', paidAmount: '', paymentSlip: null, registryDocument: null })
+    setNewPlot({ 
+      colonyId: '', 
+      plotNo: '', 
+      frontSide: '', 
+      backSide: '', 
+      leftSide: '', 
+      rightSide: '', 
+      areaGaj: '', 
+      pricePerGaj: '', 
+      totalPrice: '', 
+      facing: '', 
+      status: 'available', 
+      ownerType: 'owner', 
+      customerName: '', 
+      customerNumber: '', 
+      customerShortAddress: '',
+      customerFullAddress: '',
+      registryDate: '',
+      moreInformation: '',
+      finalPrice: '',
+      agentName: '',
+      agentCode: '',
+      advocateName: '',
+      advocateCode: '',
+      tahsil: '',
+      modeOfPayment: '', 
+      transactionDate: '', 
+      paidAmount: '', 
+      paymentSlip: null, 
+      registryDocument: null 
+    })
   }
 
   // Calculate area using the formula: ((front + back) / 2) * ((left + right) / 2) / 9
@@ -771,6 +871,90 @@ const PlotManagement = () => {
                   />
                   <TextField
                     size="small"
+                    label="Customer Short Address"
+                    value={newPlot.customerShortAddress}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))}
+                    required
+                  />
+                  <TextField
+                    size="small"
+                    label="Registry Date"
+                    type="date"
+                    value={newPlot.registryDate}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    size="small"
+                    label="Customer Full Address (Optional)"
+                    multiline
+                    rows={2}
+                    value={newPlot.customerFullAddress}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, customerFullAddress: e.target.value }))}
+                  />
+                  <TextField
+                    size="small"
+                    label="More Information"
+                    multiline
+                    rows={2}
+                    value={newPlot.moreInformation}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, moreInformation: e.target.value }))}
+                  />
+                  <TextField
+                    size="small"
+                    label="Final Price"
+                    type="number"
+                    value={newPlot.finalPrice}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))}
+                  />
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      size="small"
+                      label="Agent Name"
+                      value={newPlot.agentName}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Agent Code"
+                      value={newPlot.agentCode}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
+                      sx={{ flex: 1 }}
+                    />
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      size="small"
+                      label="Advocate Name"
+                      value={newPlot.advocateName}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Advocate Code"
+                      value={newPlot.advocateCode}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
+                      sx={{ flex: 1 }}
+                    />
+                  </Box>
+                  <TextField
+                    size="small"
+                    select
+                    label="Tahsil"
+                    value={newPlot.tahsil}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, tahsil: e.target.value }))}
+                  >
+                    <MenuItem value="">Select Tahsil</MenuItem>
+                    {TAHSIL_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    size="small"
                     select
                     label="Mode of Payment"
                     value={newPlot.modeOfPayment}
@@ -1010,6 +1194,90 @@ const PlotManagement = () => {
                     onChange={(e) => setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))}
                     required
                   />
+                  <TextField
+                    size="small"
+                    label="Customer Short Address"
+                    value={newPlot.customerShortAddress}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))}
+                    required
+                  />
+                  <TextField
+                    size="small"
+                    label="Registry Date"
+                    type="date"
+                    value={newPlot.registryDate}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    size="small"
+                    label="Customer Full Address (Optional)"
+                    multiline
+                    rows={2}
+                    value={newPlot.customerFullAddress}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, customerFullAddress: e.target.value }))}
+                  />
+                  <TextField
+                    size="small"
+                    label="More Information"
+                    multiline
+                    rows={2}
+                    value={newPlot.moreInformation}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, moreInformation: e.target.value }))}
+                  />
+                  <TextField
+                    size="small"
+                    label="Final Price"
+                    type="number"
+                    value={newPlot.finalPrice}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))}
+                  />
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      size="small"
+                      label="Agent Name"
+                      value={newPlot.agentName}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Agent Code"
+                      value={newPlot.agentCode}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
+                      sx={{ flex: 1 }}
+                    />
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      size="small"
+                      label="Advocate Name"
+                      value={newPlot.advocateName}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Advocate Code"
+                      value={newPlot.advocateCode}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
+                      sx={{ flex: 1 }}
+                    />
+                  </Box>
+                  <TextField
+                    size="small"
+                    select
+                    label="Tahsil"
+                    value={newPlot.tahsil}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, tahsil: e.target.value }))}
+                  >
+                    <MenuItem value="">Select Tahsil</MenuItem>
+                    {TAHSIL_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                   <TextField
                     size="small"
                     select

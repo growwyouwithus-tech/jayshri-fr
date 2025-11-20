@@ -100,7 +100,10 @@ export const checkAuth = createAsyncThunk(
       }
       
       const response = await api.get('/auth/me')
-      return response.data.data
+      const userData = response.data.data || response.data
+      // Update localStorage with fresh user data
+      localStorage.setItem('user', JSON.stringify(userData))
+      return { user: userData }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Authentication check failed')
     }
@@ -184,6 +187,8 @@ const authSlice = createSlice({
         state.loading = false
         state.isAuthenticated = true
         state.user = action.payload.user
+        // Update localStorage with fresh user data
+        localStorage.setItem('user', JSON.stringify(action.payload.user))
       })
       .addCase(checkAuth.rejected, (state) => {
         state.loading = false

@@ -66,7 +66,10 @@ api.interceptors.response.use(
         status: error.response?.status,
         message: error.response?.data?.message || error.message,
         url: error.config?.url,
-        data: error.response?.data
+        method: error.config?.method?.toUpperCase(),
+        requestData: error.config?.data,
+        responseData: error.response?.data,
+        errors: error.response?.data?.errors
       })
     }
 

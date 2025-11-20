@@ -80,8 +80,14 @@ const RoleManagement = () => {
   const fetchRoles = async () => {
     try {
       setLoading(true)
-      const { data } = await axios.get('/users/roles/all')
-      const roleList = Array.isArray(data.data) ? data.data : []
+      // Try new endpoint first, fallback to old endpoint
+      let response
+      try {
+        response = await axios.get('/roles')
+      } catch (err) {
+        response = await axios.get('/users/roles/all')
+      }
+      const roleList = Array.isArray(response.data.data) ? response.data.data : []
       setRoles(roleList.map((role) => ({
         ...role,
         permissions: mapPermissionsFromApi(role.permissions)
@@ -151,22 +157,27 @@ const RoleManagement = () => {
   
   const handleSubmit = async () => {
     try {
+      const payload = {
+        ...formData,
+        permissions: mapPermissionsToApi(formData.permissions)
+      }
+      
+      console.log('Submitting role with payload:', payload)
+      
       if (editMode) {
-        await axios.put(`/users/roles/${currentRole._id}`, {
-          ...formData,
-          permissions: mapPermissionsToApi(formData.permissions)
-        })
+        const response = await axios.put(`/roles/${currentRole._id}`, payload)
+        console.log('Role update response:', response.data)
         toast.success('Role updated successfully')
       } else {
-        await axios.post('/users/roles', {
-          ...formData,
-          permissions: mapPermissionsToApi(formData.permissions)
-        })
+        const response = await axios.post('/roles', payload)
+        console.log('Role create response:', response.data)
         toast.success('Role created successfully')
       }
       handleCloseDialog()
       fetchRoles()
     } catch (error) {
+      console.error('Role submit error:', error)
+      console.error('Error response:', error.response?.data)
       toast.error(error.response?.data?.message || 'Operation failed')
     }
   }
@@ -175,7 +186,7 @@ const RoleManagement = () => {
     if (!window.confirm('Are you sure you want to delete this role?')) return
     
     try {
-      await axios.delete(`/users/roles/${id}`)
+      await axios.delete(`/roles/${id}`)
       toast.success('Role deleted successfully')
       fetchRoles()
     } catch (error) {

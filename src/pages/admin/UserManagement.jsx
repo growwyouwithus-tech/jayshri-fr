@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Chip, Dialog, DialogTitle,
@@ -7,9 +8,12 @@ import {
 import { Add, Edit, Delete, Block, CheckCircle } from '@mui/icons-material'
 import axios from '@/api/axios'
 import mockApiService from '@/services/mockApiService'
+import { checkAuth } from '@/store/slices/authSlice'
 import toast from 'react-hot-toast'
 
 const UserManagement = () => {
+  const dispatch = useDispatch()
+  const { user: currentLoggedInUser } = useSelector((state) => state.auth)
   const [users, setUsers] = useState([])
   const [roles, setRoles] = useState([])
   const [cities, setCities] = useState([])
@@ -21,7 +25,7 @@ const UserManagement = () => {
   const [filterCity, setFilterCity] = useState('')
   const [filterType, setFilterType] = useState('')
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', password: '', roleId: '', cityId: ''
+    name: '', email: '', phone: '', password: '', role: '', cityId: ''
   })
 
   useEffect(() => {
@@ -83,30 +87,74 @@ const UserManagement = () => {
         email: user.email,
         phone: user.phone,
         password: '',
-        roleId: user.roleId._id,
+        role: user.role?._id || '',
         cityId: user.cityId?._id || ''
       })
     } else {
       setEditMode(false)
       setCurrentUser(null)
-      setFormData({ name: '', email: '', phone: '', password: '', roleId: '', cityId: '' })
+      setFormData({ name: '', email: '', phone: '', password: '', role: '', cityId: '' })
     }
     setOpenDialog(true)
   }
 
   const handleSubmit = async () => {
     try {
+      // Validation
+      if (!formData.name || !formData.email) {
+        toast.error('Name and email are required')
+        return
+      }
+      
+      // Password is optional for new users - will use default if not provided
+      if (!editMode && formData.password && formData.password.length < 6) {
+        toast.error('Password must be at least 6 characters')
+        return
+      }
+      
+      if (!formData.role) {
+        toast.error('Please select a role')
+        return
+      }
+      
       if (editMode) {
-        await axios.put(`/users/${currentUser._id}`, formData)
+        // Don't send password if empty during edit
+        const updateData = { ...formData }
+        if (!updateData.password) {
+          delete updateData.password
+        }
+        
+        await axios.put(`/users/${currentUser._id}`, updateData)
         toast.success('User updated')
+        
+        // If the updated user is the currently logged-in user, refresh their session
+        if (currentUser._id === currentLoggedInUser?._id) {
+          await dispatch(checkAuth()).unwrap()
+          toast.info('Your session has been updated')
+        }
       } else {
-        await axios.post('/users', formData)
-        toast.success('User created')
+        const response = await axios.post('/users', formData)
+        
+        // Show default password if generated
+        if (response.data.defaultPassword) {
+          toast.success(`User created! Default password: ${response.data.defaultPassword}`, {
+            duration: 8000
+          })
+        } else {
+          toast.success('User created')
+        }
       }
       setOpenDialog(false)
       fetchUsers()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Operation failed')
+      // Show validation errors if available
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => {
+          toast.error(`${err.path}: ${err.msg}`)
+        })
+      } else {
+        toast.error(error.response?.data?.message || 'Operation failed')
+      }
     }
   }
 
@@ -215,7 +263,7 @@ const UserManagement = () => {
                 user.phone.includes(searchTerm) ||
                 user.email.toLowerCase().includes(searchTerm.toLowerCase())
               const matchesCity = !filterCity || user.cityId?.name === filterCity
-              const matchesType = !filterType || user.roleId?.name === filterType
+              const matchesType = !filterType || user.role?.name === filterType
               return matchesSearch && matchesCity && matchesType
             }).map((user) => (
               <TableRow key={user._id}>
@@ -223,7 +271,7 @@ const UserManagement = () => {
                 <TableCell>{user.phone}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.cityId?.name || '-'}</TableCell>
-                <TableCell><Chip label={user.roleId?.name} size="small" /></TableCell>
+                <TableCell><Chip label={user.role?.name} size="small" /></TableCell>
                 <TableCell align="right">
                   <IconButton size="small" onClick={() => handleOpenDialog(user)}><Edit fontSize="small" /></IconButton>
                   <IconButton size="small" onClick={() => handleToggleStatus(user._id)}>
@@ -257,7 +305,7 @@ const UserManagement = () => {
               </TextField>
             </Grid>
             <Grid item xs={6}>
-              <TextField fullWidth select label="User Type" value={formData.roleId} onChange={(e) => setFormData({ ...formData, roleId: e.target.value })} required>
+              <TextField fullWidth select label="User Type" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} required>
                 <MenuItem value="">-- Select Type --</MenuItem>
                 {roles.map((role) => (<MenuItem key={role._id} value={role._id}>{role.name}</MenuItem>))}
               </TextField>

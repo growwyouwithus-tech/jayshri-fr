@@ -49,6 +49,8 @@ const PropertyManagement = () => {
   const [properties, setProperties] = useState([])
   const [propertiesLoading, setPropertiesLoading] = useState(true)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [currentProperty, setCurrentProperty] = useState(null)
   
   // Form stepper state
   const [activeStep, setActiveStep] = useState(0)
@@ -184,6 +186,8 @@ const PropertyManagement = () => {
   }
 
   const openAddDialog = () => {
+    setEditMode(false)
+    setCurrentProperty(null)
     setActiveStep(0)
     setFormData({
       category: 'Residential',
@@ -206,6 +210,35 @@ const PropertyManagement = () => {
       agreeTerms: false,
       roads: [],
       parks: []
+    })
+    setAddDialogOpen(true)
+  }
+
+  const openEditDialog = (property) => {
+    setEditMode(true)
+    setCurrentProperty(property)
+    setActiveStep(0)
+    setFormData({
+      category: property.category || 'Residential',
+      colonyId: property.colonyId?._id || property.colony?._id || '',
+      name: property.name || '',
+      facilities: property.facilities || [],
+      amenities: property.amenities || [],
+      tagline: property.tagline || '',
+      description: property.description || '',
+      address: property.address || '',
+      cityId: property.cityId?._id || property.city?._id || '',
+      areaId: property.areaId?._id || property.area?._id || '',
+      mainPicture: null,
+      videoUpload: null,
+      mapImage: null,
+      noc: null,
+      registry: null,
+      legalDoc: null,
+      moreImages: [],
+      agreeTerms: true,
+      roads: property.roads || [],
+      parks: property.parks || []
     })
     setAddDialogOpen(true)
   }
@@ -259,24 +292,35 @@ const PropertyManagement = () => {
         if (['facilities', 'amenities', 'roads', 'parks'].includes(key)) {
           payload.append(key, JSON.stringify(formData[key]))
         } else if (key === 'moreImages') {
-          formData[key].forEach(file => {
-            payload.append('moreImages', file)
-          })
+          if (Array.isArray(formData[key])) {
+            formData[key].forEach(file => {
+              if (file instanceof File) {
+                payload.append('moreImages', file)
+              }
+            })
+          }
         } else if (formData[key] instanceof File) {
           payload.append(key, formData[key])
-        } else {
+        } else if (formData[key] !== null && formData[key] !== undefined) {
           payload.append(key, formData[key])
         }
       })
 
-      await axios.post('/properties', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
+      if (editMode && currentProperty) {
+        await axios.put(`/properties/${currentProperty._id}`, payload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        toast.success('Property updated successfully!')
+      } else {
+        await axios.post('/properties', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        toast.success('Property created successfully!')
+      }
       
       setActiveStep(4)
-      toast.success('Property created successfully!')
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create property')
+      toast.error(error.response?.data?.message || `Failed to ${editMode ? 'update' : 'create'} property`)
     } finally {
       setLoading(false)
     }
@@ -751,7 +795,7 @@ const PropertyManagement = () => {
               Thank you for posting!
             </Typography>
             <Alert severity="success" sx={{ mb: 4 }}>
-              Property "{formData.name}" has been created successfully
+              Property "{formData.name}" has been {editMode ? 'updated' : 'created'} successfully
             </Alert>
             
             <Card sx={{ maxWidth: 300, mx: 'auto', mb: 4 }}>
@@ -844,7 +888,11 @@ const PropertyManagement = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <IconButton size="small" color="primary">
+                        <IconButton 
+                          size="small" 
+                          color="primary"
+                          onClick={() => openEditDialog(property)}
+                        >
                           <Edit />
                         </IconButton>
                         <IconButton 
@@ -867,7 +915,7 @@ const PropertyManagement = () => {
       <Dialog open={addDialogOpen} onClose={closeAddDialog} fullWidth maxWidth="md">
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Add New Property</Typography>
+          <Typography variant="h6">{editMode ? 'Edit Property' : 'Add New Property'}</Typography>
           <IconButton onClick={closeAddDialog} size="small">
             <Close />
           </IconButton>

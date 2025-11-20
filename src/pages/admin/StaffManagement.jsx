@@ -49,7 +49,7 @@ const StaffManagement = () => {
     phone: '',
     password: '',
     confirmPassword: '',
-    roleId: '',
+    role: '',
     profileImage: null
   })
 
@@ -59,11 +59,10 @@ const StaffManagement = () => {
   }, [])
 
   const normalizeUser = (user) => {
-    const role = user.role || user.roleId || {}
+    const role = user.role || {}
     return {
       ...user,
       role,
-      roleId: role,
       roleName: role?.name || user.roleName || 'Unassigned'
     }
   }
@@ -121,7 +120,7 @@ const StaffManagement = () => {
         phone: staffMember.phone,
         password: '',
         confirmPassword: '',
-        roleId: staffMember.roleId?._id || '',
+        role: staffMember.role?._id || '',
         profileImage: null
       })
     } else {
@@ -133,7 +132,7 @@ const StaffManagement = () => {
         phone: '',
         password: '',
         confirmPassword: '',
-        roleId: '',
+        role: '',
         profileImage: null
       })
     }
@@ -146,16 +145,37 @@ const StaffManagement = () => {
   }
 
   const handleSubmit = async () => {
-    if (!editMode && formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match')
+    // Validation
+    if (!formData.name || !formData.email) {
+      toast.error('Name and email are required')
       return
+    }
+    
+    if (!formData.role) {
+      toast.error('Please select a role')
+      return
+    }
+    
+    if (!editMode) {
+      // Password is optional - will use default if not provided
+      if (formData.password) {
+        if (formData.password.length < 6) {
+          toast.error('Password must be at least 6 characters')
+          return
+        }
+        
+        if (formData.password !== formData.confirmPassword) {
+          toast.error('Passwords do not match')
+          return
+        }
+      }
     }
 
     const payload = {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
-      role: formData.roleId,
+      role: formData.role,
       ...(formData.password ? { password: formData.password } : {})
     }
 
@@ -164,13 +184,28 @@ const StaffManagement = () => {
         await axios.put(`/users/${currentStaff._id}`, payload)
         toast.success('Staff updated successfully')
       } else {
-        await axios.post('/users', payload)
-        toast.success('Staff created successfully')
+        const response = await axios.post('/users', payload)
+        
+        // Show default password if generated
+        if (response.data.defaultPassword) {
+          toast.success(`Staff created! Default password: ${response.data.defaultPassword}`, {
+            duration: 8000
+          })
+        } else {
+          toast.success('Staff created successfully')
+        }
       }
       handleCloseDialog()
       fetchStaff()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Operation failed')
+      // Show validation errors if available
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => {
+          toast.error(`${err.path}: ${err.msg}`)
+        })
+      } else {
+        toast.error(error.response?.data?.message || 'Operation failed')
+      }
     }
   }
 
@@ -232,7 +267,7 @@ const StaffManagement = () => {
         staffMember.name,
         staffMember.phone,
         staffMember.email,
-        staffMember.roleId?.name || ''
+        staffMember.role?.name || staffMember.roleName || ''
       ].join(','))
     ].join('\\n')
 
@@ -371,7 +406,7 @@ const StaffManagement = () => {
                   </TableCell>
                   <TableCell>{staffMember.phone}</TableCell>
                   <TableCell>{staffMember.email}</TableCell>
-                  <TableCell>{staffMember.role?.name || staffMember.roleId?.name || staffMember.roleName || '-'}</TableCell>
+                  <TableCell>{staffMember.role?.name || staffMember.roleName || '-'}</TableCell>
                   <TableCell align="right">
                     <IconButton size="small" onClick={() => handleOpenDialog(staffMember)} sx={{ color: 'orange' }}>
                       <Edit fontSize="small" />
@@ -458,8 +493,8 @@ const StaffManagement = () => {
               <TextField
                 fullWidth
                 select
-                value={formData.roleId}
-                onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 required
               >
                 <MenuItem value="">Select One</MenuItem>

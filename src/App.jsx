@@ -75,6 +75,7 @@ function App() {
   useEffect(() => {
     // Check authentication on app load only if token exists
     const token = localStorage.getItem('token')
+    console.log('🔐 Auth Check:', { token: !!token, user: user?.name, role: user?.role?.name })
     if (token && !user) {
       dispatch(checkAuth())
     }
@@ -122,9 +123,9 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin">
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<RoleRoute roles={['Admin', 'Manager']}><AdminDashboard /></RoleRoute>} />
+          <Route path="dashboard" element={<RoleRoute roles={['Admin', 'Manager', 'Colony Manager']}><AdminDashboard /></RoleRoute>} />
           <Route path="colonies" element={<RoleRoute roles={['Admin', 'Manager']}><ColonyManagement /></RoleRoute>} />
-          <Route path="plots" element={<RoleRoute roles={['Admin', 'Manager']}><PlotManagement /></RoleRoute>} />
+          <Route path="plots" element={<RoleRoute roles={['Admin', 'Manager', 'Colony Manager']} permissions={['plot_read', 'plots_read', 'plot_create', 'plots_create']}><PlotManagement /></RoleRoute>} />
           <Route path="bookings" element={<RoleRoute roles={['Admin', 'Manager', 'Agent']}><BookingManagement /></RoleRoute>} />
           <Route path="registry" element={<RoleRoute roles={['Admin', 'Manager']}><RegistryManagement /></RoleRoute>} />
           <Route path="commissions" element={<RoleRoute roles={['Admin', 'Manager']}><CommissionManagement /></RoleRoute>} />
