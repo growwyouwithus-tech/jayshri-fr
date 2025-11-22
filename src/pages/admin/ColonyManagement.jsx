@@ -781,7 +781,7 @@ const ColonyManagement = () => {
                 error={!!errors.plotPrefix}
                 helperText={errors.plotPrefix}
                 placeholder="JSR-"
-                required
+
               />
             </Grid>
             

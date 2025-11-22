@@ -22,18 +22,27 @@ import {
   LocationOn,
   Home as HomeIcon,
 } from '@mui/icons-material'
-import { fetchColonies } from '../../store/slices/colonySlice'
+import { fetchProperties } from '../../store/slices/propertySlice'
 
 const Home = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { colonies, loading } = useSelector((state) => state.colony)
+  const { properties, loading } = useSelector((state) => state.property)
 
   useEffect(() => {
-    dispatch(fetchColonies())
+    dispatch(fetchProperties())
   }, [dispatch])
 
-  const featuredColonies = colonies.slice(0, 3)
+  const featuredProperties = properties.slice(0, 3)
+
+  const handleLocationClick = (property) => {
+    if (property.colony?.coordinates?.latitude && property.colony?.coordinates?.longitude) {
+      const { latitude, longitude } = property.colony.coordinates
+      window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, '_blank')
+    } else {
+      console.log('Location not available for this property')
+    }
+  }
 
   return (
     <Box sx={{ bgcolor: '#F5F5F5', minHeight: '100vh' }}>
@@ -57,7 +66,10 @@ const Home = () => {
         }}
       >
         <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}>
-          <IconButton sx={{ bgcolor: 'rgba(255,255,255,0.9)' }}>
+          <IconButton 
+            sx={{ bgcolor: 'rgba(255,255,255,0.9)' }}
+            onClick={() => featuredProperties[0] && handleLocationClick(featuredProperties[0])}
+          >
             <LocationOn sx={{ color: '#6200EA' }} />
           </IconButton>
         </Box>
@@ -71,7 +83,7 @@ const Home = () => {
             All Properties
           </Typography>
           <Button
-            onClick={() => navigate('/customer/colonies')}
+            onClick={() => navigate('/customer/properties')}
             sx={{ 
               textTransform: 'none', 
               fontWeight: 600,
@@ -89,43 +101,68 @@ const Home = () => {
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {featuredColonies.map((colony) => (
+            {featuredProperties.map((property) => (
               <Card
-                key={colony._id}
+                key={property._id}
                 sx={{
                   cursor: 'pointer',
                   borderRadius: 3,
                   overflow: 'hidden',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 }}
-                onClick={() => navigate(`/customer/properties/${colony._id}`)}
+                onClick={() => navigate(`/customer/properties/${property._id}`)}
               >
                 <Box sx={{ position: 'relative' }}>
-                  <Box
+                  {property.media?.mainPicture ? (
+                    <CardMedia
+                      component="img"
+                      height="160"
+                      image={property.media.mainPicture}
+                      alt={property.name}
+                      sx={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        height: 160,
+                        bgcolor: '#CCCCCC',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <HomeIcon sx={{ fontSize: 60, color: '#888' }} />
+                    </Box>
+                  )}
+                  <IconButton
                     sx={{
-                      height: 160,
-                      bgcolor: '#CCCCCC',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      '&:hover': { bgcolor: 'rgba(255,255,255,1)' }
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleLocationClick(property)
                     }}
                   >
-                    <HomeIcon sx={{ fontSize: 60, color: '#888' }} />
-                  </Box>
+                    <LocationOn sx={{ color: '#6200EA', fontSize: 20 }} />
+                  </IconButton>
                 </Box>
                 <CardContent sx={{ p: 2 }}>
                   <Typography variant="body1" fontWeight={600} gutterBottom noWrap>
-                    {colony.name || 'live longer live happy'}
+                    {property.name}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1.5 }}>
                     <LocationOn sx={{ fontSize: 16, color: '#666' }} />
-                    <Typography variant="caption" sx={{ color: '#666', fontSize: '0.8rem' }}>
-                      vikas nagar {'>'} Awas Vikas {'>'} Agra
+                    <Typography variant="caption" sx={{ color: '#666', fontSize: '0.8rem' }} noWrap>
+                      {property.address || property.colony?.address || 'Location not specified'}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 1.5 }}>
                     <Chip
-                      label="Residential"
+                      label={property.category || 'Residential'}
                       size="small"
                       variant="outlined"
                       sx={{ 
@@ -136,7 +173,7 @@ const Home = () => {
                       }}
                     />
                     <Chip
-                      label={`Completed: ${colony.soldPlots || 1}`}
+                      label={`Amenities: ${property.amenities?.length || 0}`}
                       size="small"
                       variant="outlined"
                       sx={{ 
@@ -147,18 +184,7 @@ const Home = () => {
                       }}
                     />
                     <Chip
-                      label={`Amenities: ${colony.amenities?.length || 1}`}
-                      size="small"
-                      variant="outlined"
-                      sx={{ 
-                        height: 24, 
-                        fontSize: '0.7rem',
-                        borderRadius: 5,
-                        borderColor: '#999'
-                      }}
-                    />
-                    <Chip
-                      label={`Facilities: ${colony.facilities?.length || 1}`}
+                      label={`Facilities: ${property.facilities?.length || 0}`}
                       size="small"
                       variant="outlined"
                       sx={{ 

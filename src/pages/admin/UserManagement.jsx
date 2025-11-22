@@ -14,24 +14,23 @@ import toast from 'react-hot-toast'
 const UserManagement = () => {
   const dispatch = useDispatch()
   const { user: currentLoggedInUser } = useSelector((state) => state.auth)
-  const [users, setUsers] = useState([])
-  const [roles, setRoles] = useState([])
+  const [customers, setCustomers] = useState([])
   const [cities, setCities] = useState([])
+  const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterCity, setFilterCity] = useState('')
   const [openDialog, setOpenDialog] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterCity, setFilterCity] = useState('')
-  const [filterType, setFilterType] = useState('')
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', password: '', role: '', cityId: ''
   })
 
   useEffect(() => {
-    fetchUsers()
-    fetchRoles()
+    fetchCustomers()
     fetchCities()
+    fetchRoles()
   }, [])
 
   const fetchCities = async () => {
@@ -44,39 +43,29 @@ const UserManagement = () => {
     }
   }
 
-  const fetchUsers = async (filters = {}) => {
-    try {
-      setLoading(true)
-      const query = new URLSearchParams(filters).toString()
-      const { data } = await axios.get(`/users${query ? `?${query}` : ''}`)
-      setUsers(data.data || [])
-      setLoading(false)
-    } catch (error) {
-      console.error('Failed to fetch users:', error)
-      if ([401, 403].includes(error.response?.status)) {
-        try {
-          const mock = await mockApiService.users.getAll()
-          setUsers(mock?.data?.data || [])
-        } catch (mockError) {
-          console.error('Failed to load mock users:', mockError)
-          toast.error('Failed to fetch users')
-        }
-      } else {
-        toast.error('Failed to fetch users')
-      }
-      setLoading(false)
-    }
-  }
-
   const fetchRoles = async () => {
     try {
-      const { data } = await axios.get('/users/roles/all')
-      setRoles(data.data || [])
+      const { data } = await axios.get('/roles')
+      setRoles(data?.data || [])
     } catch (error) {
       console.error('Failed to fetch roles:', error)
       toast.error('Failed to fetch roles')
     }
   }
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true)
+      const { data } = await axios.get('/customers')
+      setCustomers(data.data || [])
+      setLoading(false)
+    } catch (error) {
+      console.error('Failed to fetch customers:', error)
+      toast.error('Failed to fetch customers')
+      setLoading(false)
+    }
+  }
+
 
   const handleOpenDialog = (user = null) => {
     if (user) {
@@ -145,7 +134,7 @@ const UserManagement = () => {
         }
       }
       setOpenDialog(false)
-      fetchUsers()
+      fetchCustomers()
     } catch (error) {
       // Show validation errors if available
       if (error.response?.data?.errors) {
@@ -163,7 +152,7 @@ const UserManagement = () => {
     try {
       await axios.delete(`/users/${id}`)
       toast.success('User deleted')
-      fetchUsers()
+      fetchCustomers()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Delete failed')
     }
@@ -173,7 +162,7 @@ const UserManagement = () => {
     try {
       await axios.patch(`/users/${id}/toggle-status`)
       toast.success('User status updated')
-      fetchUsers()
+      fetchCustomers()
     } catch (error) {
       toast.error('Status update failed')
     }
@@ -183,10 +172,7 @@ const UserManagement = () => {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" fontWeight="bold">App Users</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>Add User</Button>
-      </Box>
+      <Typography variant="h4" gutterBottom mb={4}>Customer Management</Typography>
 
       {/* Filters */}
       <Box display="flex" gap={2} mb={3} alignItems="center">
@@ -214,31 +200,14 @@ const UserManagement = () => {
           ))}
         </TextField>
         
-        <TextField
-          select
-          size="small"
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          sx={{ minWidth: 150 }}
-          SelectProps={{ displayEmpty: true }}
-        >
-          <MenuItem value="">-- Filter by Type --</MenuItem>
-          {roles.map((role) => (
-            <MenuItem key={role._id} value={role.name}>
-              {role.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        
-        <Button variant="contained" onClick={() => fetchUsers()}>
-          Filter
+        <Button variant="contained" onClick={() => fetchCustomers()}>
+          Refresh
         </Button>
         
         <Button variant="outlined" onClick={() => {
           setSearchTerm('')
           setFilterCity('')
-          setFilterType('')
-          fetchUsers()
+          fetchCustomers()
         }}>
           Reset
         </Button>
@@ -252,32 +221,35 @@ const UserManagement = () => {
               <TableCell><strong>Phone</strong></TableCell>
               <TableCell><strong>Email</strong></TableCell>
               <TableCell><strong>City</strong></TableCell>
-              <TableCell><strong>User Type</strong></TableCell>
+              <TableCell><strong>Status</strong></TableCell>
               <TableCell align="right"><strong>Action</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.filter(user => {
+            {customers.filter(user => {
               const matchesSearch = !searchTerm || 
                 user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.phone.includes(searchTerm) ||
+                user.phone?.includes(searchTerm) ||
                 user.email.toLowerCase().includes(searchTerm.toLowerCase())
               const matchesCity = !filterCity || user.cityId?.name === filterCity
-              const matchesType = !filterType || user.role?.name === filterType
-              return matchesSearch && matchesCity && matchesType
+              return matchesSearch && matchesCity
             }).map((user) => (
               <TableRow key={user._id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.phone}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.cityId?.name || '-'}</TableCell>
-                <TableCell><Chip label={user.role?.name} size="small" /></TableCell>
+                <TableCell>
+                  <Chip 
+                    label={user.isActive ? 'Active' : 'Inactive'} 
+                    size="small"
+                    color={user.isActive ? 'success' : 'default'}
+                  />
+                </TableCell>
                 <TableCell align="right">
-                  <IconButton size="small" onClick={() => handleOpenDialog(user)}><Edit fontSize="small" /></IconButton>
                   <IconButton size="small" onClick={() => handleToggleStatus(user._id)}>
                     {user.isActive ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
                   </IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(user._id)}><Delete fontSize="small" /></IconButton>
                 </TableCell>
               </TableRow>
             ))}

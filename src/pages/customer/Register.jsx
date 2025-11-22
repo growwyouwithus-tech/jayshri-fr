@@ -14,7 +14,7 @@ import {
   Grid,
 } from '@mui/material'
 import { Visibility, VisibilityOff, PersonAdd } from '@mui/icons-material'
-import { register } from '../../store/slices/authSlice'
+import { registerCustomer } from '../../store/slices/authSlice'
 import toast from 'react-hot-toast'
 
 const Register = () => {
@@ -50,9 +50,9 @@ const Register = () => {
 
     try {
       const { confirmPassword, ...registerData } = formData
-      await dispatch(register(registerData)).unwrap()
+      await dispatch(registerCustomer(registerData)).unwrap()
       toast.success('Registration successful!')
-      navigate('/')
+      navigate('/customer')
     } catch (error) {
       toast.error(error || 'Registration failed')
     } finally {

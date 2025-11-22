@@ -21,21 +21,23 @@ const AdminDashboard = () => {
     try {
       setLoading(true)
       setError(null)
-      const [coloniesRes, bookingsRes] = await Promise.all([
+      const [coloniesRes, bookingsRes, plotsRes] = await Promise.all([
         axios.get('/colonies'),
-        axios.get('/bookings')
+        axios.get('/bookings'),
+        axios.get('/plots')
       ])
 
       const colonies = coloniesRes?.data?.data?.colonies || []
       const bookings = bookingsRes?.data?.data || []
+      const plots = plotsRes?.data?.data?.plots || plotsRes?.data?.plots || []
 
       const totalColonies = colonies.length
-      const totalPlots = colonies.reduce((sum, colony) => sum + (colony.totalPlots || colony.plotStats?.total || 0), 0)
-      const availablePlots = colonies.reduce((sum, colony) => sum + (colony.availablePlots || colony.plotStats?.available || 0), 0)
-      const soldPlots = colonies.reduce((sum, colony) => sum + (colony.soldPlots || colony.plotStats?.sold || 0), 0)
-      const reservedPlots = colonies.reduce((sum, colony) => sum + (colony.blockedPlots || colony.plotStats?.reserved || 0), 0)
-      const bookedPlots = bookings.filter((booking) => booking.status === 'confirmed' || booking.status === 'pending').length
-      const totalRevenue = bookings.reduce((sum, booking) => sum + (booking.totalAmount || 0), 0)
+      const totalPlots = plots.length
+      const availablePlots = plots.filter(p => p.status === 'available').length
+      const soldPlots = plots.filter(p => p.status === 'sold').length
+      const reservedPlots = plots.filter(p => p.status === 'reserved').length
+      const bookedPlots = plots.filter(p => p.status === 'booked').length
+      const totalRevenue = plots.reduce((sum, plot) => sum + (plot.paidAmount || 0), 0)
 
       setStats({
         totalColonies,

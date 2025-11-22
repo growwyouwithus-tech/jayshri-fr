@@ -26,8 +26,9 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  IconButton,
 } from '@mui/material'
-import { Add, Edit, Delete, Visibility } from '@mui/icons-material'
+import { Add, Edit, Delete, Visibility, Payment } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -62,6 +63,7 @@ const STATUS_OPTIONS = [
 const PlotManagement = () => {
   const [plots, setPlots] = useState([])
   const [colonies, setColonies] = useState([])
+  const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterColony, setFilterColony] = useState('')
   const [addDialogOpen, setAddDialogOpen] = useState(false)
@@ -69,8 +71,19 @@ const PlotManagement = () => {
   const [editingPlotId, setEditingPlotId] = useState(null)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
   const [viewingPlot, setViewingPlot] = useState(null)
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [paymentPlot, setPaymentPlot] = useState(null)
+  const [showTransactions, setShowTransactions] = useState(false)
+  const [showPlotDetails, setShowPlotDetails] = useState(false)
+  const [paymentData, setPaymentData] = useState({
+    amount: '',
+    mode: '',
+    date: new Date().toISOString().split('T')[0],
+    notes: ''
+  })
   const [errors, setErrors] = useState({})
   const [newPlot, setNewPlot] = useState({
+    propertyId: '',
     colonyId: '',
     plotNo: '',
     frontSide: '',
@@ -273,10 +286,54 @@ const PlotManagement = () => {
     return payload
   }
 
+  // Remaining land calculation function
+  const calculateRemainingLand = (property) => {
+    if (!property) return { remaining: 0, total: 0, used: 0, roads: 0, parks: 0 }
+    
+    const totalLand = property.totalLandAreaGaj || 0
+    
+    // Calculate roads area (convert feet to gaj: 1 gaj = 3 feet)
+    const roadsArea = (property.roads || []).reduce((sum, road) => {
+      const lengthGaj = (road.lengthFt || 0) / 3
+      const widthGaj = (road.widthFt || 0) / 3
+      return sum + (lengthGaj * widthGaj)
+    }, 0)
+    
+    // Calculate parks area
+    const parksArea = (property.parks || []).reduce((sum, park) => {
+      const lengthGaj = (park.lengthFt || 0) / 3
+      const widthGaj = (park.widthFt || 0) / 3
+      return sum + (lengthGaj * widthGaj)
+    }, 0)
+    
+    const usedArea = roadsArea + parksArea
+    const remainingLand = totalLand - usedArea
+    
+    return {
+      total: totalLand.toFixed(2),
+      used: usedArea.toFixed(2),
+      roads: roadsArea.toFixed(2),
+      parks: parksArea.toFixed(2),
+      remaining: remainingLand.toFixed(2)
+    }
+  }
+
   useEffect(() => {
+    fetchProperties()
     fetchColonies()
     fetchPlots()
   }, [])
+
+  const fetchProperties = async () => {
+    try {
+      const { data } = await axios.get('/properties')
+      const propertyList = Array.isArray(data?.data?.properties) ? data.data.properties : []
+      setProperties(propertyList)
+    } catch (error) {
+      console.error('Failed to fetch properties:', error)
+      toast.error('Failed to fetch properties')
+    }
+  }
 
   const fetchColonies = async () => {
     try {
@@ -354,7 +411,9 @@ const PlotManagement = () => {
   const openEditDialog = (plot) => {
     setEditingPlotId(plot._id)
     const colonyRef = plot.colonyId?._id || plot.colony?._id || plot.colonyId || plot.colony || ''
+    const propertyRef = plot.propertyId?._id || plot.propertyId || ''
     setNewPlot({
+      propertyId: typeof propertyRef === 'string' ? propertyRef : propertyRef?._id || '',
       colonyId: typeof colonyRef === 'string' ? colonyRef : colonyRef?._id || '',
       plotNo: plot.plotNo || plot.plotNumber || '',
       frontSide: plot.sideMeasurements?.front?.toString() || plot.dimensions?.length?.toString() || '',
@@ -393,6 +452,7 @@ const PlotManagement = () => {
     setEditingPlotId(null)
     setErrors({}) // Clear all errors
     setNewPlot({ 
+      propertyId: '',
       colonyId: '', 
       plotNo: '', 
       frontSide: '', 
@@ -479,10 +539,17 @@ const PlotManagement = () => {
     const newErrors = {}
     let isValid = true
 
-    // Basic Plot Information Validation
+    // Property is REQUIRED
+    const propertyError = validateRequired(newPlot.propertyId, 'Property')
+    if (propertyError) {
+      newErrors.propertyId = propertyError
+      isValid = false
+    }
+
+    // Colony is auto-selected from property, but still validate
     const colonyError = validateRequired(newPlot.colonyId, 'Colony')
     if (colonyError) {
-      newErrors.colonyId = colonyError
+      newErrors.colonyId = 'Please select a property first'
       isValid = false
     }
 
@@ -743,6 +810,42 @@ const PlotManagement = () => {
     }
   }
 
+  const handleAddPayment = async () => {
+    if (!paymentData.amount || !paymentData.mode || !paymentData.date) {
+      toast.error('Please fill all required fields')
+      return
+    }
+
+    try {
+      setLoading(true)
+      const currentPaid = paymentPlot.paidAmount || 0
+      const newPaidAmount = currentPaid + Number(paymentData.amount)
+
+      await axios.put(`/plots/${paymentPlot._id}`, {
+        paidAmount: newPaidAmount,
+        modeOfPayment: paymentData.mode,
+        transactionDate: paymentData.date,
+        moreInformation: paymentData.notes
+      })
+
+      toast.success('Payment added successfully! 💰')
+      setPaymentDialogOpen(false)
+      setPaymentPlot(null)
+      setPaymentData({
+        amount: '',
+        mode: '',
+        date: new Date().toISOString().split('T')[0],
+        notes: ''
+      })
+      fetchPlots(filterColony)
+    } catch (error) {
+      console.error('Payment error:', error)
+      toast.error('Failed to add payment. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const getStatusColor = (status) => {
     const colors = {
       available: 'success',
@@ -882,8 +985,10 @@ const PlotManagement = () => {
               <TableCell><strong>Colony</strong></TableCell>
               <TableCell><strong>Sellers / Owners</strong></TableCell>
               <TableCell><strong>Area (Gaj)</strong></TableCell>
-              <TableCell><strong>Price/Gaj</strong></TableCell>
+              <TableCell><strong>Ask Price/Gaj</strong></TableCell>
+              <TableCell><strong>Final Price/Gaj</strong></TableCell>
               <TableCell><strong>Total Price</strong></TableCell>
+              <TableCell><strong>Remaining Payment</strong></TableCell>
               <TableCell><strong>Facing</strong></TableCell>
               <TableCell><strong>Status</strong></TableCell>
               <TableCell><strong>Actions</strong></TableCell>
@@ -892,28 +997,73 @@ const PlotManagement = () => {
           <TableBody>
             {plots.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                   <Typography color="text.secondary">
                     No plots found for the selected colony.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              plots.map((plot) => (
-                <TableRow key={plot._id} hover>
-                  <TableCell>{plot.plotNo}</TableCell>
-                  <TableCell>{plot.colonyId?.name}</TableCell>
-                  <TableCell>
-                    {plot.ownerType === 'seller' ? (
-                      <Chip label="Seller" size="small" color="info" />
-                    ) : (
-                      <Chip label="Owner" size="small" />
-                    )}
-                  </TableCell>
-                  <TableCell>{Number(plot.areaGaj).toFixed(3)}</TableCell>
-                  <TableCell>₹{Number(plot.pricePerGaj).toFixed(3)}</TableCell>
-                  <TableCell>₹{Number(plot.totalPrice).toFixed(3)}</TableCell>
-                  <TableCell>{getFacingLabel(plot.facing)}</TableCell>
+              plots.map((plot) => {
+                const finalPricePerGaj = plot.finalPrice && plot.areaGaj 
+                  ? (plot.finalPrice / plot.areaGaj).toFixed(2)
+                  : null;
+                const displayTotalPrice = plot.finalPrice || plot.totalPrice;
+                
+                return (
+                  <TableRow key={plot._id} hover>
+                    <TableCell>{plot.plotNo}</TableCell>
+                    <TableCell>{plot.colonyId?.name}</TableCell>
+                    <TableCell>
+                      {plot.ownerType === 'seller' ? (
+                        <Chip label="Seller" size="small" color="info" />
+                      ) : (
+                        <Chip label="Owner" size="small" />
+                      )}
+                    </TableCell>
+                    <TableCell>{Number(plot.areaGaj).toFixed(3)}</TableCell>
+                    <TableCell>₹{Number(plot.pricePerGaj).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {finalPricePerGaj ? (
+                        <Chip 
+                          label={`₹${Number(finalPricePerGaj).toLocaleString()}`}
+                          size="small"
+                          color="success"
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">-</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <strong>₹{Number(displayTotalPrice).toLocaleString()}</strong>
+                      {plot.finalPrice && (
+                        <Chip 
+                          label="Final" 
+                          size="small" 
+                          color="success" 
+                          sx={{ ml: 1 }}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const paidAmount = plot.paidAmount || 0;
+                        const remaining = displayTotalPrice - paidAmount;
+                        return (
+                          <Box>
+                            <Typography variant="body2" fontWeight={600} color={remaining > 0 ? 'error.main' : 'success.main'}>
+                              ₹{Number(remaining).toLocaleString()}
+                            </Typography>
+                            {paidAmount > 0 && (
+                              <Typography variant="caption" color="text.secondary">
+                                Paid: ₹{Number(paidAmount).toLocaleString()}
+                              </Typography>
+                            )}
+                          </Box>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>{getFacingLabel(plot.facing)}</TableCell>
                   <TableCell>
                     <Chip
                       label={plot.status.toUpperCase()}
@@ -922,73 +1072,160 @@ const PlotManagement = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton
                         size="small"
-                        variant="outlined"
                         color="info"
-                        startIcon={<Visibility />}
                         onClick={() => {
                           setViewingPlot(plot)
                           setViewDialogOpen(true)
                         }}
+                        title="View Details"
                       >
-                        View
-                      </Button>
-                      <Button
+                        <Visibility fontSize="small" />
+                      </IconButton>
+                      <IconButton
                         size="small"
-                        variant="outlined"
-                        startIcon={<Edit />}
+                        color="primary"
                         onClick={() => openEditDialog(plot)}
+                        title="Edit Plot"
                       >
-                        Edit
-                      </Button>
-                      <Button
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton
                         size="small"
-                        variant="outlined"
-                        color="error"
-                        startIcon={<Delete />}
-                        onClick={() => handleDeletePlot(plot._id)}
+                        color="success"
+                        onClick={() => {
+                          setPaymentPlot(plot)
+                          setPaymentData({
+                            amount: '',
+                            mode: '',
+                            date: new Date().toISOString().split('T')[0],
+                            notes: ''
+                          })
+                          setPaymentDialogOpen(true)
+                        }}
+                        title="Add Payment"
                       >
-                        Delete
-                      </Button>
+                        <Payment fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeletePlot(plot._id)}
+                        title="Delete Plot"
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
                     </Box>
                   </TableCell>
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>
       </TableContainer>
 
       {/* Add Plot Dialog */}
-      <Dialog open={addDialogOpen} onClose={closeAddDialog} fullWidth maxWidth="sm">
+      <Dialog open={addDialogOpen} onClose={closeAddDialog} fullWidth maxWidth="md">
         <DialogTitle>Add New Plot</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <FormControl size="small" error={!!errors.colonyId} required>
-              <InputLabel id="colony-select-label">Colony *</InputLabel>
+            {/* Property Selector - REQUIRED */}
+            <FormControl size="small" error={!!errors.propertyId} required>
+              <InputLabel id="property-select-label">Property *</InputLabel>
               <Select
-                labelId="colony-select-label"
-                value={newPlot.colonyId}
-                label="Colony *"
+                labelId="property-select-label"
+                value={newPlot.propertyId || ''}
+                label="Property *"
                 onChange={(e) => {
-                  setNewPlot((s) => ({ ...s, colonyId: e.target.value }))
-                  clearError('colonyId')
+                  const selectedProperty = properties.find(p => p._id === e.target.value)
+                  setNewPlot((s) => ({ 
+                    ...s, 
+                    propertyId: e.target.value,
+                    colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
+                    pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj
+                  }))
+                  clearError('propertyId')
                 }}
               >
-                {colonies.map((c) => (
-                  <MenuItem key={c._id} value={c._id}>
-                    {c.name}
+                <MenuItem value="">
+                  <em>Select Property</em>
+                </MenuItem>
+                {properties.map((property) => (
+                  <MenuItem key={property._id} value={property._id}>
+                    {property.name} - {property.category}
                   </MenuItem>
                 ))}
               </Select>
-              {errors.colonyId && (
+              {errors.propertyId && (
                 <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.colonyId}
+                  {errors.propertyId}
                 </Typography>
               )}
             </FormControl>
+
+            {/* Remaining Land Calculation Display */}
+            {newPlot.propertyId && (() => {
+              const selectedProperty = properties.find(p => p._id === newPlot.propertyId)
+              if (!selectedProperty) return null
+              
+              const landCalc = calculateRemainingLand(selectedProperty)
+              
+              return (
+                <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #2196f3' }}>
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom color="primary">
+                    📊 Land Calculation Summary - {selectedProperty.name}
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6} sm={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Land: <strong>{landCalc.total} Gaj</strong>
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        Roads: <strong>{landCalc.roads} Gaj</strong>
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        Parks: <strong>{landCalc.parks} Gaj</strong>
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        Used Area: <strong>{landCalc.used} Gaj</strong>
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={8}>
+                      <Typography variant="body1" color="success.main" fontWeight={700}>
+                        ✅ Remaining Land: {landCalc.remaining} Gaj
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                  
+                  {selectedProperty.basePricePerGaj && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      💰 Base Price: ₹{selectedProperty.basePricePerGaj.toLocaleString()}/Gaj
+                    </Typography>
+                  )}
+                </Box>
+              )
+            })()}
+
+            {/* Colony is auto-selected from Property */}
+            {newPlot.colonyId && (() => {
+              const colony = colonies.find(c => c._id === newPlot.colonyId)
+              return colony ? (
+                <Box sx={{ p: 1.5, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Colony: <strong>{colony.name}</strong>
+                  </Typography>
+                </Box>
+              ) : null
+            })()}
 
             {renderSellerInfoSection(newPlot.colonyId)}
 
@@ -1373,21 +1610,51 @@ const PlotManagement = () => {
         <DialogTitle>Edit Plot</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <FormControl size="small">
-              <InputLabel id="colony-select-label-edit">Colony</InputLabel>
+            {/* Property Selector - REQUIRED */}
+            <FormControl size="small" error={!!errors.propertyId} required>
+              <InputLabel id="property-select-label-edit">Property *</InputLabel>
               <Select
-                labelId="colony-select-label-edit"
-                value={newPlot.colonyId}
-                label="Colony"
-                onChange={(e) => setNewPlot((s) => ({ ...s, colonyId: e.target.value }))}
+                labelId="property-select-label-edit"
+                value={newPlot.propertyId || ''}
+                label="Property *"
+                onChange={(e) => {
+                  const selectedProperty = properties.find(p => p._id === e.target.value)
+                  setNewPlot((s) => ({ 
+                    ...s, 
+                    propertyId: e.target.value,
+                    colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
+                    pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj
+                  }))
+                  clearError('propertyId')
+                }}
               >
-                {colonies.map((c) => (
-                  <MenuItem key={c._id} value={c._id}>
-                    {c.name}
+                <MenuItem value="">
+                  <em>Select Property</em>
+                </MenuItem>
+                {properties.map((property) => (
+                  <MenuItem key={property._id} value={property._id}>
+                    {property.name} - {property.category}
                   </MenuItem>
                 ))}
               </Select>
+              {errors.propertyId && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                  {errors.propertyId}
+                </Typography>
+              )}
             </FormControl>
+
+            {/* Colony is auto-selected from Property */}
+            {newPlot.colonyId && (() => {
+              const colony = colonies.find(c => c._id === newPlot.colonyId)
+              return colony ? (
+                <Box sx={{ p: 1.5, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Colony: <strong>{colony.name}</strong>
+                  </Typography>
+                </Box>
+              ) : null
+            })()}
 
             {renderSellerInfoSection(newPlot.colonyId)}
 
@@ -1723,16 +1990,109 @@ const PlotManagement = () => {
         onClose={() => {
           setViewDialogOpen(false)
           setViewingPlot(null)
+          setShowTransactions(false)
+          setShowPlotDetails(false)
         }} 
         fullWidth 
-        maxWidth="md"
+        maxWidth="lg"
       >
-        <DialogTitle>Plot Details</DialogTitle>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h5">Plot Details - {viewingPlot?.plotNo}</Typography>
+            <Box display="flex" gap={1}>
+              <Button 
+                variant={showTransactions ? "contained" : "outlined"}
+                size="small"
+                onClick={() => {
+                  setShowTransactions(true)
+                  setShowPlotDetails(false)
+                }}
+              >
+                Transactions
+              </Button>
+              <Button 
+                variant={showPlotDetails ? "contained" : "outlined"}
+                size="small"
+                onClick={() => {
+                  setShowPlotDetails(true)
+                  setShowTransactions(false)
+                }}
+              >
+                Plot Details
+              </Button>
+            </Box>
+          </Box>
+        </DialogTitle>
         <DialogContent>
           {viewingPlot && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-              {/* Basic Information */}
-              <Box>
+              
+              {/* Transaction Card */}
+              {showTransactions && (
+                <Paper elevation={3} sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+                    💳 Payment Transactions
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">Total Price</Typography>
+                      <Typography variant="h6" fontWeight={700} color="primary.main">
+                        ₹{Number(viewingPlot.finalPrice || viewingPlot.totalPrice).toLocaleString()}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">Paid Amount</Typography>
+                      <Typography variant="h6" fontWeight={700} color="success.main">
+                        ₹{Number(viewingPlot.paidAmount || 0).toLocaleString()}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">Remaining Payment</Typography>
+                      <Typography variant="h5" fontWeight={700} color="error.main">
+                        ₹{Number((viewingPlot.finalPrice || viewingPlot.totalPrice) - (viewingPlot.paidAmount || 0)).toLocaleString()}
+                      </Typography>
+                    </Grid>
+                    {viewingPlot.transactionDate && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Last Transaction Date</Typography>
+                        <Typography variant="body1" fontWeight={600}>
+                          {new Date(viewingPlot.transactionDate).toLocaleDateString('en-IN')}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {viewingPlot.modeOfPayment && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">Payment Mode</Typography>
+                        <Chip 
+                          label={viewingPlot.modeOfPayment.replace('_', ' ').toUpperCase()} 
+                          size="small"
+                          color="info"
+                        />
+                      </Grid>
+                    )}
+                  </Grid>
+                  <Box sx={{ mt: 3, p: 2, bgcolor: 'white', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Payment History
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {viewingPlot.paidAmount > 0 
+                        ? `Payment of ₹${viewingPlot.paidAmount?.toLocaleString()} received on ${viewingPlot.transactionDate ? new Date(viewingPlot.transactionDate).toLocaleDateString('en-IN') : 'N/A'}`
+                        : 'No payments received yet'
+                      }
+                    </Typography>
+                  </Box>
+                </Paper>
+              )}
+
+              {/* Plot Details Card */}
+              {showPlotDetails && (
+                <Paper elevation={3} sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+                    📋 Complete Plot Information
+                  </Typography>
+                  {/* Basic Information */}
+                  <Box>
                 <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
                   Basic Information
                 </Typography>
@@ -1932,6 +2292,8 @@ const PlotManagement = () => {
                   </Grid>
                 </Box>
               )}
+                </Paper>
+              )}
             </Box>
           )}
         </DialogContent>
@@ -1941,6 +2303,110 @@ const PlotManagement = () => {
             setViewingPlot(null)
           }}>
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog 
+        open={paymentDialogOpen} 
+        onClose={() => {
+          setPaymentDialogOpen(false)
+          setPaymentPlot(null)
+        }} 
+        fullWidth 
+        maxWidth="sm"
+      >
+        <DialogTitle>Add Payment - Plot {paymentPlot?.plotNo}</DialogTitle>
+        <DialogContent>
+          {paymentPlot && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+              <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                <Grid container spacing={1}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary">Total Price</Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      ₹{Number(paymentPlot.finalPrice || paymentPlot.totalPrice).toLocaleString()}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary">Paid</Typography>
+                    <Typography variant="body1" fontWeight={600} color="success.main">
+                      ₹{Number(paymentPlot.paidAmount || 0).toLocaleString()}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="caption" color="text.secondary">Remaining</Typography>
+                    <Typography variant="h6" fontWeight={700} color="error.main">
+                      ₹{Number((paymentPlot.finalPrice || paymentPlot.totalPrice) - (paymentPlot.paidAmount || 0)).toLocaleString()}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+              
+              <TextField
+                label="Payment Amount"
+                type="number"
+                fullWidth
+                required
+                value={paymentData.amount}
+                onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                placeholder="Enter amount"
+                helperText="Enter the payment amount received"
+              />
+              
+              <TextField
+                label="Payment Mode"
+                select
+                fullWidth
+                required
+                value={paymentData.mode}
+                onChange={(e) => setPaymentData({ ...paymentData, mode: e.target.value })}
+              >
+                <MenuItem value="">Select Mode</MenuItem>
+                <MenuItem value="cash">Cash</MenuItem>
+                <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                <MenuItem value="upi">UPI</MenuItem>
+                <MenuItem value="cheque">Cheque</MenuItem>
+                <MenuItem value="card">Card</MenuItem>
+              </TextField>
+              
+              <TextField
+                label="Transaction Date"
+                type="date"
+                fullWidth
+                required
+                value={paymentData.date}
+                onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+              />
+              
+              <TextField
+                label="Notes"
+                multiline
+                rows={3}
+                fullWidth
+                value={paymentData.notes}
+                onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
+                placeholder="Add any notes about this payment"
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setPaymentDialogOpen(false)
+            setPaymentPlot(null)
+          }}>
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            color="success"
+            onClick={handleAddPayment}
+            disabled={loading}
+          >
+            {loading ? 'Processing...' : 'Add Payment'}
           </Button>
         </DialogActions>
       </Dialog>

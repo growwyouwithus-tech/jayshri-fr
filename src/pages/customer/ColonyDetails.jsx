@@ -27,7 +27,7 @@ import {
   AttachMoney,
 } from '@mui/icons-material'
 import { fetchColonyById } from '../../store/slices/colonySlice.js'
-import { fetchPlots } from '../../store/slices/plotSlice.js'
+import { fetchPlotsByColony } from '../../store/slices/plotSlice.js'
 
 const ColonyDetails = () => {
   const { id } = useParams()
@@ -38,7 +38,7 @@ const ColonyDetails = () => {
 
   useEffect(() => {
     dispatch(fetchColonyById(id))
-    dispatch(fetchPlots(id))
+    dispatch(fetchPlotsByColony(id))
   }, [dispatch, id])
 
   if (colonyLoading || !selectedColony) {

@@ -20,6 +20,18 @@ export const fetchPlots = createAsyncThunk(
   }
 )
 
+export const fetchPlotsByColony = createAsyncThunk(
+  'plot/fetchPlotsByColony',
+  async (colonyId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/plots/colony/${colonyId}`)
+      return response.data.data.plots
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch plots')
+    }
+  }
+)
+
 export const fetchPlotById = createAsyncThunk(
   'plot/fetchPlotById',
   async (id, { rejectWithValue }) => {
@@ -56,6 +68,21 @@ const plotSlice = createSlice({
         state.plots = action.payload
       })
       .addCase(fetchPlots.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+
+      // 🔵 Fetch plots by colony
+      .addCase(fetchPlotsByColony.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchPlotsByColony.fulfilled, (state, action) => {
+        state.loading = false
+        state.plots = action.payload
+        state.error = null
+      })
+      .addCase(fetchPlotsByColony.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })

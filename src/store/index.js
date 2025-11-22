@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import authReducer from './slices/authSlice'
 import colonyReducer from './slices/colonySlice'
 import plotReducer from './slices/plotSlice'
+import propertyReducer from './slices/propertySlice'
 import bookingReducer from './slices/bookingSlice'
 import registryReducer from './slices/registrySlice'
 import commissionReducer from './slices/commissionSlice'
@@ -16,6 +17,7 @@ const store = configureStore({
     auth: authReducer,
     colony: colonyReducer,
     plot: plotReducer,
+    property: propertyReducer,
     booking: bookingReducer,
     registry: registryReducer,
     commission: commissionReducer,

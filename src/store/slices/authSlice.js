@@ -15,7 +15,7 @@ const initialState = {
   error: null,
 }
 
-// Register
+// Register (Admin/Staff)
 export const register = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
@@ -35,6 +35,56 @@ export const register = createAsyncThunk(
     } catch (error) {
       console.error('Registration error:', error)
       return rejectWithValue(error.response?.data?.message || error.message || 'Registration failed')
+    }
+  }
+)
+
+// Register Customer (User App)
+export const registerCustomer = createAsyncThunk(
+  'auth/registerCustomer',
+  async (userData, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/customer-auth/register', userData)
+      const data = response.data.data || response.data
+      
+      // Save tokens to localStorage
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('customer', JSON.stringify(data.customer))
+      localStorage.setItem('userType', 'customer')
+      
+      return {
+        user: data.customer,
+        token: data.token,
+        userType: 'customer'
+      }
+    } catch (error) {
+      console.error('Customer registration error:', error)
+      return rejectWithValue(error.response?.data?.message || error.message || 'Registration failed')
+    }
+  }
+)
+
+// Login Customer (User App)
+export const loginCustomer = createAsyncThunk(
+  'auth/loginCustomer',
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/customer-auth/login', credentials)
+      const data = response.data.data || response.data
+      
+      // Save tokens to localStorage
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('customer', JSON.stringify(data.customer))
+      localStorage.setItem('userType', 'customer')
+      
+      return {
+        user: data.customer,
+        token: data.token,
+        userType: 'customer'
+      }
+    } catch (error) {
+      console.error('Customer login error:', error)
+      return rejectWithValue(error.response?.data?.message || error.message || 'Login failed')
     }
   }
 )
@@ -137,6 +187,42 @@ const authSlice = createSlice({
         localStorage.setItem('token', action.payload.token)
       })
       .addCase(register.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      
+      // Register Customer
+      .addCase(registerCustomer.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(registerCustomer.fulfilled, (state, action) => {
+        state.loading = false
+        state.isAuthenticated = true
+        state.user = action.payload.user
+        state.token = action.payload.token
+        localStorage.setItem('token', action.payload.token)
+        localStorage.setItem('userType', 'customer')
+      })
+      .addCase(registerCustomer.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      
+      // Login Customer
+      .addCase(loginCustomer.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(loginCustomer.fulfilled, (state, action) => {
+        state.loading = false
+        state.isAuthenticated = true
+        state.user = action.payload.user
+        state.token = action.payload.token
+        localStorage.setItem('token', action.payload.token)
+        localStorage.setItem('userType', 'customer')
+      })
+      .addCase(loginCustomer.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
