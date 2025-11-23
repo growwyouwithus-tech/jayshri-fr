@@ -27,8 +27,10 @@ import {
   FormControlLabel,
   Radio,
   IconButton,
+  TablePagination,
+  InputAdornment,
 } from '@mui/material'
-import { Add, Edit, Delete, Visibility, Payment } from '@mui/icons-material'
+import { Add, Edit, Delete, Visibility, Payment, Search } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -66,6 +68,9 @@ const PlotManagement = () => {
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterColony, setFilterColony] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(20)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editingPlotId, setEditingPlotId] = useState(null)
@@ -349,7 +354,8 @@ const PlotManagement = () => {
   const fetchPlots = async (colonyId = '') => {
     try {
       setLoading(true)
-      const url = colonyId ? `/plots?colony=${colonyId}` : '/plots'
+      // Fetch all plots with high limit to avoid pagination issues
+      const url = colonyId ? `/plots?colony=${colonyId}&limit=1000` : '/plots?limit=1000'
       const { data } = await axios.get(url)
       const plotList = Array.isArray(data?.data?.plots)
         ? data.data.plots
@@ -859,6 +865,32 @@ const PlotManagement = () => {
 
   const getFacingLabel = (value) => FACING_OPTIONS.find((opt) => opt.value === value)?.label || value
 
+  // Filter and paginate plots
+  const filteredPlots = plots.filter((plot) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      plot.plotNo?.toLowerCase().includes(query) ||
+      plot.colonyId?.name?.toLowerCase().includes(query) ||
+      plot.customerName?.toLowerCase().includes(query) ||
+      plot._id?.toLowerCase().includes(query)
+    )
+  })
+
+  const paginatedPlots = filteredPlots.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  )
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage)
+  }
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0)
+  }
+
   // ============================================
   // VALIDATION FUNCTIONS (Reusable)
   // ============================================
@@ -956,6 +988,23 @@ const PlotManagement = () => {
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
+            size="small"
+            placeholder="Search by plot no, colony, customer..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setPage(0)
+            }}
+            sx={{ minWidth: 300 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
             select
             size="small"
             label="Filter by Colony"
@@ -995,16 +1044,16 @@ const PlotManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {plots.length === 0 ? (
+            {paginatedPlots.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                   <Typography color="text.secondary">
-                    No plots found for the selected colony.
+                    {searchQuery ? 'No plots found matching your search.' : 'No plots found for the selected colony.'}
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              plots.map((plot) => {
+              paginatedPlots.map((plot) => {
                 const finalPricePerGaj = plot.finalPrice && plot.areaGaj 
                   ? (plot.finalPrice / plot.areaGaj).toFixed(2)
                   : null;
@@ -1036,14 +1085,14 @@ const PlotManagement = () => {
                     </TableCell>
                     <TableCell>
                       <strong>₹{Number(displayTotalPrice).toLocaleString()}</strong>
-                      {plot.finalPrice && (
+                      {/* {plot.finalPrice && (
                         <Chip 
                           label="Final" 
                           size="small" 
                           color="success" 
                           sx={{ ml: 1 }}
                         />
-                      )}
+                      )} */}
                     </TableCell>
                     <TableCell>
                       {(() => {
@@ -1125,6 +1174,15 @@ const PlotManagement = () => {
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={filteredPlots.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[20, 50, 100]}
+        />
       </TableContainer>
 
       {/* Add Plot Dialog */}

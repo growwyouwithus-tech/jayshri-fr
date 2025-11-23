@@ -58,20 +58,23 @@ const AdminDashboard = () => {
       ].filter((item) => item.value > 0)
       setPlotStatusData(statusData)
 
-      const revenueByMonth = bookings.reduce((acc, booking) => {
-        if (!booking.createdAt || !booking.totalAmount) return acc
-        const date = new Date(booking.createdAt)
+      // Calculate revenue from plots' paidAmount grouped by month
+      const revenueByMonth = plots.reduce((acc, plot) => {
+        if (!plot.createdAt || !plot.paidAmount || plot.paidAmount === 0) return acc
+        const date = new Date(plot.createdAt)
         const monthKey = date.toLocaleString('default', { month: 'short' })
         const monthEntry = acc.find((entry) => entry.month === monthKey)
         if (monthEntry) {
-          monthEntry.revenue += booking.totalAmount
+          monthEntry.revenue += plot.paidAmount
         } else {
-          acc.push({ month: monthKey, revenue: booking.totalAmount })
+          acc.push({ month: monthKey, revenue: plot.paidAmount })
         }
         return acc
       }, [])
+      
+      // Sort by month order
+      const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
       const sortedRevenue = revenueByMonth.sort((a, b) => {
-        const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month)
       })
       setRevenueData(sortedRevenue)

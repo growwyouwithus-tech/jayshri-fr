@@ -51,6 +51,9 @@ const PropertyManagement = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [currentProperty, setCurrentProperty] = useState(null)
+  const [selectedPropertyPlots, setSelectedPropertyPlots] = useState(null)
+  const [plotsDialogOpen, setPlotsDialogOpen] = useState(false)
+  const [propertyStats, setPropertyStats] = useState({})
   
   // Form stepper state
   const [activeStep, setActiveStep] = useState(0)
@@ -116,7 +119,40 @@ const PropertyManagement = () => {
     fetchColonies()
     fetchCities()
     fetchAreas()
+    fetchPropertyStats()
   }, [])
+
+  const fetchPropertyStats = async () => {
+    try {
+      const { data } = await axios.get('/plots?limit=1000')
+      const plots = data?.data?.plots || []
+      
+      // Group plots by property
+      const statsByProperty = {}
+      plots.forEach(plot => {
+        const propId = plot.propertyId?._id || plot.propertyId
+        if (!propId) return
+        
+        if (!statsByProperty[propId]) {
+          statsByProperty[propId] = {
+            totalSold: 0,
+            totalRevenue: 0,
+            plots: []
+          }
+        }
+        
+        statsByProperty[propId].plots.push(plot)
+        if (plot.status === 'sold' || plot.status === 'booked') {
+          statsByProperty[propId].totalSold += plot.area || 0
+          statsByProperty[propId].totalRevenue += plot.paidAmount || 0
+        }
+      })
+      
+      setPropertyStats(statsByProperty)
+    } catch (error) {
+      console.error('Failed to fetch property stats:', error)
+    }
+  }
 
   const normalizeProperty = (property) => {
     const colony = property.colony || property.colonyId
@@ -140,6 +176,7 @@ const PropertyManagement = () => {
           ? data.data
           : []
       setProperties(list.map(normalizeProperty))
+      await fetchPropertyStats()
     } catch (error) {
       console.error('Failed to fetch properties:', error)
       toast.error('Failed to fetch properties')
@@ -354,6 +391,34 @@ const PropertyManagement = () => {
         toast.error('Failed to delete property')
       }
     }
+  }
+
+  const handleViewPlots = (property) => {
+    const stats = propertyStats[property._id]
+    setSelectedPropertyPlots({
+      property,
+      plots: stats?.plots || [],
+      stats
+    })
+    setPlotsDialogOpen(true)
+  }
+
+  const calculateRemainingLand = (property) => {
+    const totalLand = property.totalLandAreaGaj || 0
+    const stats = propertyStats[property._id]
+    const soldLand = stats ? stats.totalSold / 9 : 0 // Convert sq ft to gaj
+    
+    // Calculate roads and parks area
+    const roadsArea = (property.roads || []).reduce((sum, road) => {
+      return sum + ((road.lengthFt || 0) * (road.widthFt || 0)) / 9
+    }, 0)
+    
+    const parksArea = (property.parks || []).reduce((sum, park) => {
+      return sum + ((park.lengthFt || 0) * (park.widthFt || 0)) / 9
+    }, 0)
+    
+    const usedArea = roadsArea + parksArea + soldLand
+    return Math.max(0, totalLand - usedArea)
   }
 
   const resetFormAndCloseDialog = () => {
@@ -854,57 +919,97 @@ const PropertyManagement = () => {
                   <TableCell><strong>Property Name</strong></TableCell>
                   <TableCell><strong>Category</strong></TableCell>
                   <TableCell><strong>Colony</strong></TableCell>
-                  <TableCell><strong>City</strong></TableCell>
-                  <TableCell><strong>Facilities</strong></TableCell>
+                  <TableCell><strong>Total Land (Gaj)</strong></TableCell>
+                  <TableCell><strong>Land Sold (Gaj)</strong></TableCell>
+                  <TableCell><strong>Remaining Land (Gaj)</strong></TableCell>
+                  <TableCell><strong>Total Revenue</strong></TableCell>
+                  <TableCell><strong>Plots</strong></TableCell>
                   <TableCell><strong>Actions</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {properties.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                       <Typography color="text.secondary">
                         No properties found. Click "Add Property" to create one.
                       </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  properties.map((property) => (
-                    <TableRow key={property._id} hover>
-                      <TableCell>{property.name}</TableCell>
-                      <TableCell>
-                        <Chip label={property.category} size="small" />
-                      </TableCell>
-                      <TableCell>{property.colonyId?.name}</TableCell>
-                      <TableCell>{property.cityId?.name}</TableCell>
-                      <TableCell>
-                        <Box display="flex" gap={0.5} flexWrap="wrap">
-                          {property.facilities?.slice(0, 3).map((fac, idx) => (
-                            <Chip key={idx} label={fac} size="small" variant="outlined" />
-                          ))}
-                          {property.facilities?.length > 3 && (
-                            <Chip label={`+${property.facilities.length - 3}`} size="small" />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <IconButton 
-                          size="small" 
-                          color="primary"
-                          onClick={() => openEditDialog(property)}
-                        >
-                          <Edit />
-                        </IconButton>
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={() => handleDeleteProperty(property._id)}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  properties.map((property) => {
+                    const stats = propertyStats[property._id] || { totalSold: 0, totalRevenue: 0, plots: [] }
+                    const totalLand = property.totalLandAreaGaj || 0
+                    const soldLandGaj = stats.totalSold / 9
+                    const remainingLand = calculateRemainingLand(property)
+                    
+                    return (
+                      <TableRow 
+                        key={property._id} 
+                        hover 
+                        sx={{ cursor: 'pointer' }}
+                        onClick={() => handleViewPlots(property)}
+                      >
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>{property.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">{property.category}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={property.category} size="small" />
+                        </TableCell>
+                        <TableCell>{property.colonyId?.name || '-'}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
+                            {totalLand > 0 ? totalLand.toFixed(2) : '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="error.main">
+                            {soldLandGaj > 0 ? soldLandGaj.toFixed(2) : '0.00'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={remainingLand.toFixed(2)} 
+                            size="small" 
+                            color={remainingLand > 0 ? 'success' : 'error'}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600} color="success.main">
+                            ₹{stats.totalRevenue.toLocaleString('en-IN')}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={`${stats.plots.length} plots`} 
+                            size="small" 
+                            color="primary"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleViewPlots(property)
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => openEditDialog(property)}
+                          >
+                            <Edit />
+                          </IconButton>
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleDeleteProperty(property._id)}
+                          >
+                            <Delete />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
@@ -958,7 +1063,95 @@ const PropertyManagement = () => {
           </Box>
         )}
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      {/* Plots Dialog */}
+      <Dialog open={plotsDialogOpen} onClose={() => setPlotsDialogOpen(false)} fullWidth maxWidth="lg">
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box>
+              <Typography variant="h6">Plots - {selectedPropertyPlots?.property?.name}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Total: {selectedPropertyPlots?.plots?.length || 0} plots
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setPlotsDialogOpen(false)} size="small">
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {selectedPropertyPlots && (
+            <Box>
+              <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Total Land</Typography>
+                    <Typography variant="h6">{selectedPropertyPlots.property.totalLandAreaGaj?.toFixed(2) || 0} Gaj</Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Land Sold</Typography>
+                    <Typography variant="h6" color="error.main">
+                      {(selectedPropertyPlots.stats?.totalSold / 9 || 0).toFixed(2)} Gaj
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Remaining Land</Typography>
+                    <Typography variant="h6" color="success.main">
+                      {calculateRemainingLand(selectedPropertyPlots.property).toFixed(2)} Gaj
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Total Revenue</Typography>
+                    <Typography variant="h6" color="primary.main">
+                      ₹{(selectedPropertyPlots.stats?.totalRevenue || 0).toLocaleString('en-IN')}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                      <TableCell><strong>Plot No</strong></TableCell>
+                      <TableCell><strong>Area (Gaj)</strong></TableCell>
+                      <TableCell><strong>Price/Gaj</strong></TableCell>
+                      <TableCell><strong>Total Price</strong></TableCell>
+                      <TableCell><strong>Paid Amount</strong></TableCell>
+                      <TableCell><strong>Status</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {selectedPropertyPlots.plots.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">No plots found</TableCell>
+                      </TableRow>
+                    ) : (
+                      selectedPropertyPlots.plots.map((plot) => (
+                        <TableRow key={plot._id} hover>
+                          <TableCell>{plot.plotNumber || plot.plotNo}</TableCell>
+                          <TableCell>{(plot.area / 9).toFixed(3)}</TableCell>
+                          <TableCell>₹{((plot.pricePerSqFt || 0) * 9).toLocaleString('en-IN')}</TableCell>
+                          <TableCell>₹{(plot.totalPrice || 0).toLocaleString('en-IN')}</TableCell>
+                          <TableCell>₹{(plot.paidAmount || 0).toLocaleString('en-IN')}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={plot.status} 
+                              size="small" 
+                              color={plot.status === 'sold' ? 'error' : plot.status === 'available' ? 'success' : 'warning'}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

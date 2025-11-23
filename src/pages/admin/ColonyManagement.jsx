@@ -33,11 +33,9 @@ const ColonyManagement = () => {
   const [currentColony, setCurrentColony] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    plotPrefix: '',
     address: '',
     purchasePrice: '',
-    sellers: [], // Changed to array for multiple sellers
+    sellers: [], 
     sideMeasurements: {
       front: '',
       back: '',
@@ -136,8 +134,6 @@ const ColonyManagement = () => {
       setCurrentColony(colony)
       setFormData({
         name: colony.name,
-        description: colony.description || '',
-        plotPrefix: colony.plotPrefix || '',
         address: colony.address || colony.location?.address || '',
         purchasePrice: colony.purchasePrice || '',
         sellers: colony.sellers || (colony.sellerName ? [{ 
@@ -158,8 +154,6 @@ const ColonyManagement = () => {
       setCurrentColony(null)
       setFormData({
         name: '',
-        description: '',
-        plotPrefix: '',
         address: '',
         purchasePrice: '',
         sellers: [],
@@ -226,12 +220,6 @@ const ColonyManagement = () => {
                          validateMinLength(formData.address, 10, 'Address')
     if (addressError) {
       newErrors.address = addressError
-      isValid = false
-    }
-
-    const plotPrefixError = validateRequired(formData.plotPrefix, 'Plot Prefix')
-    if (plotPrefixError) {
-      newErrors.plotPrefix = plotPrefixError
       isValid = false
     }
 
@@ -319,20 +307,28 @@ const ColonyManagement = () => {
       const totalAreaSqFt = colonyArea ? Number(colonyArea.areaGaj) * SQFT_PER_GAJ : undefined
       const pricePerSqFt = formData.basePricePerGaj ? Number(formData.basePricePerGaj) / SQFT_PER_GAJ : undefined
 
+      // Clean sellers data - remove temporary 'id' field
+      const cleanedSellers = formData.sellers.map(seller => {
+        const { id, ...sellerData } = seller;
+        return sellerData;
+      });
+
       const payload = {
         name: formData.name,
-        description: formData.description,
         address: formData.address,
-        plotPrefix: formData.plotPrefix,
         purchasePrice: formData.purchasePrice,
-        sellers: formData.sellers,
+        sellers: cleanedSellers,
         totalArea: totalAreaSqFt,
         pricePerSqFt,
         layoutUrl: formData.layoutUrl,
-        status: formData.status,
-        coordinates: {
-          latitude: formData.latitude ? Number(formData.latitude) : undefined,
-          longitude: formData.longitude ? Number(formData.longitude) : undefined,
+        status: formData.status
+      }
+
+      // Only add coordinates if both latitude and longitude are provided
+      if (formData.latitude && formData.longitude) {
+        payload.coordinates = {
+          latitude: Number(formData.latitude),
+          longitude: Number(formData.longitude)
         }
       }
 
@@ -513,16 +509,6 @@ const ColonyManagement = () => {
                 error={!!errors.name}
                 helperText={errors.name}
                 required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                multiline
-                rows={3}
               />
             </Grid>
 
@@ -766,23 +752,6 @@ const ColonyManagement = () => {
                 <option value="sold_out">Sold Out</option>
                 <option value="on_hold">On Hold</option>
               </TextField>
-            </Grid>
-            
-            {/* Plot Prefix */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Plot Prefix (e.g., JSR-) *"
-                value={formData.plotPrefix}
-                onChange={(e) => {
-                  setFormData({ ...formData, plotPrefix: e.target.value })
-                  clearError('plotPrefix')
-                }}
-                error={!!errors.plotPrefix}
-                helperText={errors.plotPrefix}
-                placeholder="JSR-"
-
-              />
             </Grid>
             
             {/* Side Measurements */}
