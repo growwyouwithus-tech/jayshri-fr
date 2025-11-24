@@ -39,7 +39,9 @@ import {
   Add,
   Edit,
   Delete,
-  Close
+  Close,
+  Visibility,
+  ArrowBack
 } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
@@ -63,11 +65,10 @@ const PropertyManagement = () => {
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
-    category: 'Residential',
+    categories: [],
     colonyId: '',
     name: '',
     facilities: [],
-    amenities: [],
     tagline: '',
     description: '',
     address: '',
@@ -84,12 +85,15 @@ const PropertyManagement = () => {
     roads: [],
     parks: []
   })
+  
+  const [newFacility, setNewFacility] = useState('')
 
   const steps = [
     'Select Type',
     'Property Details', 
     'Description & Pricing',
     'Photos',
+    'Preview',
     'Successfully Submitted'
   ]
 
@@ -112,7 +116,7 @@ const PropertyManagement = () => {
   ]
 
   const [newRoad, setNewRoad] = useState({ name: '', lengthFt: '', widthFt: '' })
-  const [newPark, setNewPark] = useState({ name: '', lengthFt: '', widthFt: '' })
+  const [newPark, setNewPark] = useState({ name: '', frontFt: '', backFt: '', leftFt: '', rightFt: '' })
 
   useEffect(() => {
     fetchProperties()
@@ -218,7 +222,8 @@ const PropertyManagement = () => {
     setFormData((prev) => ({
       ...prev,
       colonyId,
-      name: selectedColony?.name || ''
+      name: selectedColony?.name || '',
+      address: selectedColony?.address || selectedColony?.location?.address || prev.address
     }))
   }
 
@@ -227,11 +232,10 @@ const PropertyManagement = () => {
     setCurrentProperty(null)
     setActiveStep(0)
     setFormData({
-      category: 'Residential',
+      categories: [],
       colonyId: '',
       name: '',
       facilities: [],
-      amenities: [],
       tagline: '',
       description: '',
       address: '',
@@ -248,6 +252,7 @@ const PropertyManagement = () => {
       roads: [],
       parks: []
     })
+    setNewFacility('')
     setAddDialogOpen(true)
   }
 
@@ -256,11 +261,10 @@ const PropertyManagement = () => {
     setCurrentProperty(property)
     setActiveStep(0)
     setFormData({
-      category: property.category || 'Residential',
+      categories: property.categories || (property.category ? [property.category] : []),
       colonyId: property.colonyId?._id || property.colony?._id || '',
       name: property.name || '',
       facilities: property.facilities || [],
-      amenities: property.amenities || [],
       tagline: property.tagline || '',
       description: property.description || '',
       address: property.address || '',
@@ -297,8 +301,8 @@ const PropertyManagement = () => {
   const validateStep = () => {
     switch (activeStep) {
       case 0:
-        if (!formData.category || !formData.colonyId) {
-          toast.error('Please select category and colony')
+        if (formData.categories.length === 0 || !formData.colonyId) {
+          toast.error('Please select at least one category and colony')
           return false
         }
         break
@@ -326,7 +330,7 @@ const PropertyManagement = () => {
       const payload = new FormData()
       
       Object.keys(formData).forEach(key => {
-        if (['facilities', 'amenities', 'roads', 'parks'].includes(key)) {
+        if (['facilities', 'roads', 'parks', 'categories'].includes(key)) {
           payload.append(key, JSON.stringify(formData[key]))
         } else if (key === 'moreImages') {
           if (Array.isArray(formData[key])) {
@@ -355,7 +359,7 @@ const PropertyManagement = () => {
         toast.success('Property created successfully!')
       }
       
-      setActiveStep(4)
+      setActiveStep(5)
     } catch (error) {
       toast.error(error.response?.data?.message || `Failed to ${editMode ? 'update' : 'create'} property`)
     } finally {
@@ -363,18 +367,24 @@ const PropertyManagement = () => {
     }
   }
 
-  const handleFacilityToggle = (facility) => {
-    const newFacilities = formData.facilities.includes(facility)
-      ? formData.facilities.filter(f => f !== facility)
-      : [...formData.facilities, facility]
-    setFormData({ ...formData, facilities: newFacilities })
+  const handleCategoryToggle = (category) => {
+    const newCategories = formData.categories.includes(category)
+      ? formData.categories.filter(c => c !== category)
+      : [...formData.categories, category]
+    setFormData({ ...formData, categories: newCategories })
   }
 
-  const handleAmenityToggle = (amenity) => {
-    const newAmenities = formData.amenities.includes(amenity)
-      ? formData.amenities.filter(a => a !== amenity)
-      : [...formData.amenities, amenity]
-    setFormData({ ...formData, amenities: newAmenities })
+  const addFacility = () => {
+    if (newFacility.trim()) {
+      setFormData({ ...formData, facilities: [...formData.facilities, newFacility.trim()] })
+      setNewFacility('')
+    } else {
+      toast.error('Please enter a facility name')
+    }
+  }
+
+  const removeFacility = (index) => {
+    setFormData({ ...formData, facilities: formData.facilities.filter((_, i) => i !== index) })
   }
 
   const handleFileUpload = (field, file) => {
@@ -424,11 +434,10 @@ const PropertyManagement = () => {
   const resetFormAndCloseDialog = () => {
     setActiveStep(0)
     setFormData({
-      category: 'Residential',
+      categories: [],
       colonyId: '',
       name: '',
       facilities: [],
-      amenities: [],
       tagline: '',
       description: '',
       address: '',
@@ -445,6 +454,7 @@ const PropertyManagement = () => {
       roads: [],
       parks: []
     })
+    setNewFacility('')
     closeAddDialog()
     fetchProperties()
   }
@@ -463,11 +473,14 @@ const PropertyManagement = () => {
   }
 
   const addPark = () => {
-    if (newPark.name && newPark.lengthFt && newPark.widthFt) {
-      setFormData({ ...formData, parks: [...formData.parks, { ...newPark }] })
-      setNewPark({ name: '', lengthFt: '', widthFt: '' })
+    if (newPark.name && newPark.frontFt && newPark.backFt && newPark.leftFt && newPark.rightFt) {
+      const avgLength = (Number(newPark.frontFt) + Number(newPark.backFt)) / 2
+      const avgWidth = (Number(newPark.leftFt) + Number(newPark.rightFt)) / 2
+      const areaGaj = (avgLength * avgWidth) / 9
+      setFormData({ ...formData, parks: [...formData.parks, { ...newPark, areaGaj: areaGaj.toFixed(3) }] })
+      setNewPark({ name: '', frontFt: '', backFt: '', leftFt: '', rightFt: '' })
     } else {
-      toast.error('Please fill all park fields')
+      toast.error('Please fill all park dimension fields')
     }
   }
 
@@ -493,11 +506,11 @@ const PropertyManagement = () => {
                   <Card
                     sx={{
                       cursor: 'pointer',
-                      border: formData.category === cat.value ? '2px solid #7c4dff' : '1px solid #e0e0e0',
-                      bgcolor: formData.category === cat.value ? '#f3e5f5' : 'white',
+                      border: formData.categories.includes(cat.value) ? '2px solid #7c4dff' : '1px solid #e0e0e0',
+                      bgcolor: formData.categories.includes(cat.value) ? '#f3e5f5' : 'white',
                       '&:hover': { bgcolor: '#f5f5f5' }
                     }}
-                    onClick={() => setFormData({ ...formData, category: cat.value })}
+                    onClick={() => handleCategoryToggle(cat.value)}
                   >
                     <CardContent sx={{ textAlign: 'center', py: 4 }}>
                       <Box sx={{ fontSize: 48, color: '#7c4dff', mb: 2 }}>
@@ -506,11 +519,17 @@ const PropertyManagement = () => {
                       <Typography variant="h6" fontWeight="bold">
                         {cat.label}
                       </Typography>
+                      {formData.categories.includes(cat.value) && (
+                        <Chip label="Selected" color="primary" size="small" sx={{ mt: 1 }} />
+                      )}
                     </CardContent>
                   </Card>
                 </Grid>
               ))}
             </Grid>
+            <Alert severity="info" sx={{ mb: 3 }}>
+              You can select multiple categories (e.g., Residential + Commercial)
+            </Alert>
 
             <Typography variant="body1" fontWeight="bold" mb={2}>
               Select Colony (Land)
@@ -539,65 +558,62 @@ const PropertyManagement = () => {
               Property Details
             </Typography>
             
+            {/* Property Name Field */}
+            <TextField
+              fullWidth
+              label="Property Name *"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter property name"
+              sx={{ mb: 3 }}
+              required
+            />
+            
             <Typography variant="h6" fontWeight="bold" mb={2}>
               What are the facilities?
             </Typography>
-            <Box display="flex" justifyContent="flex-end" mb={2}>
-              <Button
-                size="small"
-                onClick={() => {
-                  const allSelected = facilitiesList.every(f => formData.facilities.includes(f))
-                  setFormData({
-                    ...formData,
-                    facilities: allSelected ? [] : [...facilitiesList]
-                  })
-                }}
-              >
-                Select All
-              </Button>
+            
+            {/* Dynamic Facility Input */}
+            <Box sx={{ mb: 3, p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={9}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Add Facility"
+                    value={newFacility}
+                    onChange={(e) => setNewFacility(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addFacility()}
+                    placeholder="e.g., Swimming Pool, Gym, etc."
+                  />
+                </Grid>
+                <Grid item xs={3}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    onClick={addFacility}
+                    startIcon={<Add />}
+                  >
+                    Add
+                  </Button>
+                </Grid>
+              </Grid>
             </Box>
-            <Box display="flex" flexWrap="wrap" gap={1} mb={4}>
-              {facilitiesList.map((facility) => (
-                <Chip
-                  key={facility}
-                  label={facility}
-                  onClick={() => handleFacilityToggle(facility)}
-                  color={formData.facilities.includes(facility) ? 'primary' : 'default'}
-                  variant={formData.facilities.includes(facility) ? 'filled' : 'outlined'}
-                  sx={{ cursor: 'pointer' }}
-                />
-              ))}
-            </Box>
-
-            <Typography variant="h6" fontWeight="bold" mb={2}>
-              What are the amenities?
-            </Typography>
-            <Box display="flex" justifyContent="flex-end" mb={2}>
-              <Button
-                size="small"
-                onClick={() => {
-                  const allSelected = amenitiesList.every(a => formData.amenities.includes(a))
-                  setFormData({
-                    ...formData,
-                    amenities: allSelected ? [] : [...amenitiesList]
-                  })
-                }}
-              >
-                Select All
-              </Button>
-            </Box>
-            <Box display="flex" flexWrap="wrap" gap={1}>
-              {amenitiesList.map((amenity) => (
-                <Chip
-                  key={amenity}
-                  label={amenity}
-                  onClick={() => handleAmenityToggle(amenity)}
-                  color={formData.amenities.includes(amenity) ? 'primary' : 'default'}
-                  variant={formData.amenities.includes(amenity) ? 'filled' : 'outlined'}
-                  sx={{ cursor: 'pointer' }}
-                />
-              ))}
-            </Box>
+            
+            {/* Display Added Facilities */}
+            {formData.facilities.length > 0 && (
+              <Box display="flex" flexWrap="wrap" gap={1} mb={4}>
+                {formData.facilities.map((facility, index) => (
+                  <Chip
+                    key={index}
+                    label={facility}
+                    onDelete={() => removeFacility(index)}
+                    color="primary"
+                    variant="filled"
+                  />
+                ))}
+              </Box>
+            )}
 
             <Typography variant="h6" fontWeight="bold" mt={4} mb={2}>
               Road Details
@@ -655,7 +671,7 @@ const PropertyManagement = () => {
               Park / Amenity Area
             </Typography>
             <Grid container spacing={2} mb={2}>
-              <Grid item xs={4}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Park Name"
@@ -664,37 +680,61 @@ const PropertyManagement = () => {
                   placeholder="Central Park"
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid item xs={3}>
                 <TextField
                   fullWidth
                   type="number"
-                  label="Length (ft)"
-                  value={newPark.lengthFt}
-                  onChange={(e) => setNewPark({ ...newPark, lengthFt: e.target.value })}
+                  label="Front (ft)"
+                  value={newPark.frontFt}
+                  onChange={(e) => setNewPark({ ...newPark, frontFt: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={4}>
-                <Box display="flex" gap={1}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Width (ft)"
-                    value={newPark.widthFt}
-                    onChange={(e) => setNewPark({ ...newPark, widthFt: e.target.value })}
-                  />
-                  <Button variant="contained" onClick={addPark} sx={{ minWidth: 80 }}>
-                    Add
-                  </Button>
-                </Box>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Back (ft)"
+                  value={newPark.backFt}
+                  onChange={(e) => setNewPark({ ...newPark, backFt: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Left (ft)"
+                  value={newPark.leftFt}
+                  onChange={(e) => setNewPark({ ...newPark, leftFt: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Right (ft)"
+                  value={newPark.rightFt}
+                  onChange={(e) => setNewPark({ ...newPark, rightFt: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Button variant="contained" onClick={addPark} startIcon={<Add />}>
+                  Add Park
+                </Button>
               </Grid>
             </Grid>
             {formData.parks.length > 0 && (
               <Box display="flex" flexDirection="column" gap={1}>
                 {formData.parks.map((park, index) => (
                   <Paper key={index} sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography>
-                      <strong>{park.name}</strong>: {park.lengthFt} ft × {park.widthFt} ft = {((park.lengthFt * park.widthFt) / 9).toFixed(3)} Gaj
-                    </Typography>
+                    <Box>
+                      <Typography variant="body1" fontWeight="bold">{park.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Front: {park.frontFt}ft, Back: {park.backFt}ft, Left: {park.leftFt}ft, Right: {park.rightFt}ft
+                      </Typography>
+                      <Typography variant="body2" color="primary.main">
+                        Area: {park.areaGaj} Gaj
+                      </Typography>
+                    </Box>
                     <IconButton size="small" color="error" onClick={() => removePark(index)}>
                       <Delete />
                     </IconButton>
@@ -854,6 +894,150 @@ const PropertyManagement = () => {
 
       case 4:
         return (
+          <Box>
+            <Typography variant="h5" fontWeight="bold" mb={3}>
+              Preview - Review Your Property Details
+            </Typography>
+            
+            <Grid container spacing={3}>
+              {/* Basic Info */}
+              <Grid item xs={12}>
+                <Paper sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+                  <Typography variant="h6" fontWeight="bold" mb={2}>Basic Information</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">Property Name</Typography>
+                      <Typography variant="body1" fontWeight="bold">{formData.name || '-'}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">Categories</Typography>
+                      <Box display="flex" gap={1} mt={0.5}>
+                        {formData.categories.map(cat => (
+                          <Chip key={cat} label={cat} size="small" color="primary" />
+                        ))}
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">Colony</Typography>
+                      <Typography variant="body1">{colonies.find(c => c._id === formData.colonyId)?.name || '-'}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2" color="text.secondary">City</Typography>
+                      <Typography variant="body1">{cities.find(c => c._id === formData.cityId)?.name || '-'}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">Address</Typography>
+                      <Typography variant="body1">{formData.address || '-'}</Typography>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              </Grid>
+
+              {/* Facilities */}
+              {formData.facilities.length > 0 && (
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" fontWeight="bold" mb={2}>Facilities</Typography>
+                    <Box display="flex" flexWrap="wrap" gap={1}>
+                      {formData.facilities.map((facility, idx) => (
+                        <Chip key={idx} label={facility} color="primary" variant="outlined" />
+                      ))}
+                    </Box>
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Roads */}
+              {formData.roads.length > 0 && (
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" fontWeight="bold" mb={2}>Roads ({formData.roads.length})</Typography>
+                    {formData.roads.map((road, idx) => (
+                      <Typography key={idx} variant="body2" mb={1}>
+                        • {road.name}: {road.lengthFt}ft × {road.widthFt}ft = {((road.lengthFt * road.widthFt) / 9).toFixed(3)} Gaj
+                      </Typography>
+                    ))}
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Parks */}
+              {formData.parks.length > 0 && (
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" fontWeight="bold" mb={2}>Parks/Amenity Areas ({formData.parks.length})</Typography>
+                    {formData.parks.map((park, idx) => (
+                      <Box key={idx} mb={2}>
+                        <Typography variant="body1" fontWeight="bold">{park.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Front: {park.frontFt}ft, Back: {park.backFt}ft, Left: {park.leftFt}ft, Right: {park.rightFt}ft
+                        </Typography>
+                        <Typography variant="body2" color="primary.main">Area: {park.areaGaj} Gaj</Typography>
+                      </Box>
+                    ))}
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Description */}
+              <Grid item xs={12}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" mb={2}>Description</Typography>
+                  <Typography variant="body2" color="text.secondary" mb={1}>Tagline</Typography>
+                  <Typography variant="body1" mb={2}>{formData.tagline || '-'}</Typography>
+                  <Typography variant="body2" color="text.secondary" mb={1}>Full Description</Typography>
+                  <Typography variant="body1">{formData.description || '-'}</Typography>
+                </Paper>
+              </Grid>
+
+              {/* Files */}
+              <Grid item xs={12}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" mb={2}>Uploaded Files</Typography>
+                  <Grid container spacing={2}>
+                    {formData.mainPicture && (
+                      <Grid item xs={4}>
+                        <Chip label="Main Picture" color="success" icon={<CheckCircle />} />
+                      </Grid>
+                    )}
+                    {formData.videoUpload && (
+                      <Grid item xs={4}>
+                        <Chip label="Video" color="success" icon={<CheckCircle />} />
+                      </Grid>
+                    )}
+                    {formData.mapImage && (
+                      <Grid item xs={4}>
+                        <Chip label="Map Image" color="success" icon={<CheckCircle />} />
+                      </Grid>
+                    )}
+                    {formData.noc && (
+                      <Grid item xs={4}>
+                        <Chip label="NOC" color="success" icon={<CheckCircle />} />
+                      </Grid>
+                    )}
+                    {formData.registry && (
+                      <Grid item xs={4}>
+                        <Chip label="Registry" color="success" icon={<CheckCircle />} />
+                      </Grid>
+                    )}
+                    {formData.legalDoc && (
+                      <Grid item xs={4}>
+                        <Chip label="Legal Doc" color="success" icon={<CheckCircle />} />
+                      </Grid>
+                    )}
+                  </Grid>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            <Alert severity="info" sx={{ mt: 3 }}>
+              Please review all details carefully before submitting. Click "Continue" to create the property.
+            </Alert>
+          </Box>
+        )
+
+      case 5:
+        return (
           <Box textAlign="center" py={4}>
             <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
             <Typography variant="h4" fontWeight="bold" mb={2}>
@@ -894,16 +1078,69 @@ const PropertyManagement = () => {
     }
   }
 
-  // Main render - list view with dialog overlay
+  // Show form if addDialogOpen is true
+  if (addDialogOpen) {
+    return (
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold">
+            {editMode ? 'Edit Property' : 'Add New Property'}
+          </Typography>
+          <Button variant="outlined" startIcon={<ArrowBack />} onClick={closeAddDialog}>
+            Back to Properties
+          </Button>
+        </Box>
+
+        <Paper sx={{ p: 3 }}>
+          {/* Stepper */}
+          <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          {/* Step Content */}
+          {renderStepContent()}
+
+          {/* Navigation Buttons */}
+          {activeStep < 5 && (
+            <Box display="flex" justifyContent="space-between" mt={4}>
+              <Button
+                onClick={handleBack}
+                disabled={activeStep === 0}
+                startIcon={<NavigateBefore />}
+                color="inherit"
+                size="large"
+              >
+                Back
+              </Button>
+              <Button
+                variant="contained"
+                onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}
+                endIcon={activeStep === steps.length - 1 ? <CheckCircle /> : <NavigateNext />}
+                size="large"
+              >
+                {activeStep === steps.length - 1 ? 'Submit Property' : 'Next'}
+              </Button>
+            </Box>
+          )}
+        </Paper>
+      </Box>
+    )
+  }
+
+  // Main render - list view
   return (
     <>
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
           <Typography variant="h4" fontWeight="bold">
-            Properties Management
+            Mansion Properties
           </Typography>
           <Button variant="contained" startIcon={<Add />} onClick={openAddDialog}>
-            Add Property
+            Add feature
           </Button>
         </Box>
 
@@ -918,7 +1155,7 @@ const PropertyManagement = () => {
                 <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                   <TableCell><strong>Property Name</strong></TableCell>
                   <TableCell><strong>Category</strong></TableCell>
-                  <TableCell><strong>Colony</strong></TableCell>
+                  <TableCell><strong>Land</strong></TableCell>
                   <TableCell><strong>Total Land (Gaj)</strong></TableCell>
                   <TableCell><strong>Land Sold (Gaj)</strong></TableCell>
                   <TableCell><strong>Remaining Land (Gaj)</strong></TableCell>
@@ -994,8 +1231,17 @@ const PropertyManagement = () => {
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <IconButton 
                             size="small" 
+                            color="info"
+                            onClick={() => handleViewPlots(property)}
+                            title="View Details"
+                          >
+                            <Visibility />
+                          </IconButton>
+                          <IconButton 
+                            size="small" 
                             color="primary"
                             onClick={() => openEditDialog(property)}
+                            title="Edit Property"
                           >
                             <Edit />
                           </IconButton>
@@ -1003,6 +1249,7 @@ const PropertyManagement = () => {
                             size="small" 
                             color="error"
                             onClick={() => handleDeleteProperty(property._id)}
+                            title="Delete Property"
                           >
                             <Delete />
                           </IconButton>
@@ -1017,16 +1264,15 @@ const PropertyManagement = () => {
         )}
       </Box>
 
-      <Dialog open={addDialogOpen} onClose={closeAddDialog} fullWidth maxWidth="md">
-      <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">{editMode ? 'Edit Property' : 'Add New Property'}</Typography>
-          <IconButton onClick={closeAddDialog} size="small">
-            <Close />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent>
+      {addDialogOpen && (
+        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'white', zIndex: 1300, overflow: 'auto' }}>
+          <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+              <Typography variant="h4" fontWeight="bold">
+                {editMode ? 'Edit Property' : 'Add New Property'}
+              </Typography>
+              <Button variant="outlined" onClick={closeAddDialog} startIcon={<Close />}>Cancel</Button>
+            </Box>
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
           {steps.map((label, index) => (
             <Step key={label}>
@@ -1041,29 +1287,32 @@ const PropertyManagement = () => {
           {renderStepContent()}
         </Box>
 
-        {activeStep < 4 && (
+        {activeStep < 5 && (
           <Box display="flex" justifyContent="space-between" mt={4}>
             <Button
               onClick={handleBack}
               disabled={activeStep === 0}
               startIcon={<NavigateBefore />}
               color="inherit"
+              size="large"
             >
               Previous
             </Button>
             
             <Button
-              onClick={activeStep === 3 ? handleSubmit : handleNext}
-              endIcon={activeStep === 3 ? null : <NavigateNext />}
+              onClick={activeStep === 4 ? handleSubmit : handleNext}
+              endIcon={activeStep === 4 ? null : <NavigateNext />}
               variant="contained"
               disabled={loading}
+              size="large"
             >
-              {activeStep === 3 ? 'Submit' : 'Continue'}
+              {loading ? 'Submitting...' : activeStep === 4 ? 'Submit Property' : 'Continue'}
             </Button>
           </Box>
         )}
-      </DialogContent>
-      </Dialog>
+      </Box>
+    </Box>
+      )}
 
       {/* Plots Dialog */}
       <Dialog open={plotsDialogOpen} onClose={() => setPlotsDialogOpen(false)} fullWidth maxWidth="lg">

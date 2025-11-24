@@ -30,7 +30,7 @@ import {
   TablePagination,
   InputAdornment,
 } from '@mui/material'
-import { Add, Edit, Delete, Visibility, Payment, Search } from '@mui/icons-material'
+import { Add, Edit, Delete, Visibility, Payment, Search, CloudUpload, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -91,6 +91,7 @@ const PlotManagement = () => {
     propertyId: '',
     colonyId: '',
     plotNo: '',
+    plotType: 'residential',
     frontSide: '',
     backSide: '',
     leftSide: '',
@@ -101,6 +102,7 @@ const PlotManagement = () => {
     facing: '',
     status: 'available',
     ownerType: 'owner',
+    plotImages: [],
     // Booking/Sale details
     customerName: '',
     customerNumber: '',
@@ -142,42 +144,42 @@ const PlotManagement = () => {
     return colonies.find((colony) => colony._id === colonyId) || null
   }
 
-  const getColonySellers = (colonyRef) => {
+  const getColonyKhatoniHolders = (colonyRef) => {
     const colonyFromState = getColonyFromState(colonyRef)
-    if (colonyFromState && Array.isArray(colonyFromState.sellers)) {
-      return colonyFromState.sellers
+    if (colonyFromState && Array.isArray(colonyFromState.khatoniHolders)) {
+      return colonyFromState.khatoniHolders
     }
 
-    if (colonyRef && typeof colonyRef === 'object' && Array.isArray(colonyRef.sellers)) {
-      return colonyRef.sellers
+    if (colonyRef && typeof colonyRef === 'object' && Array.isArray(colonyRef.khatoniHolders)) {
+      return colonyRef.khatoniHolders
     }
 
     return []
   }
 
-  const formatSellerLabel = (seller) => {
-    if (!seller) return 'Seller'
-    const name = seller.name || seller.fullName || seller.company || 'Seller'
-    const phone = seller.mobile || seller.phone || seller.contact || seller.email || ''
+  const formatKhatoniHolderLabel = (holder) => {
+    if (!holder) return 'Khatoni Holder'
+    const name = holder.name || holder.fullName || holder.company || 'Khatoni Holder'
+    const phone = holder.mobile || holder.phone || holder.contact || holder.email || ''
     return phone ? `${name} (${phone})` : name
   }
 
-  const renderSellerInfoSection = (colonyRef) => {
+  const renderKhatoniHolderInfoSection = (colonyRef) => {
     if (!colonyRef) return null
 
-    const sellers = getColonySellers(colonyRef)
+    const holders = getColonyKhatoniHolders(colonyRef)
 
     return (
       <Box sx={{ p: 2, bgcolor: '#f9fafb', borderRadius: 1, border: '1px solid #ececec' }}>
         <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-          Colony Sellers / Owners
+          Colony Khatoni Holders / Owners
         </Typography>
-        {sellers.length ? (
+        {holders.length ? (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {sellers.map((seller, index) => (
+            {holders.map((holder, index) => (
               <Chip
-                key={seller?._id || seller?.id || `${seller?.name || 'seller'}-${index}`}
-                label={formatSellerLabel(seller)}
+                key={holder?._id || holder?.id || `${holder?.name || 'holder'}-${index}`}
+                label={formatKhatoniHolderLabel(holder)}
                 size="small"
                 variant="outlined"
                 color="primary"
@@ -186,7 +188,7 @@ const PlotManagement = () => {
           </Box>
         ) : (
           <Typography variant="body2" color="text.secondary">
-            No sellers added for this colony yet.
+            No Khatoni Holders added for this colony yet.
           </Typography>
         )}
       </Box>
@@ -236,7 +238,7 @@ const PlotManagement = () => {
       plotNo: plot.plotNo || plot.plotNumber || '',
       areaGaj: plot.areaGaj ?? (plot.area ? sqFtToGaj(plot.area) : ''),
       pricePerGaj: plot.pricePerGaj ?? (plot.pricePerSqFt ? pricePerSqFtToGaj(plot.pricePerSqFt) : null),
-      ownerType: plot.ownerType === 'seller' ? 'seller' : 'owner',
+      ownerType: plot.ownerType === 'khatoniHolder' ? 'khatoniHolder' : 'owner',
     }
   }
 
@@ -980,6 +982,1013 @@ const PlotManagement = () => {
     )
   }
 
+  // Show form if add or edit dialog is open
+  if (addDialogOpen || editDialogOpen) {
+    return (
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold">
+            {addDialogOpen ? 'Add New Plot' : 'Edit Plot'}
+          </Typography>
+          <Button 
+            variant="outlined" 
+            startIcon={<ArrowBack />} 
+            onClick={addDialogOpen ? closeAddDialog : closeEditDialog}
+          >
+            Back to Plots
+          </Button>
+        </Box>
+        
+        <Paper sx={{ p: 3 }}>
+          {addDialogOpen ? (
+            <>
+              {/* ADD PLOT FORM */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* Property Selector - REQUIRED */}
+                <FormControl size="small" error={!!errors.propertyId} required>
+                  <InputLabel id="property-select-label">Property *</InputLabel>
+                  <Select
+                    labelId="property-select-label"
+                    value={newPlot.propertyId || ''}
+                    label="Property *"
+                    onChange={(e) => {
+                      const selectedProperty = properties.find(p => p._id === e.target.value)
+                      setNewPlot((s) => ({ 
+                        ...s, 
+                        propertyId: e.target.value,
+                        colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
+                        pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj
+                      }))
+                      clearError('propertyId')
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Property</em>
+                    </MenuItem>
+                    {properties.map((property) => (
+                      <MenuItem key={property._id} value={property._id}>
+                        {property.name} - {property.category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.propertyId && (
+                    <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                      {errors.propertyId}
+                    </Typography>
+                  )}
+                </FormControl>
+
+                {/* Remaining Land Calculation Display */}
+                {newPlot.propertyId && (() => {
+                  const selectedProperty = properties.find(p => p._id === newPlot.propertyId)
+                  if (!selectedProperty) return null
+                  
+                  const landCalc = calculateRemainingLand(selectedProperty)
+                  
+                  return (
+                    <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #2196f3' }}>
+                      <Typography variant="subtitle2" fontWeight={600} gutterBottom color="primary">
+                        📊 Land Calculation Summary - {selectedProperty.name}
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6} sm={4}>
+                          <Typography variant="body2" color="text.secondary">
+                            Total Land: <strong>{landCalc.total} Gaj</strong>
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={4}>
+                          <Typography variant="body2" color="text.secondary">
+                            Roads: <strong>{landCalc.roads} Gaj</strong>
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={4}>
+                          <Typography variant="body2" color="text.secondary">
+                            Parks: <strong>{landCalc.parks} Gaj</strong>
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={4}>
+                          <Typography variant="body2" color="text.secondary">
+                            Used Area: <strong>{landCalc.used} Gaj</strong>
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={8}>
+                          <Typography variant="body1" color="success.main" fontWeight={700}>
+                            ✅ Remaining Land: {landCalc.remaining} Gaj
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                      
+                      {selectedProperty.basePricePerGaj && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          💰 Base Price: ₹{selectedProperty.basePricePerGaj.toLocaleString()}/Gaj
+                        </Typography>
+                      )}
+                    </Box>
+                  )
+                })()}
+
+                {/* Colony is auto-selected from Property */}
+                {newPlot.colonyId && (() => {
+                  const colony = colonies.find(c => c._id === newPlot.colonyId)
+                  return colony ? (
+                    <Box sx={{ p: 1.5, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Colony: <strong>{colony.name}</strong>
+                      </Typography>
+                    </Box>
+                  ) : null
+                })()}
+
+                {renderKhatoniHolderInfoSection(newPlot.colonyId)}
+
+                <FormControl component="fieldset" sx={{ mt: 1 }}>
+                  <FormLabel component="legend">Plot Owner</FormLabel>
+                  <RadioGroup
+                    row
+                    value={newPlot.ownerType}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, ownerType: e.target.value }))}
+                  >
+                    <FormControlLabel value="owner" control={<Radio size="small" />} label="Owner" />
+                    <FormControlLabel value="khatoniHolder" control={<Radio size="small" />} label="Khatoni Holder" />
+                  </RadioGroup>
+                </FormControl>
+
+                <TextField 
+                  size="small" 
+                  label="Plot Number *" 
+                  value={newPlot.plotNo} 
+                  onChange={(e) => {
+                    setNewPlot((s) => ({ ...s, plotNo: e.target.value }))
+                    clearError('plotNo')
+                  }}
+                  error={!!errors.plotNo}
+                  helperText={errors.plotNo}
+                  required
+                />
+                
+                {/* Side Measurements */}
+                <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Plot Dimensions (in feet) *
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <TextField 
+                        fullWidth
+                        size="small" 
+                        label="Front Side (ft) *" 
+                        type="number"
+                        value={newPlot.frontSide} 
+                        onChange={(e) => {
+                          handleSideMeasurementChange('frontSide', e.target.value)
+                          clearError('frontSide')
+                        }}
+                        error={!!errors.frontSide}
+                        helperText={errors.frontSide}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField 
+                        fullWidth
+                        size="small" 
+                        label="Back Side (ft) *" 
+                        type="number"
+                        value={newPlot.backSide} 
+                        onChange={(e) => {
+                          handleSideMeasurementChange('backSide', e.target.value)
+                          clearError('backSide')
+                        }}
+                        error={!!errors.backSide}
+                        helperText={errors.backSide}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField 
+                        fullWidth
+                        size="small" 
+                        label="Left Side (ft) *" 
+                        type="number"
+                        value={newPlot.leftSide} 
+                        onChange={(e) => {
+                          handleSideMeasurementChange('leftSide', e.target.value)
+                          clearError('leftSide')
+                        }}
+                        error={!!errors.leftSide}
+                        helperText={errors.leftSide}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField 
+                        fullWidth
+                        size="small" 
+                        label="Right Side (ft) *" 
+                        type="number"
+                        value={newPlot.rightSide} 
+                        onChange={(e) => {
+                          handleSideMeasurementChange('rightSide', e.target.value)
+                          clearError('rightSide')
+                        }}
+                        error={!!errors.rightSide}
+                        helperText={errors.rightSide}
+                        required
+                      />
+                    </Grid>
+                  </Grid>
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'white', borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Calculated Area:</Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: 'primary.main' }}>
+                      {newPlot.areaGaj ? `${newPlot.areaGaj} Gaj` : 'Enter all sides to calculate'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <TextField 
+                  size="small" 
+                  label="Price per Gaj *" 
+                  type="number" 
+                  value={newPlot.pricePerGaj} 
+                  onChange={(e) => {
+                    updatePricingFromPricePerGaj(e.target.value)
+                    clearError('pricePerGaj')
+                  }}
+                  error={!!errors.pricePerGaj}
+                  helperText={errors.pricePerGaj}
+                  required
+                />
+                <TextField
+                  size="small"
+                  label="Total Price (Auto-calculated)"
+                  type="number"
+                  value={newPlot.totalPrice}
+                  onChange={(e) => updatePricingFromTotal(e.target.value)}
+                  InputProps={{ readOnly: true }}
+                />
+                
+                <FormControl size="small" error={!!errors.facing} required>
+                  <InputLabel id="facing-select-label">Facing *</InputLabel>
+                  <Select
+                    labelId="facing-select-label"
+                    value={newPlot.facing}
+                    label="Facing *"
+                    onChange={(e) => {
+                      setNewPlot((s) => ({ ...s, facing: e.target.value }))
+                      clearError('facing')
+                    }}
+                  >
+                    <MenuItem value="">Select Facing</MenuItem>
+                    {FACING_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.facing && (
+                    <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                      {errors.facing}
+                    </Typography>
+                  )}
+                </FormControl>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField 
+                      fullWidth
+                      size="small" 
+                      select 
+                      label="Plot Type *" 
+                      value={newPlot.plotType} 
+                      onChange={(e) => setNewPlot((s) => ({ ...s, plotType: e.target.value }))}
+                    >
+                      <MenuItem value="residential">Residential</MenuItem>
+                      <MenuItem value="commercial">Commercial</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField 
+                      fullWidth
+                      size="small" 
+                      select 
+                      label="Status" 
+                      value={newPlot.status} 
+                      onChange={(e) => setNewPlot((s) => ({ ...s, status: e.target.value }))}
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                </Grid>
+
+                {/* Plot Images Upload */}
+                <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Plot Images (Optional)
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUpload />}
+                    fullWidth
+                  >
+                    Upload Plot Photos
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files)
+                        setNewPlot((s) => ({ ...s, plotImages: files }))
+                      }}
+                    />
+                  </Button>
+                  {newPlot.plotImages && newPlot.plotImages.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="body2" color="success.main">
+                        ✓ {newPlot.plotImages.length} image(s) selected
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                        {newPlot.plotImages.map((file, idx) => (
+                          <Chip 
+                            key={idx} 
+                            label={file.name} 
+                            size="small" 
+                            onDelete={() => {
+                              setNewPlot((s) => ({
+                                ...s,
+                                plotImages: s.plotImages.filter((_, i) => i !== idx)
+                              }))
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Conditional fields for Booked/Sold status */}
+                {(newPlot.status === 'booked' || newPlot.status === 'sold') && (
+                  <Box sx={{ p: 2, bgcolor: '#fff3e0', borderRadius: 1, border: '1px solid #ffb74d', mt: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#e65100' }}>
+                      {newPlot.status === 'booked' ? 'Booking Details' : 'Sale Details'}
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <TextField
+                        size="small"
+                        label="Customer Name *"
+                        value={newPlot.customerName}
+                        onChange={(e) => {
+                          setNewPlot((s) => ({ ...s, customerName: e.target.value }))
+                          clearError('customerName')
+                        }}
+                        error={!!errors.customerName}
+                        helperText={errors.customerName}
+                        required
+                      />
+                      <TextField
+                        size="small"
+                        label="Customer Number *"
+                        type="tel"
+                        value={newPlot.customerNumber}
+                        onChange={(e) => {
+                          setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))
+                          clearError('customerNumber')
+                        }}
+                        error={!!errors.customerNumber}
+                        helperText={errors.customerNumber}
+                        placeholder="10 digit mobile number"
+                        required
+                      />
+                      <TextField
+                        size="small"
+                        label="Customer Short Address *"
+                        value={newPlot.customerShortAddress}
+                        onChange={(e) => {
+                          setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))
+                          clearError('customerShortAddress')
+                        }}
+                        error={!!errors.customerShortAddress}
+                        helperText={errors.customerShortAddress}
+                        required
+                      />
+                      <TextField
+                        size="small"
+                        label="Registry Date (Optional)"
+                        type="date"
+                        value={newPlot.registryDate}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                      <TextField
+                        size="small"
+                        label="Customer Full Address (Optional)"
+                        multiline
+                        rows={2}
+                        value={newPlot.customerFullAddress}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, customerFullAddress: e.target.value }))}
+                      />
+                      <TextField
+                        size="small"
+                        label="More Information (Optional)"
+                        multiline
+                        rows={2}
+                        value={newPlot.moreInformation}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, moreInformation: e.target.value }))}
+                      />
+                      <TextField
+                        size="small"
+                        label="Final Price (Optional)"
+                        type="number"
+                        value={newPlot.finalPrice}
+                        onChange={(e) => {
+                          setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))
+                          clearError('finalPrice')
+                        }}
+                        error={!!errors.finalPrice}
+                        helperText={errors.finalPrice}
+                      />
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField
+                          size="small"
+                          label="Agent Name (Optional)"
+                          value={newPlot.agentName}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
+                          sx={{ flex: 1 }}
+                        />
+                        <TextField
+                          size="small"
+                          label="Agent Code (Optional)"
+                          value={newPlot.agentCode}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
+                          sx={{ flex: 1 }}
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField
+                          size="small"
+                          label="Advocate Name (Optional)"
+                          value={newPlot.advocateName}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
+                          sx={{ flex: 1 }}
+                        />
+                        <TextField
+                          size="small"
+                          label="Advocate Code (Optional)"
+                          value={newPlot.advocateCode}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
+                          sx={{ flex: 1 }}
+                        />
+                      </Box>
+                      <TextField
+                        size="small"
+                        select
+                        label="Tahsil (Optional)"
+                        value={newPlot.tahsil}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, tahsil: e.target.value }))}
+                      >
+                        <MenuItem value="">Select Tahsil</MenuItem>
+                        {TAHSIL_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                      <TextField
+                        size="small"
+                        select
+                        label="Mode of Payment (Optional)"
+                        value={newPlot.modeOfPayment}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, modeOfPayment: e.target.value }))}
+                      >
+                        <MenuItem value="">Select Mode</MenuItem>
+                        <MenuItem value="cash">Cash</MenuItem>
+                        <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                        <MenuItem value="upi">UPI</MenuItem>
+                        <MenuItem value="cheque">Cheque</MenuItem>
+                        <MenuItem value="card">Card</MenuItem>
+                      </TextField>
+                      <TextField
+                        size="small"
+                        label="Transaction Date & Time (Optional)"
+                        type="datetime-local"
+                        value={newPlot.transactionDate}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, transactionDate: e.target.value }))}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                      <TextField
+                        size="small"
+                        label="Amount Paid (Optional)"
+                        type="number"
+                        value={newPlot.paidAmount}
+                        onChange={(e) => {
+                          setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))
+                          clearError('paidAmount')
+                        }}
+                        error={!!errors.paidAmount}
+                        helperText={errors.paidAmount}
+                      />
+                      <Box>
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          fullWidth
+                          size="small"
+                        >
+                          Upload Payment Slip/Screenshot (Optional)
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*,.pdf"
+                            onChange={(e) => setNewPlot((s) => ({ ...s, paymentSlip: e.target.files[0] }))}
+                          />
+                        </Button>
+                        {newPlot.paymentSlip && (
+                          <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                            ✓ {newPlot.paymentSlip.name}
+                          </Typography>
+                        )}
+                      </Box>
+                      {newPlot.status === 'sold' && (
+                        <Box>
+                          <Button
+                            variant="outlined"
+                            component="label"
+                            fullWidth
+                            size="small"
+                            color="secondary"
+                          >
+                            Upload Registry Document (Optional)
+                            <input
+                              type="file"
+                              hidden
+                              accept="image/*,.pdf"
+                              onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
+                            />
+                          </Button>
+                          {newPlot.registryDocument && (
+                            <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                              ✓ {newPlot.registryDocument.name}
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Action Buttons */}
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+                <Button onClick={closeAddDialog} variant="outlined">Cancel</Button>
+                <Button variant="contained" onClick={handleAddPlot}>Add Plot</Button>
+              </Box>
+            </>
+          ) : (
+            <>
+              {/* EDIT PLOT FORM - COMPLETE COPY OF ADD PLOT FORM */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* Property Selector - REQUIRED */}
+                <FormControl size="small" error={!!errors.propertyId} required>
+                  <InputLabel id="property-select-label-edit">Property *</InputLabel>
+                  <Select
+                    labelId="property-select-label-edit"
+                    value={newPlot.propertyId || ''}
+                    label="Property *"
+                    onChange={(e) => {
+                      const selectedProperty = properties.find(p => p._id === e.target.value)
+                      setNewPlot((s) => ({ 
+                        ...s, 
+                        propertyId: e.target.value,
+                        colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
+                        pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj
+                      }))
+                      clearError('propertyId')
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Property</em>
+                    </MenuItem>
+                    {properties.map((property) => (
+                      <MenuItem key={property._id} value={property._id}>
+                        {property.name} - {property.category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.propertyId && (
+                    <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                      {errors.propertyId}
+                    </Typography>
+                  )}
+                </FormControl>
+
+                {/* Colony is auto-selected from Property */}
+                {newPlot.colonyId && (() => {
+                  const colony = colonies.find(c => c._id === newPlot.colonyId)
+                  return colony ? (
+                    <Box sx={{ p: 1.5, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Colony: <strong>{colony.name}</strong>
+                      </Typography>
+                    </Box>
+                  ) : null
+                })()}
+
+                {renderKhatoniHolderInfoSection(newPlot.colonyId)}
+
+                <FormControl component="fieldset" sx={{ mt: 1 }}>
+                  <FormLabel component="legend">Plot Owner</FormLabel>
+                  <RadioGroup
+                    row
+                    value={newPlot.ownerType}
+                    onChange={(e) => setNewPlot((s) => ({ ...s, ownerType: e.target.value }))}
+                  >
+                    <FormControlLabel value="owner" control={<Radio size="small" />} label="Owner" />
+                    <FormControlLabel value="khatoniHolder" control={<Radio size="small" />} label="Khatoni Holder" />
+                  </RadioGroup>
+                </FormControl>
+
+                <TextField 
+                  size="small" 
+                  label="Plot Number *" 
+                  value={newPlot.plotNo} 
+                  onChange={(e) => setNewPlot((s) => ({ ...s, plotNo: e.target.value }))} 
+                  required
+                />
+                
+                {/* Side Measurements */}
+                <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Plot Dimensions (in feet) *
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <TextField 
+                        fullWidth
+                        size="small" 
+                        label="Front Side (ft) *" 
+                        type="number"
+                        value={newPlot.frontSide} 
+                        onChange={(e) => handleSideMeasurementChange('frontSide', e.target.value)}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField 
+                        fullWidth
+                        size="small" 
+                        label="Back Side (ft) *" 
+                        type="number"
+                        value={newPlot.backSide} 
+                        onChange={(e) => handleSideMeasurementChange('backSide', e.target.value)}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField 
+                        fullWidth
+                        size="small" 
+                        label="Left Side (ft) *" 
+                        type="number"
+                        value={newPlot.leftSide} 
+                        onChange={(e) => handleSideMeasurementChange('leftSide', e.target.value)}
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField 
+                        fullWidth
+                        size="small" 
+                        label="Right Side (ft) *" 
+                        type="number"
+                        value={newPlot.rightSide} 
+                        onChange={(e) => handleSideMeasurementChange('rightSide', e.target.value)}
+                        required
+                      />
+                    </Grid>
+                  </Grid>
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'white', borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Calculated Area:</Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: 'primary.main' }}>
+                      {newPlot.areaGaj ? `${newPlot.areaGaj} Gaj` : 'Enter all sides to calculate'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <TextField 
+                  size="small" 
+                  label="Price per Gaj *" 
+                  type="number" 
+                  value={newPlot.pricePerGaj} 
+                  onChange={(e) => updatePricingFromPricePerGaj(e.target.value)}
+                  required
+                />
+                <TextField
+                  size="small"
+                  label="Total Price (Auto-calculated)"
+                  type="number"
+                  value={newPlot.totalPrice}
+                  onChange={(e) => updatePricingFromTotal(e.target.value)}
+                  InputProps={{ readOnly: true }}
+                />
+                
+                <FormControl size="small" required>
+                  <InputLabel>Facing *</InputLabel>
+                  <Select
+                    value={newPlot.facing}
+                    label="Facing *"
+                    onChange={(e) => setNewPlot((s) => ({ ...s, facing: e.target.value }))}
+                  >
+                    <MenuItem value="">Select Facing</MenuItem>
+                    {FACING_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField 
+                      fullWidth
+                      size="small" 
+                      select 
+                      label="Plot Type *" 
+                      value={newPlot.plotType} 
+                      onChange={(e) => setNewPlot((s) => ({ ...s, plotType: e.target.value }))}
+                    >
+                      <MenuItem value="residential">Residential</MenuItem>
+                      <MenuItem value="commercial">Commercial</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField 
+                      fullWidth
+                      size="small" 
+                      select 
+                      label="Status" 
+                      value={newPlot.status} 
+                      onChange={(e) => setNewPlot((s) => ({ ...s, status: e.target.value }))}
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                </Grid>
+
+                {/* Plot Images Upload */}
+                <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Plot Images (Optional)
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUpload />}
+                    fullWidth
+                  >
+                    Upload Plot Photos
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files)
+                        setNewPlot((s) => ({ ...s, plotImages: files }))
+                      }}
+                    />
+                  </Button>
+                  {newPlot.plotImages && newPlot.plotImages.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="body2" color="success.main">
+                        ✓ {newPlot.plotImages.length} image(s) selected
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                        {newPlot.plotImages.map((file, idx) => (
+                          <Chip 
+                            key={idx} 
+                            label={file.name} 
+                            size="small" 
+                            onDelete={() => {
+                              setNewPlot((s) => ({
+                                ...s,
+                                plotImages: s.plotImages.filter((_, i) => i !== idx)
+                              }))
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Conditional fields for Booked/Sold status */}
+                {(newPlot.status === 'booked' || newPlot.status === 'sold') && (
+                  <Box sx={{ p: 2, bgcolor: '#fff3e0', borderRadius: 1, border: '1px solid #ffb74d', mt: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#e65100' }}>
+                      {newPlot.status === 'booked' ? 'Booking Details' : 'Sale Details'}
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <TextField
+                        size="small"
+                        label="Customer Name *"
+                        value={newPlot.customerName}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, customerName: e.target.value }))}
+                        required
+                      />
+                      <TextField
+                        size="small"
+                        label="Customer Number *"
+                        type="tel"
+                        value={newPlot.customerNumber}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))}
+                        placeholder="10 digit mobile number"
+                        required
+                      />
+                      <TextField
+                        size="small"
+                        label="Customer Short Address *"
+                        value={newPlot.customerShortAddress}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))}
+                        required
+                      />
+                      <TextField
+                        size="small"
+                        label="Registry Date (Optional)"
+                        type="date"
+                        value={newPlot.registryDate}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                      <TextField
+                        size="small"
+                        label="Customer Full Address (Optional)"
+                        multiline
+                        rows={2}
+                        value={newPlot.customerFullAddress}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, customerFullAddress: e.target.value }))}
+                      />
+                      <TextField
+                        size="small"
+                        label="More Information (Optional)"
+                        multiline
+                        rows={2}
+                        value={newPlot.moreInformation}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, moreInformation: e.target.value }))}
+                      />
+                      <TextField
+                        size="small"
+                        label="Final Price (Optional)"
+                        type="number"
+                        value={newPlot.finalPrice}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))}
+                      />
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField
+                          size="small"
+                          label="Agent Name (Optional)"
+                          value={newPlot.agentName}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
+                          sx={{ flex: 1 }}
+                        />
+                        <TextField
+                          size="small"
+                          label="Agent Code (Optional)"
+                          value={newPlot.agentCode}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
+                          sx={{ flex: 1 }}
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField
+                          size="small"
+                          label="Advocate Name (Optional)"
+                          value={newPlot.advocateName}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
+                          sx={{ flex: 1 }}
+                        />
+                        <TextField
+                          size="small"
+                          label="Advocate Code (Optional)"
+                          value={newPlot.advocateCode}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
+                          sx={{ flex: 1 }}
+                        />
+                      </Box>
+                      <TextField
+                        size="small"
+                        select
+                        label="Tahsil (Optional)"
+                        value={newPlot.tahsil}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, tahsil: e.target.value }))}
+                      >
+                        <MenuItem value="">Select Tahsil</MenuItem>
+                        {TAHSIL_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                      <TextField
+                        size="small"
+                        select
+                        label="Mode of Payment (Optional)"
+                        value={newPlot.modeOfPayment}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, modeOfPayment: e.target.value }))}
+                      >
+                        <MenuItem value="">Select Mode</MenuItem>
+                        <MenuItem value="cash">Cash</MenuItem>
+                        <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                        <MenuItem value="upi">UPI</MenuItem>
+                        <MenuItem value="cheque">Cheque</MenuItem>
+                        <MenuItem value="card">Card</MenuItem>
+                      </TextField>
+                      <TextField
+                        size="small"
+                        label="Transaction Date & Time (Optional)"
+                        type="datetime-local"
+                        value={newPlot.transactionDate}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, transactionDate: e.target.value }))}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                      <TextField
+                        size="small"
+                        label="Amount Paid (Optional)"
+                        type="number"
+                        value={newPlot.paidAmount}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))}
+                      />
+                      <Box>
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          fullWidth
+                          size="small"
+                        >
+                          Upload Payment Slip/Screenshot (Optional)
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*,.pdf"
+                            onChange={(e) => setNewPlot((s) => ({ ...s, paymentSlip: e.target.files[0] }))}
+                          />
+                        </Button>
+                        {newPlot.paymentSlip && (
+                          <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                            ✓ {newPlot.paymentSlip.name}
+                          </Typography>
+                        )}
+                      </Box>
+                      {newPlot.status === 'sold' && (
+                        <Box>
+                          <Button
+                            variant="outlined"
+                            component="label"
+                            fullWidth
+                            size="small"
+                            color="secondary"
+                          >
+                            Upload Registry Document (Optional)
+                            <input
+                              type="file"
+                              hidden
+                              accept="image/*,.pdf"
+                              onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
+                            />
+                          </Button>
+                          {newPlot.registryDocument && (
+                            <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                              ✓ {newPlot.registryDocument.name}
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Action Buttons */}
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+                <Button onClick={closeEditDialog} variant="outlined">Cancel</Button>
+                <Button variant="contained" onClick={handleEditPlot}>Update Plot</Button>
+              </Box>
+            </>
+          )}
+        </Paper>
+      </Box>
+    )
+  }
+
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
@@ -1032,9 +2041,9 @@ const PlotManagement = () => {
             <TableRow sx={{ bgcolor: '#f5f5f5' }}>
               <TableCell><strong>Plot No</strong></TableCell>
               <TableCell><strong>Colony</strong></TableCell>
-              <TableCell><strong>Sellers / Owners</strong></TableCell>
+              <TableCell><strong>Khatoni Holders / Owners</strong></TableCell>
               <TableCell><strong>Area (Gaj)</strong></TableCell>
-              <TableCell><strong>Ask Price/Gaj</strong></TableCell>
+              <TableCell><strong>Asking Price/Gaj</strong></TableCell>
               <TableCell><strong>Final Price/Gaj</strong></TableCell>
               <TableCell><strong>Total Price</strong></TableCell>
               <TableCell><strong>Remaining Payment</strong></TableCell>
@@ -1064,8 +2073,8 @@ const PlotManagement = () => {
                     <TableCell>{plot.plotNo}</TableCell>
                     <TableCell>{plot.colonyId?.name}</TableCell>
                     <TableCell>
-                      {plot.ownerType === 'seller' ? (
-                        <Chip label="Seller" size="small" color="info" />
+                      {plot.ownerType === 'khatoniHolder' ? (
+                        <Chip label="Khatoni Holder" size="small" color="info" />
                       ) : (
                         <Chip label="Owner" size="small" />
                       )}
@@ -1285,7 +2294,7 @@ const PlotManagement = () => {
               ) : null
             })()}
 
-            {renderSellerInfoSection(newPlot.colonyId)}
+            {renderKhatoniHolderInfoSection(newPlot.colonyId)}
 
             <FormControl component="fieldset" sx={{ mt: 1 }}>
               <FormLabel component="legend">Plot Owner</FormLabel>
@@ -1295,7 +2304,7 @@ const PlotManagement = () => {
                 onChange={(e) => setNewPlot((s) => ({ ...s, ownerType: e.target.value }))}
               >
                 <FormControlLabel value="owner" control={<Radio size="small" />} label="Owner" />
-                <FormControlLabel value="seller" control={<Radio size="small" />} label="Seller" />
+                <FormControlLabel value="khatoniHolder" control={<Radio size="small" />} label="Khatoni Holder" />
               </RadioGroup>
             </FormControl>
 
@@ -1438,13 +2447,84 @@ const PlotManagement = () => {
               )}
             </FormControl>
 
-            <TextField size="small" select label="Status" value={newPlot.status} onChange={(e) => setNewPlot((s) => ({ ...s, status: e.target.value }))}>
-              {STATUS_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField 
+                  fullWidth
+                  size="small" 
+                  select 
+                  label="Plot Type *" 
+                  value={newPlot.plotType} 
+                  onChange={(e) => setNewPlot((s) => ({ ...s, plotType: e.target.value }))}
+                >
+                  <MenuItem value="residential">Residential</MenuItem>
+                  <MenuItem value="commercial">Commercial</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={6}>
+                <TextField 
+                  fullWidth
+                  size="small" 
+                  select 
+                  label="Status" 
+                  value={newPlot.status} 
+                  onChange={(e) => setNewPlot((s) => ({ ...s, status: e.target.value }))}
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
+
+            {/* Plot Images Upload */}
+            <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                Plot Images (Optional)
+              </Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<CloudUpload />}
+                fullWidth
+              >
+                Upload Plot Photos
+                <input
+                  type="file"
+                  hidden
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files)
+                    setNewPlot((s) => ({ ...s, plotImages: files }))
+                  }}
+                />
+              </Button>
+              {newPlot.plotImages && newPlot.plotImages.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" color="success.main">
+                    ✓ {newPlot.plotImages.length} image(s) selected
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                    {newPlot.plotImages.map((file, idx) => (
+                      <Chip 
+                        key={idx} 
+                        label={file.name} 
+                        size="small" 
+                        onDelete={() => {
+                          setNewPlot((s) => ({
+                            ...s,
+                            plotImages: s.plotImages.filter((_, i) => i !== idx)
+                          }))
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
 
             {/* Conditional fields for Booked/Sold status */}
             {(newPlot.status === 'booked' || newPlot.status === 'sold') && (
@@ -1714,7 +2794,7 @@ const PlotManagement = () => {
               ) : null
             })()}
 
-            {renderSellerInfoSection(newPlot.colonyId)}
+            {renderKhatoniHolderInfoSection(newPlot.colonyId)}
 
             <FormControl component="fieldset" sx={{ mt: 1 }}>
               <FormLabel component="legend">Plot Owner</FormLabel>
@@ -1724,7 +2804,7 @@ const PlotManagement = () => {
                 onChange={(e) => setNewPlot((s) => ({ ...s, ownerType: e.target.value }))}
               >
                 <FormControlLabel value="owner" control={<Radio size="small" />} label="Owner" />
-                <FormControlLabel value="seller" control={<Radio size="small" />} label="Seller" />
+                <FormControlLabel value="khatoniHolder" control={<Radio size="small" />} label="Khatoni Holder" />
               </RadioGroup>
             </FormControl>
 
@@ -2175,9 +3255,9 @@ const PlotManagement = () => {
                   <Grid item xs={6}>
                     <Typography variant="body2" color="text.secondary">Owner Type</Typography>
                     <Chip 
-                      label={viewingPlot.ownerType === 'seller' ? 'Seller' : 'Owner'} 
+                      label={viewingPlot.ownerType === 'khatoniHolder' ? 'Khatoni Holder' : 'Owner'} 
                       size="small"
-                      color={viewingPlot.ownerType === 'seller' ? 'info' : 'default'}
+                      color={viewingPlot.ownerType === 'khatoniHolder' ? 'info' : 'default'}
                       sx={{ mt: 0.5 }}
                     />
                   </Grid>
@@ -2190,25 +3270,25 @@ const PlotManagement = () => {
 
               {/* Dimensions */}
               <Box>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'success.main' }}>
                   Dimensions
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={3}>
                     <Typography variant="body2" color="text.secondary">Front Side</Typography>
-                    <Typography variant="body1" fontWeight={600}>{viewingPlot.sideMeasurements?.front || 'N/A'} ft</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.frontSide || 'N/A'} ft</Typography>
                   </Grid>
                   <Grid item xs={3}>
                     <Typography variant="body2" color="text.secondary">Back Side</Typography>
-                    <Typography variant="body1" fontWeight={600}>{viewingPlot.sideMeasurements?.back || 'N/A'} ft</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.backSide || 'N/A'} ft</Typography>
                   </Grid>
                   <Grid item xs={3}>
                     <Typography variant="body2" color="text.secondary">Left Side</Typography>
-                    <Typography variant="body1" fontWeight={600}>{viewingPlot.sideMeasurements?.left || 'N/A'} ft</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.leftSide || 'N/A'} ft</Typography>
                   </Grid>
                   <Grid item xs={3}>
                     <Typography variant="body2" color="text.secondary">Right Side</Typography>
-                    <Typography variant="body1" fontWeight={600}>{viewingPlot.sideMeasurements?.right || 'N/A'} ft</Typography>
+                    <Typography variant="body1" fontWeight={600}>{viewingPlot.rightSide || 'N/A'} ft</Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">Total Area</Typography>

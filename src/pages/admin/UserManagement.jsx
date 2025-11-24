@@ -5,7 +5,7 @@ import {
   TableHead, TableRow, Paper, IconButton, Chip, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Grid, CircularProgress, MenuItem, Switch
 } from '@mui/material'
-import { Add, Edit, Delete, Block, CheckCircle } from '@mui/icons-material'
+import { Add, Edit, Delete, Block, CheckCircle, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
 import mockApiService from '@/services/mockApiService'
 import { checkAuth } from '@/store/slices/authSlice'
@@ -169,6 +169,52 @@ const UserManagement = () => {
   }
 
   if (loading) return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>
+
+  // Show form if dialog is open
+  if (openDialog) {
+    return (
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold">
+            {editMode ? 'Edit User' : 'Add New User'}
+          </Typography>
+          <Button variant="outlined" startIcon={<ArrowBack />} onClick={() => setOpenDialog(false)}>
+            Back to Users
+          </Button>
+        </Box>
+        <Paper sx={{ p: 3 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+            </Grid>
+            {!editMode && (
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required />
+              </Grid>
+            )}
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth select label="City" value={formData.cityId} onChange={(e) => setFormData({ ...formData, cityId: e.target.value })}>
+                <MenuItem value="">Select City</MenuItem>
+                {cities.map((city) => (
+                  <MenuItem key={city._id} value={city._id}>{city.name}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          </Grid>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+            <Button onClick={() => setOpenDialog(false)} variant="outlined">Cancel</Button>
+            <Button variant="contained" onClick={handleSubmit}>{editMode ? 'Update' : 'Add'} User</Button>
+          </Box>
+        </Paper>
+      </Box>
+    )
+  }
 
   return (
     <Box>

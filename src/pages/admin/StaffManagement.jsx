@@ -25,7 +25,7 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material'
-import { Add, Edit, Delete, CloudUpload, GetApp, Print, Search, FileDownload } from '@mui/icons-material'
+import { Add, Edit, Delete, CloudUpload, GetApp, Print, Search, FileDownload, ArrowBack } from '@mui/icons-material'
 import apiService from '@/services/apiService'
 import mockApiService from '@/services/mockApiService'
 import errorService from '@/services/errorService'
@@ -291,41 +291,96 @@ const StaffManagement = () => {
     staffMember.phone.includes(searchTerm)
   ).slice(0, showEntries)
 
-  if (loading) return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>
+  if (loading) {
+  return (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+      <CircularProgress />
+    </Box>
+  )
+}
 
+// Show form if dialog is open
+if (openDialog) {
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" fontWeight="bold">Staff List</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
-          Add Staff
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" fontWeight="bold">
+          {editMode ? 'Edit Staff' : 'Add New Staff'}
+        </Typography>
+        <Button variant="outlined" startIcon={<ArrowBack />} onClick={handleCloseDialog}>
+          Back to Staff List
         </Button>
       </Box>
-
-      {/* Controls */}
-      <Box display="flex" gap={2} mb={3} alignItems="center">
-        <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="body2">Show:</Typography>
-          <TextField
-            select
-            size="small"
-            value={showEntries}
-            onChange={(e) => setShowEntries(e.target.value)}
-            sx={{ minWidth: 80 }}
-          >
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={25}>25</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-            <MenuItem value={100}>100</MenuItem>
-          </TextField>
+      
+      <Paper sx={{ p: 3 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField fullWidth label="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField fullWidth label="Email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField fullWidth label="Phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+          </Grid>
+          {!editMode && (
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required />
+            </Grid>
+          )}
+          <Grid item xs={12} sm={6}>
+            <TextField fullWidth select label="Role" value={formData.roleId} onChange={(e) => setFormData({ ...formData, roleId: e.target.value })} required>
+              {roles.map((role) => (
+                <MenuItem key={role._id} value={role._id}>{role.name}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField fullWidth label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
+          </Grid>
+        </Grid>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+          <Button onClick={handleCloseDialog} variant="outlined">Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit}>{editMode ? 'Update' : 'Add'} Staff</Button>
         </Box>
-        
+      </Paper>
+    </Box>
+  )
+}
+
+return (
+  <Box>
+    <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+      <Typography variant="h4" fontWeight="bold">Staff Management</Typography>
+      <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
+        Add Staff
+      </Button>
+    </Box>
+
+    {/* Controls */}
+    <Box display="flex" gap={2} mb={3} alignItems="center">
+      <Box display="flex" alignItems="center" gap={1}>
+        <Typography variant="body2">Show:</Typography>
         <TextField
+          select
           size="small"
-          placeholder="Search"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
+          value={showEntries}
+          onChange={(e) => setShowEntries(e.target.value)}
+          sx={{ minWidth: 80 }}
+        >
+          <MenuItem value={10}>10</MenuItem>
+          <MenuItem value={25}>25</MenuItem>
+          <MenuItem value={50}>50</MenuItem>
+          <MenuItem value={100}>100</MenuItem>
+        </TextField>
+      </Box>
+      
+      <TextField
+        size="small"
+        placeholder="Search"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        InputProps={{
             startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
           }}
           sx={{ minWidth: 200 }}

@@ -20,7 +20,7 @@ import {
   Grid,
   CircularProgress
 } from '@mui/material'
-import { Add, Edit, Delete, Visibility } from '@mui/icons-material'
+import { Add, Edit, Delete, Visibility, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 import { validateRequired, validateNumeric, validatePhone, validateMinLength, validateURL } from '@/utils/validation'
@@ -28,14 +28,14 @@ import { validateRequired, validateNumeric, validatePhone, validateMinLength, va
 const ColonyManagement = () => {
   const [colonies, setColonies] = useState([])
   const [loading, setLoading] = useState(true)
-  const [openDialog, setOpenDialog] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [currentColony, setCurrentColony] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     address: '',
     purchasePrice: '',
-    sellers: [], 
+    khatoniHolders: [],
     sideMeasurements: {
       front: '',
       back: '',
@@ -58,8 +58,8 @@ const ColonyManagement = () => {
     basePricePerGaj: '',
     status: 'planning'
   })
-  
-  const [newSeller, setNewSeller] = useState({ name: '', address: '', mobile: '' })
+
+  const [newKhatoniHolder, setNewKhatoniHolder] = useState({ name: '', address: '', mobile: '' })
   const [errors, setErrors] = useState({})
 
   // Clear error for a specific field
@@ -88,8 +88,8 @@ const ColonyManagement = () => {
       totalPlots,
       saleablePlots,
       ratePerGaj,
-      sellerDetails: Array.isArray(colony.sellers) && colony.sellers.length > 0
-        ? colony.sellers
+      khatoniHolderDetails: Array.isArray(colony.khatoniHolders) && colony.khatoniHolders.length > 0
+        ? colony.khatoniHolders
         : colony.createdBy
           ? [{ name: colony.createdBy.name, mobile: colony.createdBy.email || '', id: colony.createdBy._id }]
           : []
@@ -136,9 +136,9 @@ const ColonyManagement = () => {
         name: colony.name,
         address: colony.address || colony.location?.address || '',
         purchasePrice: colony.purchasePrice || '',
-        sellers: colony.sellers || (colony.sellerName ? [{ 
-          name: colony.sellerName, 
-          address: colony.sellerAddress || '', 
+        khatoniHolders: colony.khatoniHolders || (colony.sellerName ? [{
+          name: colony.sellerName,
+          address: colony.sellerAddress || '',
           mobile: colony.sellerMobile || ''
         }] : []),
         sideMeasurements: colony.sideMeasurements || { front: '', back: '', left: '', right: '' },
@@ -156,7 +156,7 @@ const ColonyManagement = () => {
         name: '',
         address: '',
         purchasePrice: '',
-        sellers: [],
+        khatoniHolders: [],
         sideMeasurements: { front: '', back: '', left: '', right: '' },
         location: { address: '', city: '', state: '', pincode: '', coordinates: { lat: '', lng: '' } },
         latitude: '',
@@ -166,31 +166,31 @@ const ColonyManagement = () => {
         status: 'planning'
       })
     }
-    setOpenDialog(true)
+    setShowForm(true)
   }
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
+  const handleCloseForm = () => {
+    setShowForm(false)
     setCurrentColony(null)
     setErrors({}) // Clear all errors
-    // Reset new seller form
-    setNewSeller({ name: '', address: '', mobile: '' })
+    // Reset new khatoni holder form
+    setNewKhatoniHolder({ name: '', address: '', mobile: '' })
   }
-  
-  // Seller management functions
-  const addSeller = () => {
-    if (newSeller.name && newSeller.address && newSeller.mobile) {
-      setFormData({ ...formData, sellers: [...formData.sellers, { ...newSeller, id: Date.now() }] })
-      setNewSeller({ name: '', address: '', mobile: '' })
+
+  // Khatoni Holder management functions
+  const addKhatoniHolder = () => {
+    if (newKhatoniHolder.name && newKhatoniHolder.address && newKhatoniHolder.mobile) {
+      setFormData({ ...formData, khatoniHolders: [...formData.khatoniHolders, { ...newKhatoniHolder, id: Date.now() }] })
+      setNewKhatoniHolder({ name: '', address: '', mobile: '' })
     } else {
-      toast.error('Please fill all seller fields')
+      toast.error('Please fill all Khatoni Holder fields')
     }
   }
-  
-  const removeSeller = (index) => {
-    setFormData({ ...formData, sellers: formData.sellers.filter((_, i) => i !== index) })
+
+  const removeKhatoniHolder = (id) => {
+    setFormData({ ...formData, khatoniHolders: formData.khatoniHolders.filter(s => s.id !== id) })
   }
-  
+
   const calculateColonyArea = () => {
     const { front, back, left, right } = formData.sideMeasurements
     if (front && back && left && right) {
@@ -209,15 +209,15 @@ const ColonyManagement = () => {
     let isValid = true
 
     // Required fields validation
-    const nameError = validateRequired(formData.name, 'Colony Name') || 
-                      validateMinLength(formData.name, 3, 'Colony Name')
+    const nameError = validateRequired(formData.name, 'Colony Name') ||
+      validateMinLength(formData.name, 3, 'Colony Name')
     if (nameError) {
       newErrors.name = nameError
       isValid = false
     }
 
     const addressError = validateRequired(formData.address, 'Address') ||
-                         validateMinLength(formData.address, 10, 'Address')
+      validateMinLength(formData.address, 10, 'Address')
     if (addressError) {
       newErrors.address = addressError
       isValid = false
@@ -307,17 +307,17 @@ const ColonyManagement = () => {
       const totalAreaSqFt = colonyArea ? Number(colonyArea.areaGaj) * SQFT_PER_GAJ : undefined
       const pricePerSqFt = formData.basePricePerGaj ? Number(formData.basePricePerGaj) / SQFT_PER_GAJ : undefined
 
-      // Clean sellers data - remove temporary 'id' field
-      const cleanedSellers = formData.sellers.map(seller => {
-        const { id, ...sellerData } = seller;
-        return sellerData;
+      // Clean khatoni holders data - remove temporary 'id' field
+      const cleanedKhatoniHolders = formData.khatoniHolders.map(holder => {
+        const { id, ...holderData } = holder;
+        return holderData;
       });
 
       const payload = {
         name: formData.name,
         address: formData.address,
         purchasePrice: formData.purchasePrice,
-        sellers: cleanedSellers,
+        khatoniHolders: cleanedKhatoniHolders,
         totalArea: totalAreaSqFt,
         pricePerSqFt,
         layoutUrl: formData.layoutUrl,
@@ -346,7 +346,7 @@ const ColonyManagement = () => {
         })
       }
 
-      handleCloseDialog()
+      handleCloseForm()
       fetchColonies()
     } catch (error) {
       console.error('Error saving colony:', error)
@@ -396,111 +396,25 @@ const ColonyManagement = () => {
     )
   }
 
-  return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" fontWeight="bold">
-          Colony Management
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add Colony
-        </Button>
-      </Box>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell><strong>Colony</strong></TableCell>
-              <TableCell><strong>Total Land (Gaj)</strong></TableCell>
-              <TableCell><strong>plots</strong></TableCell>
-              <TableCell><strong>Rate / Gaj</strong></TableCell>
-              <TableCell><strong>Seller</strong></TableCell>
-              <TableCell><strong>Status</strong></TableCell>
-              <TableCell align="right"><strong>Action</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {colonies.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} align="center">
-                  No colonies found. Click "Add Colony" to create one.
-                </TableCell>
-              </TableRow>
-            ) : (
-              colonies.map((colony) => (
-                <TableRow key={colony._id}>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>{colony.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {colony.address || colony.location?.address || '-'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {colony.city?.name || '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{colony.totalLandAreaGaj ? colony.totalLandAreaGaj.toLocaleString('en-IN') : '-'}</TableCell>
-                  <TableCell>{colony.totalPlots ?? '-'}</TableCell>
-                  <TableCell>₹{colony.ratePerGaj ? colony.ratePerGaj.toLocaleString('en-IN') : '-'}</TableCell>
-                  <TableCell>
-                    {colony.sellerDetails && colony.sellerDetails.length > 0 ? (
-                      <Box>
-                        {colony.sellerDetails.map((seller, idx) => (
-                          <Box key={seller.id || idx} mb={0.5}>
-                            <Typography variant="body2">
-                              {seller.name || '-'}
-                            </Typography>
-                            {seller.mobile && (
-                              <Typography variant="caption" color="text.secondary">
-                                {seller.mobile}
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
-                      </Box>
-                    ) : (
-                      <Typography variant="body2">-</Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={colony.status.replace('_', ' ').toUpperCase()}
-                      color={getStatusColor(colony.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton size="small" color="primary" onClick={() => handleOpenDialog(colony)}>
-                      <Visibility fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleOpenDialog(colony)}>
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDelete(colony._id)}>
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Add/Edit Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>{editMode ? 'Edit Colony' : 'Add New Colony'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-
+  // Show form if showForm is true
+  if (showForm) {
+    return (
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold">
+            {editMode ? 'Edit Land' : 'Add New Land'}
+          </Typography>
+          <Button variant="outlined" startIcon={<ArrowBack />} onClick={handleCloseForm}>
+            Back to Land List
+          </Button>
+        </Box>
+        
+        <Paper sx={{ p: 3 }}>
+          <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Colony Name *"
+                label="Land Name *"
                 value={formData.name}
                 onChange={(e) => {
                   setFormData({ ...formData, name: e.target.value })
@@ -511,32 +425,10 @@ const ColonyManagement = () => {
                 required
               />
             </Grid>
-
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Address *"
-                value={formData.address}
-                onChange={(e) => {
-                  setFormData({ ...formData, address: e.target.value })
-                  clearError('address')
-                }}
-                error={!!errors.address}
-                helperText={errors.address}
-                required
-              />
-            </Grid>
-            
-            {/* Seller & Purchase Details */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Seller & Purchase Details
-              </Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Purchase Price (₹) (Optional)"
+                label="Purchase Price (₹)"
                 type="number"
                 value={formData.purchasePrice}
                 onChange={(e) => {
@@ -548,105 +440,17 @@ const ColonyManagement = () => {
                 placeholder="Total purchase amount"
               />
             </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Calculated Total Area (Gaj)"
-                value={calculateColonyArea()?.areaGaj || ''}
-                InputProps={{ readOnly: true }}
-                helperText="Area auto-calculated from the side measurements"
-              />
-            </Grid>
-            {/* Multiple Sellers Section */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Sellers Information
-              </Typography>
-              
-              {/* Existing Sellers */}
-              {formData.sellers.map((seller, index) => (
-                <Box key={seller.id || index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      Seller {index + 1}
-                    </Typography>
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={() => removeSeller(index)}
-                    >
-                      Remove
-                    </Button>
-                  </Box>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <Typography variant="body2"><strong>Name:</strong> {seller.name}</Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="body2"><strong>Mobile:</strong> {seller.mobile}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2"><strong>Address:</strong> {seller.address}</Typography>
-                    </Grid>
-                  </Grid>
-                </Box>
-              ))}
-              
-              {/* Add New Seller */}
-              <Box sx={{ p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Add New Seller
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={5}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Seller Name"
-                      value={newSeller.name}
-                      onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={3}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Mobile"
-                      value={newSeller.mobile}
-                      onChange={(e) => setNewSeller({ ...newSeller, mobile: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={4}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Address"
-                      value={newSeller.address}
-                      onChange={(e) => setNewSeller({ ...newSeller, address: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      variant="contained"
-                      onClick={addSeller}
-                      sx={{ width: 'auto', px: 3 }}
-                    >
-                      Add Seller
-                    </Button>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Grid>
-            {/* Colony Location */}
+
+            {/* Land Location */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Colony Location
+                Land Location
               </Typography>
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Location Address"
+                label="Address*"
                 value={formData.location.address}
                 onChange={(e) => setFormData({
                   ...formData,
@@ -687,46 +491,92 @@ const ColonyManagement = () => {
                 })}
               />
             </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Latitude"
-                type="number"
-                value={formData.latitude}
-                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                placeholder="e.g., 28.6139"
-                required
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Longitude"
-                type="number"
-                value={formData.longitude}
-                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                placeholder="e.g., 77.2090"
-                required
-              />
-            </Grid>
+
+            {/* Multiple Khatoni Holders Section */}
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Layout Image URL (Optional)"
-                value={formData.layoutUrl}
-                onChange={(e) => {
-                  setFormData({ ...formData, layoutUrl: e.target.value })
-                  clearError('layoutUrl')
-                }}
-                error={!!errors.layoutUrl}
-                helperText={errors.layoutUrl}
-                placeholder="https://example.com/layout-image.jpg"
-              />
+              <Typography variant="h6" gutterBottom>
+                Khatoni Holders Information
+              </Typography>
+
+              {/* Existing Khatoni Holders */}
+              {formData.khatoniHolders.map((holder, index) => (
+                <Box key={holder.id || index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      Khatoni Holder {index + 1}
+                    </Typography>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => removeKhatoniHolder(holder.id)}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="body2"><strong>Name:</strong> {holder.name}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2"><strong>Mobile:</strong> {holder.mobile}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2"><strong>Address:</strong> {holder.address}</Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              ))}
+
+              {/* Add New Khatoni Holder */}
+              <Box sx={{ p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Add New Khatoni Holder
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={5}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Khatoni Holder Name"
+                      value={newKhatoniHolder.name}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, name: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={3}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Mobile"
+                      value={newKhatoniHolder.mobile}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, mobile: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Address"
+                      value={newKhatoniHolder.address}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, address: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      variant="contained"
+                      onClick={addKhatoniHolder}
+                      sx={{ width: 'auto', px: 3 }}
+                    >
+                      Add Khatoni Holder
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
             </Grid>
+
             <Grid item xs={6}>
               <TextField
                 fullWidth
-                label="Base Price per Gaj (Optional)"
+                label="Asking Price per Gaj (Optional)"
                 type="number"
                 value={formData.basePricePerGaj}
                 onChange={(e) => {
@@ -753,11 +603,11 @@ const ColonyManagement = () => {
                 <option value="on_hold">On Hold</option>
               </TextField>
             </Grid>
-            
+
             {/* Side Measurements */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Colony Side Measurements (in Feet)
+                Land Side Measurements (in Feet)
               </Typography>
             </Grid>
             <Grid item xs={3}>
@@ -815,16 +665,461 @@ const ColonyManagement = () => {
                 </Paper>
               </Grid>
             )}
-            
           </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editMode ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          
+          <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
+            <Button onClick={handleCloseForm} size="large">Cancel</Button>
+            <Button onClick={handleSubmit} variant="contained" size="large">
+              {editMode ? 'Update Colony' : 'Create Colony'}
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    )
+  }
+
+  return (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Typography variant="h4" fontWeight="bold">
+          Land Management
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={() => handleOpenDialog()}
+        >
+          Add Land
+        </Button>
+      </Box>
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Land</strong></TableCell>
+              <TableCell><strong>Total Land (Gaj)</strong></TableCell>
+              <TableCell><strong>plots</strong></TableCell>
+              <TableCell><strong>asking price Gaj</strong></TableCell>
+              <TableCell><strong>Khatoni Holder</strong></TableCell>
+              <TableCell><strong>Status</strong></TableCell>
+              <TableCell align="right"><strong>Action</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {colonies.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} align="center">
+                  No colonies found. Click "Add Colony" to create one.
+                </TableCell>
+              </TableRow>
+            ) : (
+              colonies.map((colony) => (
+                <TableRow key={colony._id}>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>{colony.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {colony.address || colony.location?.address || '-'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {colony.city?.name || '-'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{colony.totalLandAreaGaj ? colony.totalLandAreaGaj.toLocaleString('en-IN') : '-'}</TableCell>
+                  <TableCell>{colony.totalPlots ?? '-'}</TableCell>
+                  <TableCell>₹{colony.ratePerGaj ? colony.ratePerGaj.toLocaleString('en-IN') : '-'}</TableCell>
+                  <TableCell>
+                    {colony.khatoniHolderDetails && colony.khatoniHolderDetails.length > 0 ? (
+                      <Box>
+                        {colony.khatoniHolderDetails.map((holder, idx) => (
+                          <Box key={holder.id || idx} mb={0.5}>
+                            <Typography variant="body2">
+                              {holder.name || '-'}
+                            </Typography>
+                            {holder.mobile && (
+                              <Typography variant="caption" color="text.secondary">
+                                {holder.mobile}
+                              </Typography>
+                            )}
+                          </Box>
+                        ))}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">-</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={colony.status.replace('_', ' ').toUpperCase()}
+                      color={getStatusColor(colony.status)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton size="small" color="primary" onClick={() => handleOpenDialog(colony)}>
+                      <Visibility fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleOpenDialog(colony)}>
+                      <Edit fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" color="error" onClick={() => handleDelete(colony._id)}>
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Add/Edit Form - Full Screen */}
+      {showForm && (
+        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'white', zIndex: 1300, overflow: 'auto' }}>
+          <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+              <Typography variant="h4" fontWeight="bold">
+                {editMode ? 'Edit Land' : 'Add New Land'}
+              </Typography>
+              <Button variant="outlined" onClick={handleCloseForm}>Cancel</Button>
+            </Box>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Land Name *"
+                value={formData.name}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value })
+                  clearError('name')
+                }}
+                error={!!errors.name}
+                helperText={errors.name}
+                required
+              />
+            </Grid>
+               <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Purchase Price (₹)"
+                type="number"
+                value={formData.purchasePrice}
+                onChange={(e) => {
+                  setFormData({ ...formData, purchasePrice: e.target.value })
+                  clearError('purchasePrice')
+                }}
+                error={!!errors.purchasePrice}
+                helperText={errors.purchasePrice}
+                placeholder="Total purchase amount"
+              />
+            </Grid>
+
+            {/* <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address *"
+                value={formData.address}
+                onChange={(e) => {
+                  setFormData({ ...formData, address: e.target.value })
+                  clearError('address')
+                }}
+                error={!!errors.address}
+                helperText={errors.address}
+                required
+              />
+            </Grid> */}
+             {/* land Location */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
+                Land Location
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address*"
+                value={formData.location.address}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  location: { ...formData.location, address: e.target.value }
+                })}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="City"
+                value={formData.location.city}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  location: { ...formData.location, city: e.target.value }
+                })}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="State"
+                value={formData.location.state}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  location: { ...formData.location, state: e.target.value }
+                })}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="Pincode"
+                value={formData.location.pincode}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  location: { ...formData.location, pincode: e.target.value }
+                })}
+              />
+            </Grid>
+         
+
+            {/* Seller & Purchase Details */}
+            {/* <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
+                Seller & Purchase Details
+              </Typography>
+            </Grid> */}
+
+            {/* <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Calculated Total Area (Gaj)"
+                value={calculateColonyArea()?.areaGaj || ''}
+                InputProps={{ readOnly: true }}
+                helperText="Area auto-calculated from the side measurements"
+              />
+            </Grid> */}
+            {/* Multiple Khatoni Holders Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>
+                Khatoni Holders Information
+              </Typography>
+
+              {/* Existing Khatoni Holders */}
+              {formData.khatoniHolders.map((holder, index) => (
+                <Box key={holder.id || index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      Khatoni Holder {index + 1}
+                    </Typography>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => removeKhatoniHolder(holder.id)}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="body2"><strong>Name:</strong> {holder.name}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2"><strong>Mobile:</strong> {holder.mobile}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2"><strong>Address:</strong> {holder.address}</Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              ))}
+
+              {/* Add New Khatoni Holder */}
+              <Box sx={{ p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Add New Khatoni Holder
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={5}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Khatoni Holder Name"
+                      value={newKhatoniHolder.name}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, name: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={3}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Mobile"
+                      value={newKhatoniHolder.mobile}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, mobile: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Address"
+                      value={newKhatoniHolder.address}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, address: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      variant="contained"
+                      onClick={addKhatoniHolder}
+                      sx={{ width: 'auto', px: 3 }}
+                    >
+                      Add Khatoni Holder
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Grid>
+           
+
+            {/* <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Latitude"
+                type="number"
+                value={formData.latitude}
+                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                placeholder="e.g., 28.6139"
+                required
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Longitude"
+                type="number"
+                value={formData.longitude}
+                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                placeholder="e.g., 77.2090"
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Layout Image URL (Optional)"
+                value={formData.layoutUrl}
+                onChange={(e) => {
+                  setFormData({ ...formData, layoutUrl: e.target.value })
+                  clearError('layoutUrl')
+                }}
+                error={!!errors.layoutUrl}
+                helperText={errors.layoutUrl}
+                placeholder="https://example.com/layout-image.jpg"
+              />
+            </Grid> */}
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Asking
+                 Price per Gaj (Optional)"
+                type="number"
+                value={formData.basePricePerGaj}
+                onChange={(e) => {
+                  setFormData({ ...formData, basePricePerGaj: e.target.value })
+                  clearError('basePricePerGaj')
+                }}
+                error={!!errors.basePricePerGaj}
+                helperText={errors.basePricePerGaj}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Status"
+                select
+                SelectProps={{ native: true }}
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value="planning">Planning</option>
+                <option value="under_construction">Under Construction</option>
+                <option value="ready_to_sell">Ready to Sell</option>
+                <option value="sold_out">Sold Out</option>
+                <option value="on_hold">On Hold</option>
+              </TextField>
+            </Grid>
+
+            {/* Side Measurements */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
+                Land Side Measurements (in Feet)
+              </Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="Front (ft)"
+                type="number"
+                value={formData.sideMeasurements.front}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  sideMeasurements: { ...formData.sideMeasurements, front: e.target.value }
+                })}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="Back (ft)"
+                type="number"
+                value={formData.sideMeasurements.back}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  sideMeasurements: { ...formData.sideMeasurements, back: e.target.value }
+                })}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="Left (ft)"
+                type="number"
+                value={formData.sideMeasurements.left}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  sideMeasurements: { ...formData.sideMeasurements, left: e.target.value }
+                })}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="Right (ft)"
+                type="number"
+                value={formData.sideMeasurements.right}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  sideMeasurements: { ...formData.sideMeasurements, right: e.target.value }
+                })}
+              />
+            </Grid>
+            {calculateColonyArea() && (
+              <Grid item xs={12}>
+                <Paper sx={{ p: 2, bgcolor: 'success.light', color: 'white' }}>
+                  <Typography variant="body2">Total Area: <strong>{calculateColonyArea().areaFeet} sq ft = {calculateColonyArea().areaGaj} Gaj</strong></Typography>
+                </Paper>
+              </Grid>
+            )}
+
+          </Grid>
+          
+          <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
+            <Button onClick={handleCloseForm} size="large">Cancel</Button>
+            <Button onClick={handleSubmit} variant="contained" size="large">
+              {editMode ? 'Update Colony' : 'Create Colony'}
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+      )}
     </Box>
   )
 }

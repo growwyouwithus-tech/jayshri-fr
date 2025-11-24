@@ -160,9 +160,9 @@ const MainLayout = () => {
     // Properties submenu
     if (hasPermission('colony_read') || hasPermission('colonies_read')) {
       const propertiesSubmenu = []
-      if (hasPermission('colony_read') || hasPermission('colonies_read')) propertiesSubmenu.push({ text: 'All Properties', path: '/admin/properties' })
-      if (hasPermission('city_read') || hasPermission('cities_read')) propertiesSubmenu.push({ text: 'All Cities', path: '/admin/cities' })
-      if (hasPermission('city_read') || hasPermission('cities_read')) propertiesSubmenu.push({ text: 'All Areas', path: '/admin/areas' })
+      if (hasPermission('colony_read') || hasPermission('colonies_read')) propertiesSubmenu.push({ text: 'Mansion Properties', path: '/admin/properties' })
+      if (hasPermission('city_read') || hasPermission('cities_read')) propertiesSubmenu.push({ text: 'Create Cities', path: '/admin/cities' })
+      // if (hasPermission('city_read') || hasPermission('cities_read')) propertiesSubmenu.push({ text: 'All Areas', path: '/admin/areas' })
       
       if (propertiesSubmenu.length > 0) {
         dynamicItems.push({ 

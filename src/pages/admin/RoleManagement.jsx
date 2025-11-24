@@ -5,7 +5,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
   Grid, FormControlLabel, Checkbox, MenuItem
 } from '@mui/material'
-import { Add, Edit, Delete, Visibility } from '@mui/icons-material'
+import { Add, Edit, Delete, Visibility, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -195,6 +195,59 @@ const RoleManagement = () => {
   }
 
   if (loading) return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>
+
+  // Show form if dialog is open
+  if (openDialog) {
+    return (
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold">
+            {editMode ? 'Edit Role' : 'Add New Role'}
+          </Typography>
+          <Button variant="outlined" startIcon={<ArrowBack />} onClick={handleCloseDialog}>
+            Back to Roles
+          </Button>
+        </Box>
+        <Paper sx={{ p: 3 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Role Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField fullWidth multiline rows={3} label="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" fontWeight={600} mb={1}>Permissions</Typography>
+              <Box display="flex" flexWrap="wrap" gap={1}>
+                {['create', 'read', 'update', 'delete', 'manage_users', 'manage_roles'].map((perm) => (
+                  <FormControlLabel
+                    key={perm}
+                    control={
+                      <Checkbox
+                        checked={formData.permissions.includes(perm)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({ ...formData, permissions: [...formData.permissions, perm] })
+                          } else {
+                            setFormData({ ...formData, permissions: formData.permissions.filter(p => p !== perm) })
+                          }
+                        }}
+                      />
+                    }
+                    label={perm.replace('_', ' ').toUpperCase()}
+                  />
+                ))}
+              </Box>
+            </Grid>
+          </Grid>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+            <Button onClick={handleCloseDialog} variant="outlined">Cancel</Button>
+            <Button variant="contained" onClick={handleSubmit}>{editMode ? 'Update' : 'Add'} Role</Button>
+          </Box>
+        </Paper>
+      </Box>
+    )
+  }
 
   return (
     <Box>

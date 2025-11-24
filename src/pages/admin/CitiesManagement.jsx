@@ -40,6 +40,11 @@ const CitiesManagement = () => {
     tagline: '',
     priority: 0
   })
+  const [selectedCity, setSelectedCity] = useState(null)
+  const [showAreas, setShowAreas] = useState(false)
+  const [areaDialogOpen, setAreaDialogOpen] = useState(false)
+  const [areaFormData, setAreaFormData] = useState({ name: '', cityId: '' })
+  const [editingArea, setEditingArea] = useState(null)
   const [errors, setErrors] = useState({})
 
   const clearError = (fieldName) => {
@@ -169,6 +174,51 @@ const CitiesManagement = () => {
     fetchCities()
   }
 
+  const handleAreaSubmit = async () => {
+    if (!areaFormData.name.trim()) {
+      toast.error('Area name is required')
+      return
+    }
+
+    try {
+      const updatedAreas = editingArea
+        ? selectedCity.areas.map(a => a._id === editingArea._id ? { ...a, name: areaFormData.name } : a)
+        : [...(selectedCity.areas || []), { name: areaFormData.name, _id: Date.now().toString() }]
+
+      await apiService.cities.update(selectedCity._id, { areas: updatedAreas })
+      toast.success(editingArea ? 'Area updated successfully' : 'Area added successfully')
+      
+      setAreaDialogOpen(false)
+      setAreaFormData({ name: '', cityId: '' })
+      setEditingArea(null)
+      fetchCities()
+      
+      // Update selected city
+      const updatedCity = { ...selectedCity, areas: updatedAreas }
+      setSelectedCity(updatedCity)
+    } catch (error) {
+      toast.error('Failed to save area')
+      console.error(error)
+    }
+  }
+
+  const handleDeleteArea = async (areaId) => {
+    if (!window.confirm('Are you sure you want to delete this area?')) return
+
+    try {
+      const updatedAreas = selectedCity.areas.filter(a => (a._id || a.name) !== areaId)
+      await apiService.cities.update(selectedCity._id, { areas: updatedAreas })
+      toast.success('Area deleted successfully')
+      
+      fetchCities()
+      const updatedCity = { ...selectedCity, areas: updatedAreas }
+      setSelectedCity(updatedCity)
+    } catch (error) {
+      toast.error('Failed to delete area')
+      console.error(error)
+    }
+  }
+
   const filteredCities = cities.filter(city =>
     city.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (city.tagline && city.tagline.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -179,7 +229,7 @@ const CitiesManagement = () => {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" fontWeight="bold">Cities</Typography>
+        <Typography variant="h4" fontWeight="bold">Cities & Areas Management</Typography>
         <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
           Add City
         </Button>
@@ -221,8 +271,9 @@ const CitiesManagement = () => {
           <TableHead>
             <TableRow>
               <TableCell><strong>SL</strong></TableCell>
-              <TableCell><strong>Name</strong></TableCell>
-              <TableCell><strong>Tagline</strong></TableCell>
+              <TableCell><strong>City Name</strong></TableCell>
+              <TableCell><strong>State</strong></TableCell>
+              <TableCell><strong>Areas</strong></TableCell>
               <TableCell><strong>Priority</strong></TableCell>
               <TableCell align="right"><strong>Action</strong></TableCell>
             </TableRow>
@@ -238,8 +289,25 @@ const CitiesManagement = () => {
               filteredCities.map((city, index) => (
                 <TableRow key={city._id}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{city.name}</TableCell>
-                  <TableCell>{city.tagline || '-'}</TableCell>
+                  <TableCell>
+                    <Typography variant="body1" fontWeight={600}>{city.name}</Typography>
+                    {city.tagline && (
+                      <Typography variant="caption" color="text.secondary">{city.tagline}</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>{city.state}</TableCell>
+                  <TableCell>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      onClick={() => {
+                        setSelectedCity(city)
+                        setShowAreas(true)
+                      }}
+                    >
+                      Manage Areas ({city.areas?.length || 0})
+                    </Button>
+                  </TableCell>
                   <TableCell>{city.priority || 0}</TableCell>
                   <TableCell align="right">
                     <IconButton size="small" onClick={() => handleOpenDialog(city)} sx={{ color: 'orange' }}>
@@ -256,12 +324,12 @@ const CitiesManagement = () => {
         </Table>
       </TableContainer>
 
-      {/* Add/Edit Dialog */}
+      {/* Add/Edit City Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>{editMode ? 'Edit City' : 'Add City'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="City Name *"
@@ -275,7 +343,7 @@ const CitiesManagement = () => {
                 required
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="State *"
@@ -289,7 +357,7 @@ const CitiesManagement = () => {
                 required
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Priority (Optional)"
@@ -320,6 +388,100 @@ const CitiesManagement = () => {
           <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
           <Button onClick={handleSubmit} variant="contained">
             {editMode ? 'Update' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Areas Management Dialog */}
+      <Dialog open={showAreas} onClose={() => { setShowAreas(false); setSelectedCity(null) }} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Manage Areas - {selectedCity?.name}</Typography>
+            <Button 
+              variant="contained" 
+              size="small" 
+              startIcon={<Add />}
+              onClick={() => {
+                setAreaFormData({ name: '', cityId: selectedCity?._id })
+                setEditingArea(null)
+                setAreaDialogOpen(true)
+              }}
+            >
+              Add Area
+            </Button>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <TableContainer component={Paper} sx={{ mt: 2 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>SL</strong></TableCell>
+                  <TableCell><strong>Area Name</strong></TableCell>
+                  <TableCell align="right"><strong>Action</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(!selectedCity?.areas || selectedCity.areas.length === 0) ? (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      No areas found. Click "Add Area" to create one.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  selectedCity.areas.map((area, index) => (
+                    <TableRow key={area._id || index}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{area.name}</TableCell>
+                      <TableCell align="right">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => {
+                            setAreaFormData({ name: area.name, cityId: selectedCity._id })
+                            setEditingArea(area)
+                            setAreaDialogOpen(true)
+                          }}
+                          sx={{ color: 'orange' }}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          onClick={() => handleDeleteArea(area._id || area.name)}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setShowAreas(false); setSelectedCity(null) }}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add/Edit Area Dialog */}
+      <Dialog open={areaDialogOpen} onClose={() => setAreaDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{editingArea ? 'Edit Area' : 'Add Area'}</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Area Name *"
+            value={areaFormData.name}
+            onChange={(e) => setAreaFormData({ ...areaFormData, name: e.target.value })}
+            sx={{ mt: 2 }}
+            required
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAreaDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleAreaSubmit} variant="contained">
+            {editingArea ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>
