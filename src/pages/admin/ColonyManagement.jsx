@@ -216,10 +216,10 @@ const ColonyManagement = () => {
       isValid = false
     }
 
-    const addressError = validateRequired(formData.address, 'Address') ||
-      validateMinLength(formData.address, 10, 'Address')
+    const addressError = validateRequired(formData.location.address, 'Land Location Address') ||
+      validateMinLength(formData.location.address, 10, 'Land Location Address')
     if (addressError) {
-      newErrors.address = addressError
+      newErrors.locationAddress = addressError
       isValid = false
     }
 
@@ -298,8 +298,8 @@ const ColonyManagement = () => {
     // Validate form first
     if (!validateForm()) return
     try {
-      if (!formData.address) {
-        toast.error('Address is required')
+      if (!formData.location.address) {
+        toast.error('Land Location Address is required')
         return
       }
 
@@ -315,7 +315,8 @@ const ColonyManagement = () => {
 
       const payload = {
         name: formData.name,
-        address: formData.address,
+        address: formData.location.address,
+        location: formData.location,
         purchasePrice: formData.purchasePrice,
         khatoniHolders: cleanedKhatoniHolders,
         totalArea: totalAreaSqFt,

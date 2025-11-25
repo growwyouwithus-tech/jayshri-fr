@@ -307,8 +307,8 @@ const PropertyManagement = () => {
         }
         break
       case 2:
-        if (!formData.tagline || !formData.description || !formData.cityId) {
-          toast.error('Please fill all required fields')
+        if (!formData.tagline || !formData.description) {
+          toast.error('Please fill tagline and description')
           return false
         }
         break
@@ -325,9 +325,13 @@ const PropertyManagement = () => {
   }
 
   const handleSubmit = async () => {
+    console.log('🚀 Property Submit Started')
+    console.log('📝 Form Data:', formData)
+    
     setLoading(true)
     try {
       const payload = new FormData()
+      console.log('📦 Preparing payload...')
       
       Object.keys(formData).forEach(key => {
         if (['facilities', 'roads', 'parks', 'categories'].includes(key)) {
@@ -348,20 +352,43 @@ const PropertyManagement = () => {
       })
 
       if (editMode && currentProperty) {
-        await axios.put(`/properties/${currentProperty._id}`, payload, {
+        console.log('✏️ Updating property:', currentProperty._id)
+        const response = await axios.put(`/properties/${currentProperty._id}`, payload, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
+        console.log('✅ Update Response:', response.data)
         toast.success('Property updated successfully!')
       } else {
-        await axios.post('/properties', payload, {
+        console.log('➕ Creating new property')
+        const response = await axios.post('/properties', payload, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
+        console.log('✅ Create Response:', response.data)
         toast.success('Property created successfully!')
       }
       
+      // Refresh property list
+      console.log('🔄 Refreshing property list...')
+      await fetchProperties()
+      console.log('✅ Property list refreshed')
+      
       setActiveStep(5)
+      
+      // Auto-close dialog after 2 seconds to show updated list
+      setTimeout(() => {
+        resetFormAndCloseDialog()
+      }, 2000)
     } catch (error) {
-      toast.error(error.response?.data?.message || `Failed to ${editMode ? 'update' : 'create'} property`)
+      console.error('❌ Property Submit Error:', error)
+      console.error('❌ Error Response:', error.response?.data)
+      console.error('❌ Error Status:', error.response?.status)
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.errors?.[0]?.message
+        || error.message
+        || `Failed to ${editMode ? 'update' : 'create'} property`
+      
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -1118,11 +1145,12 @@ const PropertyManagement = () => {
               </Button>
               <Button
                 variant="contained"
-                onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}
-                endIcon={activeStep === steps.length - 1 ? <CheckCircle /> : <NavigateNext />}
+                onClick={activeStep === 4 ? handleSubmit : handleNext}
+                endIcon={activeStep === 4 ? <CheckCircle /> : <NavigateNext />}
                 size="large"
+                disabled={loading}
               >
-                {activeStep === steps.length - 1 ? 'Submit Property' : 'Next'}
+                {loading ? 'Submitting...' : activeStep === 4 ? 'Submit Property' : 'Continue'}
               </Button>
             </Box>
           )}
@@ -1301,7 +1329,7 @@ const PropertyManagement = () => {
             
             <Button
               onClick={activeStep === 4 ? handleSubmit : handleNext}
-              endIcon={activeStep === 4 ? null : <NavigateNext />}
+              endIcon={activeStep === 4 ? <CheckCircle /> : <NavigateNext />}
               variant="contained"
               disabled={loading}
               size="large"
