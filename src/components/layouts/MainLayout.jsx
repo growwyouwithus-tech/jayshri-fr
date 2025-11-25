@@ -214,6 +214,11 @@ const MainLayout = () => {
       dynamicItems.push({ text: 'Calculator', icon: <Calculate />, path: '/admin/calculator' })
     }
 
+    // Kisan Payment
+    if (hasPermission('colony_read') || hasPermission('colonies_read') || roleName === 'Admin' || roleName === 'Manager') {
+      dynamicItems.push({ text: 'Kisan Payment', icon: <TrendingUp />, path: '/admin/kisan-payments' })
+    }
+
     // Settings
     if (hasPermission('settings_read') || hasPermission('setting_read')) {
       dynamicItems.push({ text: 'Settings', icon: <AdminPanelSettings />, path: '/admin/settings' })
