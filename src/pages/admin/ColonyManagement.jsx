@@ -317,12 +317,16 @@ const ColonyManagement = () => {
         name: formData.name,
         address: formData.location.address,
         location: formData.location,
-        purchasePrice: formData.purchasePrice,
         khatoniHolders: cleanedKhatoniHolders,
         totalArea: totalAreaSqFt,
         pricePerSqFt,
         layoutUrl: formData.layoutUrl,
         status: formData.status
+      }
+
+      // Only add purchasePrice if it has a value
+      if (formData.purchasePrice) {
+        payload.purchasePrice = Number(formData.purchasePrice)
       }
 
       // Only add coordinates if both latitude and longitude are provided

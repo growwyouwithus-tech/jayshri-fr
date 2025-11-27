@@ -52,19 +52,31 @@ const Login = () => {
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
-      {/* Jayshree Properties Logo */}
-      <Box display="flex" justifyContent="center" mb={3}>
-        <img 
-          src="/JAISHRI GROUP.png" 
-          alt="Jayshri Properties" 
-          style={{ width: '200px', height: 'auto' }}
-        />
-      </Box>
-      
-      <Typography variant="h5" fontWeight="bold" mb={3} textAlign="center">
-        Sign In
-      </Typography>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{ width: '100%', maxWidth: 400, px: 2 }}
+      >
+        {/* Jayshree Properties Logo */}
+        <Box display="flex" justifyContent="center" mb={3}>
+          <img 
+            src="/JAISHRI GROUP.png" 
+            alt="Jayshri Properties" 
+            style={{ width: '200px', height: 'auto' }}
+          />
+        </Box>
+        
+        <Typography variant="h5" fontWeight="bold" mb={3} textAlign="center">
+          Sign In
+        </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -97,24 +109,25 @@ const Login = () => {
         required
       />
 
-      <Button
-        fullWidth
-        type="submit"
-        variant="contained"
-        size="large"
-        disabled={loading}
-        sx={{ mt: 3, mb: 2 }}
-      >
-        {loading ? <CircularProgress size={24} /> : 'Sign In'}
-      </Button>
+        <Button
+          fullWidth
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={loading}
+          sx={{ mt: 3, mb: 2 }}
+        >
+          {loading ? <CircularProgress size={24} /> : 'Sign In'}
+        </Button>
 
-      <Box textAlign="center">
-        <Typography variant="body2" color="text.secondary">
-          Don't have an account?{' '}
-          <Link component={RouterLink} to="/register" underline="hover">
-            Sign Up
-          </Link>
-        </Typography>
+        <Box textAlign="center">
+          <Typography variant="body2" color="text.secondary">
+            Don't have an account?{' '}
+            <Link component={RouterLink} to="/register" underline="hover">
+              Sign Up
+            </Link>
+          </Typography>
+        </Box>
       </Box>
     </Box>
   )

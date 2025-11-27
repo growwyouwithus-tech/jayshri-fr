@@ -62,6 +62,45 @@ const STATUS_OPTIONS = [
   { label: 'Reserved', value: 'reserved' },
 ]
 
+const PLOT_TYPE_LABELS = {
+  residential: 'Residential',
+  commercial: 'Commercial',
+  farmhouse: 'Farmhouse',
+}
+
+const getPropertyPlotTypes = (property) => {
+  if (!property) {
+    return ['residential', 'commercial', 'farmhouse']
+  }
+
+  const rawCategories = Array.isArray(property.categories) && property.categories.length
+    ? property.categories
+    : property.category
+      ? [property.category]
+      : []
+
+  if (!rawCategories.length) {
+    return ['residential', 'commercial', 'farmhouse']
+  }
+
+  const normalized = rawCategories
+    .map((c) => (c ? c.toString().toLowerCase() : ''))
+
+  const allowed = []
+
+  if (normalized.some((c) => c.includes('residential'))) {
+    allowed.push('residential')
+  }
+  if (normalized.some((c) => c.includes('commercial'))) {
+    allowed.push('commercial')
+  }
+  if (normalized.some((c) => c.includes('farm'))) {
+    allowed.push('farmhouse')
+  }
+
+  return allowed.length ? allowed : ['residential', 'commercial', 'farmhouse']
+}
+
 const PlotManagement = () => {
   const [plots, setPlots] = useState([])
   const [colonies, setColonies] = useState([])
@@ -1013,11 +1052,13 @@ const PlotManagement = () => {
                     label="Property *"
                     onChange={(e) => {
                       const selectedProperty = properties.find(p => p._id === e.target.value)
+                      const allowedPlotTypes = getPropertyPlotTypes(selectedProperty)
                       setNewPlot((s) => ({ 
                         ...s, 
                         propertyId: e.target.value,
                         colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
-                        pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj
+                        pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj,
+                        plotType: allowedPlotTypes.includes(s.plotType) ? s.plotType : allowedPlotTypes[0] || 'residential',
                       }))
                       clearError('propertyId')
                     }}
@@ -1025,11 +1066,16 @@ const PlotManagement = () => {
                     <MenuItem value="">
                       <em>Select Property</em>
                     </MenuItem>
-                    {properties.map((property) => (
-                      <MenuItem key={property._id} value={property._id}>
-                        {property.name} - {property.category}
-                      </MenuItem>
-                    ))}
+                    {properties.map((property) => {
+                      const categories = Array.isArray(property.categories) && property.categories.length
+                        ? property.categories.join(', ')
+                        : property.category
+                      return (
+                        <MenuItem key={property._id} value={property._id}>
+                          {property.name} - {categories}
+                        </MenuItem>
+                      )
+                    })}
                   </Select>
                   {errors.propertyId && (
                     <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
@@ -1262,8 +1308,9 @@ const PlotManagement = () => {
                       value={newPlot.plotType} 
                       onChange={(e) => setNewPlot((s) => ({ ...s, plotType: e.target.value }))}
                     >
-                      <MenuItem value="residential">Residential</MenuItem>
-                      <MenuItem value="commercial">Commercial</MenuItem>
+                      {getPropertyPlotTypes(properties.find(p => p._id === newPlot.propertyId)).map((type) => (
+                        <MenuItem key={type} value={type}>{PLOT_TYPE_LABELS[type] || type}</MenuItem>
+                      ))}
                     </TextField>
                   </Grid>
                   <Grid item xs={6}>
@@ -1561,11 +1608,13 @@ const PlotManagement = () => {
                     label="Property *"
                     onChange={(e) => {
                       const selectedProperty = properties.find(p => p._id === e.target.value)
+                      const allowedPlotTypes = getPropertyPlotTypes(selectedProperty)
                       setNewPlot((s) => ({ 
                         ...s, 
                         propertyId: e.target.value,
                         colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
-                        pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj
+                        pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj,
+                        plotType: allowedPlotTypes.includes(s.plotType) ? s.plotType : allowedPlotTypes[0] || 'residential',
                       }))
                       clearError('propertyId')
                     }}
@@ -1724,6 +1773,7 @@ const PlotManagement = () => {
                     >
                       <MenuItem value="residential">Residential</MenuItem>
                       <MenuItem value="commercial">Commercial</MenuItem>
+                      <MenuItem value="farmhouse">Farmhouse</MenuItem>
                     </TextField>
                   </Grid>
                   <Grid item xs={6}>
@@ -2208,11 +2258,13 @@ const PlotManagement = () => {
                 label="Property *"
                 onChange={(e) => {
                   const selectedProperty = properties.find(p => p._id === e.target.value)
+                  const allowedPlotTypes = getPropertyPlotTypes(selectedProperty)
                   setNewPlot((s) => ({ 
                     ...s, 
                     propertyId: e.target.value,
                     colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
-                    pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj
+                    pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj,
+                    plotType: allowedPlotTypes.includes(s.plotType) ? s.plotType : allowedPlotTypes[0] || 'residential',
                   }))
                   clearError('propertyId')
                 }}
@@ -2220,11 +2272,16 @@ const PlotManagement = () => {
                 <MenuItem value="">
                   <em>Select Property</em>
                 </MenuItem>
-                {properties.map((property) => (
-                  <MenuItem key={property._id} value={property._id}>
-                    {property.name} - {property.category}
-                  </MenuItem>
-                ))}
+                {properties.map((property) => {
+                  const categories = Array.isArray(property.categories) && property.categories.length
+                    ? property.categories.join(', ')
+                    : property.category
+                  return (
+                    <MenuItem key={property._id} value={property._id}>
+                      {property.name} - {categories}
+                    </MenuItem>
+                  )
+                })}
               </Select>
               {errors.propertyId && (
                 <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
@@ -2459,6 +2516,7 @@ const PlotManagement = () => {
                 >
                   <MenuItem value="residential">Residential</MenuItem>
                   <MenuItem value="commercial">Commercial</MenuItem>
+                  <MenuItem value="farmhouse">Farmhouse</MenuItem>
                 </TextField>
               </Grid>
               <Grid item xs={6}>

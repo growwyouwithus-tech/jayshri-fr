@@ -19,6 +19,10 @@ import {
   Card,
   CardContent,
   Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  Alert,
 } from '@mui/material'
 import { Add, Delete, Payment as PaymentIcon, Save, Clear } from '@mui/icons-material'
 import axios from '@/api/axios'
@@ -29,11 +33,15 @@ const TRANSACTION_TYPES = ['DEPOSITED', 'WITHDRAWN', 'PENDING']
 
 const KisanPaymentManagement = () => {
   const [payments, setPayments] = useState([])
+  const [colonies, setColonies] = useState([])
+  const [selectedColony, setSelectedColony] = useState('')
+  const [selectedColonyData, setSelectedColonyData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
 
   // Add Payment Form State
   const [newPayment, setNewPayment] = useState({
+    colony: '',
     dateTime: new Date().toLocaleString('en-IN', { 
       year: 'numeric', 
       month: '2-digit', 
@@ -49,13 +57,48 @@ const KisanPaymentManagement = () => {
 
 
   useEffect(() => {
-    fetchPayments()
+    fetchColonies()
   }, [])
 
-  const fetchPayments = async () => {
+  useEffect(() => {
+    if (selectedColony) {
+      fetchPayments(selectedColony)
+      fetchColonyData(selectedColony)
+    }
+  }, [selectedColony])
+
+  const fetchColonies = async () => {
+    try {
+      const response = await axios.get('/colonies')
+      const coloniesData = response.data?.data?.colonies || []
+      setColonies(coloniesData)
+    } catch (error) {
+      console.error('Error fetching colonies:', error)
+      toast.error('Failed to fetch colonies')
+    }
+  }
+
+  const fetchColonyData = async (colonyId) => {
+    try {
+      const response = await axios.get(`/colonies/${colonyId}`)
+      console.log('Colony data response:', response.data)
+      // Backend returns { success: true, data: { colony: {...} } }
+      const colonyData = response.data?.data?.colony || response.data?.data || null
+      console.log('Extracted colony data:', colonyData)
+      console.log('Purchase Price:', colonyData?.purchasePrice)
+      setSelectedColonyData(colonyData)
+    } catch (error) {
+      console.error('Error fetching colony data:', error)
+      toast.error('Failed to fetch colony details')
+    }
+  }
+
+  const fetchPayments = async (colonyId) => {
     setLoading(true)
     try {
-      const response = await axios.get('/kisan-payments')
+      const response = await axios.get('/kisan-payments', {
+        params: { colony: colonyId }
+      })
       setPayments(response.data.data || [])
     } catch (error) {
       console.error('Error fetching payments:', error)
@@ -65,16 +108,24 @@ const KisanPaymentManagement = () => {
     }
   }
 
-  const calculateTotalAmount = () => {
+  const calculateTotalPaid = () => {
     return payments.reduce((total, payment) => {
       const amount = parseFloat(payment.paidAmount) || 0
       return total + amount
     }, 0)
   }
 
+  const calculateRemaining = () => {
+    const purchasePrice = selectedColonyData?.purchasePrice || 0
+    const totalPaid = calculateTotalPaid()
+    return purchasePrice - totalPaid
+  }
+
   const handleAddPayment = async () => {
-    console.log('handleAddPayment called')
-    console.log('newPayment:', newPayment)
+    if (!selectedColony) {
+      toast.error('Please select a colony first')
+      return
+    }
     
     if (!newPayment.paidAmount) {
       toast.error('Please fill Paid Amount')
@@ -89,20 +140,18 @@ const KisanPaymentManagement = () => {
     try {
       const payload = {
         ...newPayment,
+        colony: selectedColony,
         paidAmount: parseFloat(newPayment.paidAmount),
       }
       
-      console.log('Sending payload:', payload)
       const response = await axios.post('/kisan-payments', payload)
-      console.log('Response:', response)
       
       toast.success('Payment added successfully')
       setShowAddForm(false)
       resetAddForm()
-      fetchPayments()
+      fetchPayments(selectedColony)
     } catch (error) {
       console.error('Error adding payment:', error)
-      console.error('Error response:', error.response)
       toast.error(error.response?.data?.message || error.message || 'Failed to add payment')
     }
   }
@@ -110,6 +159,7 @@ const KisanPaymentManagement = () => {
 
   const resetAddForm = () => {
     setNewPayment({
+      colony: selectedColony,
       dateTime: new Date().toLocaleString('en-IN', { 
         year: 'numeric', 
         month: '2-digit', 
@@ -155,26 +205,89 @@ const KisanPaymentManagement = () => {
           Kisan to Company Payment Mode
         </Typography>
         <Box display="flex" gap={2} alignItems="center">
-          <Chip 
-            label={`Total Amount: ₹${calculateTotalAmount().toLocaleString('en-IN')}`}
-            color="primary"
-            sx={{ fontSize: '1.1rem', padding: '20px 10px' }}
-          />
           <Button
             variant="contained"
             startIcon={showAddForm ? <Clear /> : <Add />}
             onClick={() => {
+              if (!selectedColony) {
+                toast.error('Please select a colony first')
+                return
+              }
               setShowAddForm(!showAddForm)
               if (!showAddForm) resetAddForm()
             }}
+            disabled={!selectedColony}
           >
             {showAddForm ? 'Cancel' : 'Add Payment'}
           </Button>
         </Box>
       </Box>
 
+      {/* Colony Selection */}
+      <Card sx={{ mb: 3, boxShadow: 3 }}>
+        <CardContent>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Select Colony</InputLabel>
+                <Select
+                  value={selectedColony}
+                  label="Select Colony"
+                  onChange={(e) => {
+                    setSelectedColony(e.target.value)
+                    setPayments([])
+                    setShowAddForm(false)
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>-- Select Colony --</em>
+                  </MenuItem>
+                  {colonies.map((colony) => (
+                    <MenuItem key={colony._id} value={colony._id}>
+                      {colony.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            {selectedColonyData && (
+              <Grid item xs={12} md={6}>
+                {!selectedColonyData.purchasePrice && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    This colony doesn't have a purchase price set. Please edit the colony to add the purchase price.
+                  </Alert>
+                )}
+                <Box display="flex" gap={2} flexWrap="wrap">
+                  <Chip 
+                    label={`Purchase Price: ₹${(selectedColonyData.purchasePrice || 0).toLocaleString('en-IN')}`}
+                    color={selectedColonyData.purchasePrice ? "primary" : "default"}
+                    sx={{ fontSize: '1rem', padding: '20px 10px' }}
+                  />
+                  {/* <Chip 
+                    label={`Total Paid: ₹${calculateTotalPaid().toLocaleString('en-IN')}`}
+                    color="success"
+                    sx={{ fontSize: '1rem', padding: '20px 10px' }}
+                  />
+                  <Chip 
+                    label={`Remaining: ₹${calculateRemaining().toLocaleString('en-IN')}`}
+                    color={calculateRemaining() > 0 ? 'warning' : 'success'}
+                    sx={{ fontSize: '1rem', padding: '20px 10px' }}
+                  /> */}
+                </Box>
+              </Grid>
+            )}
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {!selectedColony && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Please select a colony to view and manage payments.
+        </Alert>
+      )}
+
       {/* Add Payment Form */}
-      {showAddForm && (
+      {showAddForm && selectedColony && (
         <Card sx={{ mb: 3, boxShadow: 3 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom color="primary">
@@ -218,7 +331,7 @@ const KisanPaymentManagement = () => {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Hints in Words"
@@ -257,45 +370,82 @@ const KisanPaymentManagement = () => {
       )}
 
       {/* Table */}
-      <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
-        <Table>
-          <TableHead sx={{ backgroundColor: '#2e7d32' }}>
-            <TableRow>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>S.R. NO.</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>DATE & TIME</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>PAID AMOUNT</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>PAYMENT MODE</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>HINTS IN WORDS</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {payments.map((payment, index) => (
-              <TableRow key={payment._id} hover>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{formatDateTime(payment.dateTime)}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight="bold">
-                    ₹{parseFloat(payment.paidAmount || 0).toLocaleString('en-IN')}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip label={payment.paymentMode} size="small" color="info" />
-                </TableCell>
-                <TableCell>{payment.hintsInWord || '-'}</TableCell>
-              </TableRow>
-            ))}
-            {payments.length === 0 && (
+      {selectedColony && (
+        <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
+          <Table>
+            <TableHead sx={{ backgroundColor: '#2e7d32' }}>
               <TableRow>
-                <TableCell colSpan={5} align="center">
-                  <Typography variant="body2" color="text.secondary" py={3}>
-                    No payments found. Click "Add Payment" to create one.
-                  </Typography>
-                </TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>S.R. NO.</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>DATE & TIME</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>PAID AMOUNT</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>PAYMENT MODE</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>HINTS IN WORDS</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {payments.map((payment, index) => (
+                <TableRow key={payment._id} hover>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{formatDateTime(payment.dateTime)}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight="bold">
+                      ₹{parseFloat(payment.paidAmount || 0).toLocaleString('en-IN')}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip label={payment.paymentMode} size="small" color="info" />
+                  </TableCell>
+                  <TableCell>{payment.hintsInWord || '-'}</TableCell>
+                </TableRow>
+              ))}
+              {payments.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    <Typography variant="body2" color="text.secondary" py={3}>
+                      No payments found. Click "Add Payment" to create one.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+              {/* Summary Row - Always show when colony is selected */}
+              {selectedColonyData && (
+                <TableRow sx={{ backgroundColor: '#e8f5e9', borderTop: '2px solid #4caf50' }}>
+                  <TableCell colSpan={6}>
+                    <Box display="flex" justifyContent="space-around" alignItems="center" py={1}>
+                      <Box textAlign="center">
+                        <Typography variant="caption" color="text.secondary">
+                          Colony Purchase Price
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold" color="primary">
+                          ₹{(selectedColonyData.purchasePrice || 0).toLocaleString('en-IN')}
+                        </Typography>
+                      </Box>
+                      <Typography variant="h5" color="text.secondary">-</Typography>
+                      <Box textAlign="center">
+                        <Typography variant="caption" color="text.secondary">
+                          Total Paid
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold" color="success.main">
+                          ₹{calculateTotalPaid().toLocaleString('en-IN')}
+                        </Typography>
+                      </Box>
+                      <Typography variant="h5" color="text.secondary">=</Typography>
+                      <Box textAlign="center">
+                        <Typography variant="caption" color="text.secondary">
+                          Remaining
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold" color={calculateRemaining() > 0 ? 'error.main' : 'success.main'}>
+                          ₹{calculateRemaining().toLocaleString('en-IN')}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </Box>
   )
 }

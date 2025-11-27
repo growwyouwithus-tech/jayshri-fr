@@ -1081,7 +1081,9 @@ const PropertyManagement = () => {
                   {formData.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {formData.category}
+                  {formData.categories && formData.categories.length > 0 
+                    ? formData.categories.join(', ') 
+                    : '-'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   📍 {cities.find(c => c._id === formData.cityId)?.name}
@@ -1217,10 +1219,21 @@ const PropertyManagement = () => {
                       >
                         <TableCell>
                           <Typography variant="body2" fontWeight={600}>{property.name}</Typography>
-                          <Typography variant="caption" color="text.secondary">{property.category}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {property.categories && property.categories.length > 0 
+                              ? property.categories.join(', ') 
+                              : property.category || '-'}
+                          </Typography>
                         </TableCell>
                         <TableCell>
-                          <Chip label={property.category} size="small" />
+                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                            {property.categories && property.categories.length > 0 
+                              ? property.categories.map((cat, idx) => (
+                                  <Chip key={idx} label={cat} size="small" />
+                                ))
+                              : <Chip label={property.category || '-'} size="small" />
+                            }
+                          </Box>
                         </TableCell>
                         <TableCell>{property.colonyId?.name || '-'}</TableCell>
                         <TableCell>
