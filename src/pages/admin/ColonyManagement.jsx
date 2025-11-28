@@ -424,10 +424,10 @@ const ColonyManagement = () => {
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" fontWeight="bold">
-            {editMode ? 'Edit Land' : 'Add New Land'}
+            {editMode ? 'Edit Colony' : 'Add New Colony'}
           </Typography>
           <Button variant="outlined" startIcon={<ArrowBack />} onClick={handleCloseForm}>
-            Back to Land List
+            Back to colony List
           </Button>
         </Box>
         
@@ -436,7 +436,7 @@ const ColonyManagement = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Land Name *"
+                label="Colony Name *"
                 value={formData.name}
                 onChange={(e) => {
                   setFormData({ ...formData, name: e.target.value })
@@ -466,7 +466,7 @@ const ColonyManagement = () => {
             {/* Land Location */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Land Location
+                Colony Location
               </Typography>
             </Grid>
             <Grid item xs={12}>
@@ -653,7 +653,7 @@ const ColonyManagement = () => {
             {/* Side Measurements */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Land Side Measurements (in Feet)
+                Colony Side Measurements (in Feet)
               </Typography>
             </Grid>
             <Grid item xs={3}>
@@ -728,14 +728,14 @@ const ColonyManagement = () => {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Typography variant="h4" fontWeight="bold">
-          Land Management
+          Colony Management
         </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => handleOpenDialog()}
         >
-          Add Land
+          Add Colony
         </Button>
       </Box>
 
@@ -743,7 +743,7 @@ const ColonyManagement = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell><strong>Land</strong></TableCell>
+              <TableCell><strong>Colony</strong></TableCell>
               <TableCell><strong>Total Land (Gaj)</strong></TableCell>
               <TableCell><strong>plots</strong></TableCell>
               <TableCell><strong>asking price Gaj</strong></TableCell>
@@ -825,7 +825,7 @@ const ColonyManagement = () => {
           <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
               <Typography variant="h4" fontWeight="bold">
-                {editMode ? 'Edit Land' : 'Add New Land'}
+                {editMode ? 'Edit Colony' : 'Add New Colony'}
               </Typography>
               <Button variant="outlined" onClick={handleCloseForm}>Cancel</Button>
             </Box>
@@ -834,7 +834,7 @@ const ColonyManagement = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Land Name *"
+                label="Colony Name *"
                 value={formData.name}
                 onChange={(e) => {
                   setFormData({ ...formData, name: e.target.value })
@@ -878,7 +878,7 @@ const ColonyManagement = () => {
              {/* land Location */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Land Location
+                Colony Location
               </Typography>
             </Grid>
             <Grid item xs={12}>
@@ -1124,7 +1124,7 @@ const ColonyManagement = () => {
             {/* Side Measurements */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Land Side Measurements (in Feet)
+                Colony Side Measurements (in Feet)
               </Typography>
             </Grid>
             <Grid item xs={3}>
