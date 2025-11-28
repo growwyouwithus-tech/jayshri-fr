@@ -10,7 +10,10 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'
-import { login, clearError } from '@/storecls'
+import { login, clearError } from '@/store/slices/authSlice'
+import toast from 'react-hot-toast'
+
+
 
 
 /**

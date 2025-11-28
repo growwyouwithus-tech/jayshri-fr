@@ -18,7 +18,11 @@ import {
   DialogActions,
   TextField,
   Grid,
-  CircularProgress
+  CircularProgress,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material'
 import { Add, Edit, Delete, Visibility, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
@@ -27,6 +31,7 @@ import { validateRequired, validateNumeric, validatePhone, validateMinLength, va
 
 const ColonyManagement = () => {
   const [colonies, setColonies] = useState([])
+  const [cities, setCities] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -75,7 +80,19 @@ const ColonyManagement = () => {
 
   useEffect(() => {
     fetchColonies()
+    fetchCities()
   }, [])
+
+  const fetchCities = async () => {
+    try {
+      const { data } = await axios.get('/cities')
+      console.log('Fetched cities:', data?.data)
+      setCities(data?.data || [])
+    } catch (error) {
+      console.error('Failed to fetch cities:', error)
+      toast.error('Failed to load cities')
+    }
+  }
 
   const normalizeColony = (colony) => {
     const totalLandAreaGaj = colony.totalLandAreaGaj ?? (typeof colony.totalArea === 'number' ? Math.round(colony.totalArea / SQFT_PER_GAJ) : null)
@@ -464,15 +481,35 @@ const ColonyManagement = () => {
               />
             </Grid>
             <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="City"
-                value={formData.location.city}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  location: { ...formData.location, city: e.target.value }
-                })}
-              />
+              <FormControl fullWidth>
+                <InputLabel>City</InputLabel>
+                <Select
+                  value={formData.location.city}
+                  label="City"
+                  onChange={(e) => {
+                    const selectedCity = cities.find(city => city.name === e.target.value)
+                    setFormData({
+                      ...formData,
+                      location: { 
+                        ...formData.location, 
+                        city: e.target.value,
+                        state: selectedCity?.state || formData.location.state
+                      }
+                    })
+                  }}
+                >
+                  <MenuItem value="">Select City</MenuItem>
+                  {cities.length === 0 ? (
+                    <MenuItem disabled>No cities found. Please create cities first.</MenuItem>
+                  ) : (
+                    cities.map((city) => (
+                      <MenuItem key={city._id} value={city.name}>
+                        {city.name}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={3}>
               <TextField
@@ -483,6 +520,10 @@ const ColonyManagement = () => {
                   ...formData,
                   location: { ...formData.location, state: e.target.value }
                 })}
+                InputProps={{
+                  readOnly: !!formData.location.city
+                }}
+                helperText={formData.location.city ? "Auto-filled from city" : ""}
               />
             </Grid>
             <Grid item xs={3}>
@@ -854,13 +895,37 @@ const ColonyManagement = () => {
             <Grid item xs={6}>
               <TextField
                 fullWidth
+                select
                 label="City"
                 value={formData.location.city}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  location: { ...formData.location, city: e.target.value }
-                })}
-              />
+                onChange={(e) => {
+                  const selectedCity = cities.find(city => city.name === e.target.value)
+                  console.log('Selected city:', selectedCity)
+                  setFormData({
+                    ...formData,
+                    location: { 
+                      ...formData.location, 
+                      city: e.target.value,
+                      state: selectedCity?.state || formData.location.state
+                    }
+                  })
+                }}
+                SelectProps={{
+                  native: false,
+                }}
+                helperText={`${cities.length} cities available`}
+              >
+                <MenuItem value="">Select City</MenuItem>
+                {cities.length === 0 ? (
+                  <MenuItem disabled>No cities found. Please create cities first.</MenuItem>
+                ) : (
+                  cities.map((city) => (
+                    <MenuItem key={city._id} value={city.name}>
+                      {city.name}
+                    </MenuItem>
+                  ))
+                )}
+              </TextField>
             </Grid>
             <Grid item xs={3}>
               <TextField
@@ -871,6 +936,10 @@ const ColonyManagement = () => {
                   ...formData,
                   location: { ...formData.location, state: e.target.value }
                 })}
+                InputProps={{
+                  readOnly: !!formData.location.city
+                }}
+                helperText={formData.location.city ? "Auto-filled from city" : ""}
               />
             </Grid>
             <Grid item xs={3}>

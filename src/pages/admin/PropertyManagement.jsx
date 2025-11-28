@@ -63,6 +63,7 @@ const PropertyManagement = () => {
   const [cities, setCities] = useState([])
   const [areas, setAreas] = useState([])
   const [loading, setLoading] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
   
   const [formData, setFormData] = useState({
     categories: [],
@@ -207,10 +208,25 @@ const PropertyManagement = () => {
     }
   }
 
-  const fetchAreas = async () => {
+  const fetchAreas = async (cityId = null) => {
     try {
-      // Backend does not expose /areas. Keep empty list gracefully.
-      setAreas([])
+      if (!cityId && !formData.cityId) {
+        setAreas([])
+        return
+      }
+      
+      const targetCityId = cityId || formData.cityId
+      const selectedCity = cities.find(city => city._id === targetCityId)
+      
+      if (selectedCity && selectedCity.areas) {
+        setAreas(selectedCity.areas.map(area => ({
+          _id: area._id || area.name,
+          name: area.name,
+          cityId: { _id: selectedCity._id, name: selectedCity.name }
+        })))
+      } else {
+        setAreas([])
+      }
     } catch (error) {
       console.error('Failed to fetch areas')
       setAreas([])
@@ -442,20 +458,32 @@ const PropertyManagement = () => {
 
   const calculateRemainingLand = (property) => {
     const totalLand = property.totalLandAreaGaj || 0
-    const stats = propertyStats[property._id]
-    const soldLand = stats ? stats.totalSold / 9 : 0 // Convert sq ft to gaj
+    const usedLand = calculateUsedLand(property)
+    const stats = propertyStats[property._id] || { totalSold: 0 }
+    const soldLandGaj = stats.totalSold / 9
+    return totalLand - usedLand - soldLandGaj
+  }
+
+  const calculateUsedLand = (property) => {
+    let usedLand = 0
     
-    // Calculate roads and parks area
-    const roadsArea = (property.roads || []).reduce((sum, road) => {
-      return sum + ((road.lengthFt || 0) * (road.widthFt || 0)) / 9
-    }, 0)
+    // Calculate land used by roads
+    if (property.roads && Array.isArray(property.roads)) {
+      property.roads.forEach(road => {
+        const lengthFt = parseFloat(road.lengthFt) || 0
+        const widthFt = parseFloat(road.widthFt) || 0
+        usedLand += (lengthFt * widthFt) / 9 // Convert sq ft to Gaj
+      })
+    }
     
-    const parksArea = (property.parks || []).reduce((sum, park) => {
-      return sum + ((park.lengthFt || 0) * (park.widthFt || 0)) / 9
-    }, 0)
+    // Calculate land used by parks/amenities
+    if (property.parks && Array.isArray(property.parks)) {
+      property.parks.forEach(park => {
+        usedLand += parseFloat(park.areaGaj) || 0
+      })
+    }
     
-    const usedArea = roadsArea + parksArea + soldLand
-    return Math.max(0, totalLand - usedArea)
+    return usedLand
   }
 
   const resetFormAndCloseDialog = () => {
@@ -523,10 +551,29 @@ const PropertyManagement = () => {
             <Typography variant="h5" fontWeight="bold" mb={2}>
               What Would you like to Post?
             </Typography>
-            <Typography variant="body2" color="text.secondary" mb={3}>
+    
+             <Typography variant="body1" fontWeight="bold" mb={2}>
+              Select Colony (Land)
+            </Typography>
+            <TextField
+              fullWidth
+              select
+              value={formData.colonyId}
+              onChange={(e) => handleColonySelect(e.target.value)}
+              placeholder="-- Select Colony --"
+            >
+              <MenuItem value="">-- Select Colony --</MenuItem>
+              {colonies.map((colony) => (
+                <MenuItem key={colony._id} value={colony._id}>
+                  {colony.name}
+                </MenuItem>
+              ))}
+            </TextField>
+
+             <Typography variant="body2" color="text.secondary" mb={3} mt={3}>
               Select A Category
             </Typography>
-            
+
             <Grid container spacing={3} mb={4}>
               {categories.map((cat) => (
                 <Grid item xs={12} md={4} key={cat.value}>
@@ -558,23 +605,7 @@ const PropertyManagement = () => {
               You can select multiple categories (e.g., Residential + Commercial)
             </Alert>
 
-            <Typography variant="body1" fontWeight="bold" mb={2}>
-              Select Colony (Land)
-            </Typography>
-            <TextField
-              fullWidth
-              select
-              value={formData.colonyId}
-              onChange={(e) => handleColonySelect(e.target.value)}
-              placeholder="-- Select Colony --"
-            >
-              <MenuItem value="">-- Select Colony --</MenuItem>
-              {colonies.map((colony) => (
-                <MenuItem key={colony._id} value={colony._id}>
-                  {colony.name}
-                </MenuItem>
-              ))}
-            </TextField>
+           
           </Box>
         )
 
@@ -815,7 +846,11 @@ const PropertyManagement = () => {
                   select
                   label="City"
                   value={formData.cityId}
-                  onChange={(e) => setFormData({ ...formData, cityId: e.target.value })}
+                  onChange={(e) => {
+                    const cityId = e.target.value
+                    setFormData({ ...formData, cityId, areaId: '' })
+                    fetchAreas(cityId)
+                  }}
                 >
                   <MenuItem value="">Select City</MenuItem>
                   {cities.map((city) => (
@@ -832,13 +867,14 @@ const PropertyManagement = () => {
                   label="Area"
                   value={formData.areaId}
                   onChange={(e) => setFormData({ ...formData, areaId: e.target.value })}
+                  disabled={!formData.cityId || areas.length === 0}
                 >
                   <MenuItem value="">Select Area</MenuItem>
-              {(Array.isArray(areas) ? areas.filter(area => area.cityId?._id === formData.cityId) : []).map((area) => (
-                <MenuItem key={area._id} value={area._id}>
-                  {area.name}
-                </MenuItem>
-              ))}
+                  {areas.map((area) => (
+                    <MenuItem key={area._id} value={area._id}>
+                      {area.name}
+                    </MenuItem>
+                  ))}
                 </TextField>
               </Grid>
             </Grid>
@@ -1174,6 +1210,18 @@ const PropertyManagement = () => {
           </Button>
         </Box>
 
+        {/* Search Bar */}
+        <Box mb={3}>
+          <TextField
+            fullWidth
+            placeholder="Search properties by name, category, or land..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="medium"
+            sx={{ maxWidth: 600 }}
+          />
+        </Box>
+
         {propertiesLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
             <CircularProgress />
@@ -1187,6 +1235,7 @@ const PropertyManagement = () => {
                   <TableCell><strong>Category</strong></TableCell>
                   <TableCell><strong>Land</strong></TableCell>
                   <TableCell><strong>Total Land (Gaj)</strong></TableCell>
+                  <TableCell><strong>Used Land (Gaj)</strong></TableCell>
                   <TableCell><strong>Land Sold (Gaj)</strong></TableCell>
                   <TableCell><strong>Remaining Land (Gaj)</strong></TableCell>
                   <TableCell><strong>Total Revenue</strong></TableCell>
@@ -1197,16 +1246,28 @@ const PropertyManagement = () => {
               <TableBody>
                 {properties.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                       <Typography color="text.secondary">
                         No properties found. Click "Add Property" to create one.
                       </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  properties.map((property) => {
+                  properties
+                    .filter(property => {
+                      if (!searchTerm) return true
+                      const search = searchTerm.toLowerCase()
+                      return (
+                        property.name?.toLowerCase().includes(search) ||
+                        property.category?.toLowerCase().includes(search) ||
+                        property.categories?.some(cat => cat.toLowerCase().includes(search)) ||
+                        property.colonyId?.name?.toLowerCase().includes(search)
+                      )
+                    })
+                    .map((property) => {
                     const stats = propertyStats[property._id] || { totalSold: 0, totalRevenue: 0, plots: [] }
                     const totalLand = property.totalLandAreaGaj || 0
+                    const usedLand = calculateUsedLand(property)
                     const soldLandGaj = stats.totalSold / 9
                     const remainingLand = calculateRemainingLand(property)
                     
@@ -1240,6 +1301,14 @@ const PropertyManagement = () => {
                           <Typography variant="body2" fontWeight={600}>
                             {totalLand > 0 ? totalLand.toFixed(2) : '-'}
                           </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={usedLand.toFixed(2)} 
+                            size="small" 
+                            color="warning"
+                            title="Land used by roads, parks, and amenities"
+                          />
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="error.main">
@@ -1375,23 +1444,29 @@ const PropertyManagement = () => {
             <Box>
               <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
                 <Grid container spacing={2}>
-                  <Grid item xs={3}>
+                  <Grid item xs={2.4}>
                     <Typography variant="body2" color="text.secondary">Total Land</Typography>
                     <Typography variant="h6">{selectedPropertyPlots.property.totalLandAreaGaj?.toFixed(2) || 0} Gaj</Typography>
                   </Grid>
-                  <Grid item xs={3}>
+                  <Grid item xs={2.4}>
+                    <Typography variant="body2" color="text.secondary">Used Land</Typography>
+                    <Typography variant="h6" color="warning.main">
+                      {calculateUsedLand(selectedPropertyPlots.property).toFixed(2)} Gaj
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={2.4}>
                     <Typography variant="body2" color="text.secondary">Land Sold</Typography>
                     <Typography variant="h6" color="error.main">
                       {(selectedPropertyPlots.stats?.totalSold / 9 || 0).toFixed(2)} Gaj
                     </Typography>
                   </Grid>
-                  <Grid item xs={3}>
+                  <Grid item xs={2.4}>
                     <Typography variant="body2" color="text.secondary">Remaining Land</Typography>
                     <Typography variant="h6" color="success.main">
                       {calculateRemainingLand(selectedPropertyPlots.property).toFixed(2)} Gaj
                     </Typography>
                   </Grid>
-                  <Grid item xs={3}>
+                  <Grid item xs={2.4}>
                     <Typography variant="body2" color="text.secondary">Total Revenue</Typography>
                     <Typography variant="h6" color="primary.main">
                       ₹{(selectedPropertyPlots.stats?.totalRevenue || 0).toLocaleString('en-IN')}

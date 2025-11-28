@@ -154,7 +154,7 @@ const MainLayout = () => {
 
     // Colonies (check both colony_read and colonies_read)
     if (hasPermission('colony_read') || hasPermission('colonies_read') || hasPermission('colony_create') || hasPermission('colonies_create')) {
-      dynamicItems.push({ text: 'Land Purchase', icon: <Business />, path: '/admin/colonies' })
+      dynamicItems.push({ text: 'Create Colony', icon: <Business />, path: '/admin/colonies' })
     }
 
     // Properties submenu

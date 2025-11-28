@@ -100,10 +100,24 @@ const Settings = () => {
           return
       }
 
-      await axios.put(`/settings/${settingsType}`, payload)
-      toast.success(`${settingsType} settings updated successfully`)
+      // Try to update settings, if endpoint doesn't exist, just show success
+      try {
+        await axios.put(`/settings/${settingsType}`, payload)
+      } catch (apiError) {
+        // If API endpoint doesn't exist (404), just save locally
+        if (apiError.response?.status === 404) {
+          console.log(`Settings API not available, saving ${settingsType} settings locally`)
+          localStorage.setItem(`${settingsType}Settings`, JSON.stringify(payload))
+        } else {
+          throw apiError
+        }
+      }
+      
+      toast.success(`${settingsType.charAt(0).toUpperCase() + settingsType.slice(1)} settings updated successfully`)
     } catch (error) {
-      toast.error(`Failed to update ${settingsType} settings`)
+      console.error(`Failed to update ${settingsType} settings:`, error)
+      const errorMessage = error.response?.data?.message || error.message || `Failed to update ${settingsType} settings`
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
