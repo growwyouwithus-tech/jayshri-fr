@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Box,
   Typography,
@@ -47,6 +48,8 @@ import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
 const PropertyManagement = () => {
+  const navigate = useNavigate()
+  
   // Main list view state
   const [properties, setProperties] = useState([])
   const [propertiesLoading, setPropertiesLoading] = useState(true)
@@ -454,6 +457,23 @@ const PropertyManagement = () => {
       stats
     })
     setPlotsDialogOpen(true)
+  }
+
+  const handleAddPlotForProperty = (property) => {
+    // Navigate to plot management with pre-selected property
+    navigate('/admin/plots', { 
+      state: { 
+        preSelectedProperty: property._id,
+        preSelectedColony: property.colonyId?._id || property.colonyId,
+        openAddDialog: true 
+      } 
+    })
+  }
+
+  const handleAddFeatureForProperty = (property) => {
+    // Open edit dialog for the property to add features
+    openEditDialog(property)
+    setPlotsDialogOpen(false)
   }
 
   const calculateRemainingLand = (property) => {
@@ -1434,9 +1454,29 @@ const PropertyManagement = () => {
                 Total: {selectedPropertyPlots?.plots?.length || 0} plots
               </Typography>
             </Box>
-            <IconButton onClick={() => setPlotsDialogOpen(false)} size="small">
-              <Close />
-            </IconButton>
+            <Box display="flex" gap={1}>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                size="small"
+                startIcon={<Add />}
+                onClick={() => handleAddPlotForProperty(selectedPropertyPlots?.property)}
+              >
+                Add Plot
+              </Button>
+              {/* <Button 
+                variant="contained" 
+                color="secondary" 
+                size="small"
+                startIcon={<Add />}
+                onClick={() => handleAddFeatureForProperty(selectedPropertyPlots?.property)}
+              >
+                Add Feature
+              </Button> */}
+              <IconButton onClick={() => setPlotsDialogOpen(false)} size="small">
+                <Close />
+              </IconButton>
+            </Box>
           </Box>
         </DialogTitle>
         <DialogContent>

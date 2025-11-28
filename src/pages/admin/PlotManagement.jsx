@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   Box,
   Typography,
@@ -290,6 +291,7 @@ const PlotManagement = () => {
 
     const payload = {
       plotNumber: newPlot.plotNo,
+      propertyId: newPlot.propertyId,
       colony: newPlot.colonyId,
       area,
       pricePerSqFt,
@@ -364,11 +366,37 @@ const PlotManagement = () => {
     }
   }
 
+  const location = useLocation()
+
   useEffect(() => {
     fetchProperties()
     fetchColonies()
     fetchPlots()
   }, [])
+
+  // Handle pre-selected property from navigation state
+  useEffect(() => {
+    if (location.state?.preSelectedProperty && location.state?.openAddDialog) {
+      const propertyId = location.state.preSelectedProperty
+      const colonyId = location.state.preSelectedColony
+      const selectedProperty = properties.find(p => p._id === propertyId)
+      
+      if (selectedProperty) {
+        const allowedPlotTypes = getPropertyPlotTypes(selectedProperty)
+        setNewPlot((prev) => ({
+          ...prev,
+          propertyId: propertyId,
+          colonyId: colonyId || '',
+          pricePerGaj: selectedProperty?.basePricePerGaj || prev.pricePerGaj,
+          plotType: allowedPlotTypes[0] || 'residential'
+        }))
+        setAddDialogOpen(true)
+      }
+      
+      // Clear the navigation state to prevent reopening on refresh
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state, properties])
 
   const fetchProperties = async () => {
     try {
