@@ -1521,9 +1521,9 @@ const PropertyManagement = () => {
                     <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                       <TableCell><strong>Plot No</strong></TableCell>
                       <TableCell><strong>Area (Gaj)</strong></TableCell>
-                      <TableCell><strong>Price/Gaj</strong></TableCell>
+                      <TableCell><strong>Asking Price/Gaj</strong></TableCell>
                       <TableCell><strong>Total Price</strong></TableCell>
-                      <TableCell><strong>Paid Amount</strong></TableCell>
+                      {/* <TableCell><strong>Paid Amount</strong></TableCell> */}
                       <TableCell><strong>Status</strong></TableCell>
                     </TableRow>
                   </TableHead>
@@ -1539,7 +1539,7 @@ const PropertyManagement = () => {
                           <TableCell>{(plot.area / 9).toFixed(3)}</TableCell>
                           <TableCell>₹{((plot.pricePerSqFt || 0) * 9).toLocaleString('en-IN')}</TableCell>
                           <TableCell>₹{(plot.totalPrice || 0).toLocaleString('en-IN')}</TableCell>
-                          <TableCell>₹{(plot.paidAmount || 0).toLocaleString('en-IN')}</TableCell>
+                          {/* <TableCell>₹{(plot.paidAmount || 0).toLocaleString('en-IN')}</TableCell> */}
                           <TableCell>
                             <Chip 
                               label={plot.status} 
