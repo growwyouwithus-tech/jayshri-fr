@@ -345,11 +345,6 @@ if (openDialog) {
           <Grid item xs={12} sm={6}>
             <TextField fullWidth label="Phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
           </Grid>
-          {!editMode && (
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required />
-            </Grid>
-          )}
           <Grid item xs={12} sm={6}>
             <TextField fullWidth select label="Role" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} required>
               {roles.map((role) => (
@@ -357,6 +352,35 @@ if (openDialog) {
               ))}
             </TextField>
           </Grid>
+          {!editMode && (
+            <>
+              <Grid item xs={12} sm={6}>
+                <TextField 
+                  fullWidth 
+                  label="Password" 
+                  type="password" 
+                  value={formData.password} 
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+                  helperText="Leave empty for auto-generated password"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField 
+                  fullWidth 
+                  label="Confirm Password" 
+                  type="password" 
+                  value={formData.confirmPassword} 
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  error={formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()}
+                  helperText={
+                    formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()
+                      ? "Passwords do not match"
+                      : ""
+                  }
+                />
+              </Grid>
+            </>
+          )}
         </Grid>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
           <Button onClick={handleCloseDialog} variant="outlined">Cancel</Button>
@@ -507,7 +531,7 @@ return (
         <DialogTitle>{editMode ? 'Edit Staff' : 'Add Staff'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={6}>
               <Typography variant="body2" mb={1}>Full Name</Typography>
               <TextField
                 fullWidth
@@ -517,7 +541,7 @@ return (
                 required
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={6}>
               <Typography variant="body2" mb={1}>Email Address</Typography>
               <TextField
                 fullWidth
@@ -529,7 +553,7 @@ return (
                 disabled={editMode}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={6}>
               <Typography variant="body2" mb={1}>Phone</Typography>
               <TextField
                 fullWidth
@@ -546,36 +570,7 @@ return (
                 }}
               />
             </Grid>
-            <Grid item xs={4}>
-              <Typography variant="body2" mb={1}>Password</Typography>
-              <TextField
-                fullWidth
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required={!editMode}
-                helperText={!editMode && !formData.password ? "Leave empty for auto-generated password" : ""}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <Typography variant="body2" mb={1}>Confirm Password</Typography>
-              <TextField
-                fullWidth
-                type="password"
-                placeholder="••••••"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                required={!editMode}
-                error={formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()}
-                helperText={
-                  formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()
-                    ? "Passwords do not match"
-                    : ""
-                }
-              />
-            </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={6}>
               <Typography variant="body2" mb={1}>Role*</Typography>
               <TextField
                 fullWidth
@@ -604,6 +599,37 @@ return (
                 )}
               </TextField>
             </Grid>
+            {!editMode && (
+              <>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" mb={1}>Password</Typography>
+                  <TextField
+                    fullWidth
+                    type="password"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    helperText="Leave empty for auto-generated password"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" mb={1}>Confirm Password</Typography>
+                  <TextField
+                    fullWidth
+                    type="password"
+                    placeholder="••••••"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    error={formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()}
+                    helperText={
+                      formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()
+                        ? "Passwords do not match"
+                        : ""
+                    }
+                  />
+                </Grid>
+              </>
+            )}
             <Grid item xs={12}>
               <Typography variant="body2" mb={1}>Profile Image (optional)</Typography>
               <Box

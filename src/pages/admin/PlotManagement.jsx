@@ -1108,7 +1108,7 @@ const PlotManagement = () => {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {/* Property Selector - REQUIRED */}
                 <FormControl size="small" error={!!errors.propertyId} required>
-                  <InputLabel id="property-select-label">Property *</InputLabel>
+                  <InputLabel id="property-select-label">Property</InputLabel>
                   <Select
                     labelId="property-select-label"
                     value={newPlot.propertyId || ''}
@@ -1222,18 +1222,49 @@ const PlotManagement = () => {
                   </RadioGroup>
                 </FormControl>
 
-                <TextField 
-                  size="small" 
-                  label="Plot Number *" 
-                  value={newPlot.plotNo} 
-                  onChange={(e) => {
-                    setNewPlot((s) => ({ ...s, plotNo: e.target.value }))
-                    clearError('plotNo')
-                  }}
-                  error={!!errors.plotNo}
-                  helperText={errors.plotNo}
-                  required
-                />
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField 
+                      fullWidth
+                      size="small" 
+                      label="Plot Number *" 
+                      value={newPlot.plotNo} 
+                      onChange={(e) => {
+                        setNewPlot((s) => ({ ...s, plotNo: e.target.value }))
+                        clearError('plotNo')
+                      }}
+                      error={!!errors.plotNo}
+                      helperText={errors.plotNo}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small" error={!!errors.facing} required>
+                      <InputLabel id="facing-select-label">Facing *</InputLabel>
+                      <Select
+                        labelId="facing-select-label"
+                        value={newPlot.facing}
+                        label="Facing *"
+                        onChange={(e) => {
+                          setNewPlot((s) => ({ ...s, facing: e.target.value }))
+                          clearError('facing')
+                        }}
+                      >
+                        <MenuItem value="">Select Facing</MenuItem>
+                        {FACING_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {errors.facing && (
+                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                          {errors.facing}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  </Grid>
+                </Grid>
                 
                 {/* Side Measurements */}
                 <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
@@ -1314,52 +1345,35 @@ const PlotManagement = () => {
                   </Box>
                 </Box>
 
-                <TextField 
-                  size="small" 
-                  label="Asking Price per Gaj *" 
-                  type="number" 
-                  value={newPlot.pricePerGaj} 
-                  onChange={(e) => {
-                    updatePricingFromPricePerGaj(e.target.value)
-                    clearError('pricePerGaj')
-                  }}
-                  error={!!errors.pricePerGaj}
-                  helperText={errors.pricePerGaj}
-                  required
-                />
-                <TextField
-                  size="small"
-                  label="Total Price (Auto-calculated)"
-                  type="number"
-                  value={newPlot.totalPrice}
-                  onChange={(e) => updatePricingFromTotal(e.target.value)}
-                  InputProps={{ readOnly: true }}
-                />
-                
-                <FormControl size="small" error={!!errors.facing} required>
-                  <InputLabel id="facing-select-label">Facing *</InputLabel>
-                  <Select
-                    labelId="facing-select-label"
-                    value={newPlot.facing}
-                    label="Facing *"
-                    onChange={(e) => {
-                      setNewPlot((s) => ({ ...s, facing: e.target.value }))
-                      clearError('facing')
-                    }}
-                  >
-                    <MenuItem value="">Select Facing</MenuItem>
-                    {FACING_OPTIONS.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {errors.facing && (
-                    <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                      {errors.facing}
-                    </Typography>
-                  )}
-                </FormControl>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField 
+                      fullWidth
+                      size="small" 
+                      label="Asking Price per Gaj *" 
+                      type="number" 
+                      value={newPlot.pricePerGaj} 
+                      onChange={(e) => {
+                        updatePricingFromPricePerGaj(e.target.value)
+                        clearError('pricePerGaj')
+                      }}
+                      error={!!errors.pricePerGaj}
+                      helperText={errors.pricePerGaj}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Total Price (Auto-calculated)"
+                      type="number"
+                      value={newPlot.totalPrice}
+                      onChange={(e) => updatePricingFromTotal(e.target.value)}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Grid>
+                </Grid>
 
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
@@ -1447,168 +1461,205 @@ const PlotManagement = () => {
                     <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#e65100' }}>
                       {newPlot.status === 'booked' ? 'Booking Details' : 'Sale Details'}
                     </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <TextField
-                        size="small"
-                        label="Customer Name *"
-                        value={newPlot.customerName}
-                        onChange={(e) => {
-                          setNewPlot((s) => ({ ...s, customerName: e.target.value }))
-                          clearError('customerName')
-                        }}
-                        error={!!errors.customerName}
-                        helperText={errors.customerName}
-                        required
-                      />
-                      <TextField
-                        size="small"
-                        label="Customer Number *"
-                        type="tel"
-                        value={newPlot.customerNumber}
-                        onChange={(e) => {
-                          setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))
-                          clearError('customerNumber')
-                        }}
-                        error={!!errors.customerNumber}
-                        helperText={errors.customerNumber}
-                        placeholder="10 digit mobile number"
-                        required
-                      />
-                      <TextField
-                        size="small"
-                        label="Customer Short Address *"
-                        value={newPlot.customerShortAddress}
-                        onChange={(e) => {
-                          setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))
-                          clearError('customerShortAddress')
-                        }}
-                        error={!!errors.customerShortAddress}
-                        helperText={errors.customerShortAddress}
-                        required
-                      />
-                      <TextField
-                        size="small"
-                        label="Registry Date (Optional)"
-                        type="date"
-                        value={newPlot.registryDate}
-                        onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
-                        InputLabelProps={{ shrink: true }}
-                      />
-                      <TextField
-                        size="small"
-                        label="Customer Full Address (Optional)"
-                        multiline
-                        rows={2}
-                        value={newPlot.customerFullAddress}
-                        onChange={(e) => setNewPlot((s) => ({ ...s, customerFullAddress: e.target.value }))}
-                      />
-                      <TextField
-                        size="small"
-                        label="More Information (Optional)"
-                        multiline
-                        rows={2}
-                        value={newPlot.moreInformation}
-                        onChange={(e) => setNewPlot((s) => ({ ...s, moreInformation: e.target.value }))}
-                      />
-                      <TextField
-                        size="small"
-                        label="Final Price per Gaj (Optional)"
-                        type="number"
-                        value={newPlot.finalPrice}
-                        onChange={(e) => {
-                          setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))
-                          clearError('finalPrice')
-                        }}
-                        error={!!errors.finalPrice}
-                        helperText={
-                          errors.finalPrice || 
-                          (newPlot.finalPrice && newPlot.areaGaj ? 
-                            `Total: ₹${Number(newPlot.finalPrice * newPlot.areaGaj).toLocaleString()}` : 
-                            'Enter negotiated price per Gaj'
-                          )
-                        }
-                      />
-                      <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
                         <TextField
+                          fullWidth
+                          size="small"
+                          label="Customer Name *"
+                          value={newPlot.customerName}
+                          onChange={(e) => {
+                            setNewPlot((s) => ({ ...s, customerName: e.target.value }))
+                            clearError('customerName')
+                          }}
+                          error={!!errors.customerName}
+                          helperText={errors.customerName}
+                          required
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Customer Number *"
+                          type="tel"
+                          value={newPlot.customerNumber}
+                          onChange={(e) => {
+                            setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))
+                            clearError('customerNumber')
+                          }}
+                          error={!!errors.customerNumber}
+                          helperText={errors.customerNumber}
+                          placeholder="10 digit mobile number"
+                          required
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Customer Short Address *"
+                          value={newPlot.customerShortAddress}
+                          onChange={(e) => {
+                            setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))
+                            clearError('customerShortAddress')
+                          }}
+                          error={!!errors.customerShortAddress}
+                          helperText={errors.customerShortAddress}
+                          required
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Registry Date (Optional)"
+                          type="date"
+                          value={newPlot.registryDate}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Customer Full Address (Optional)"
+                          multiline
+                          rows={2}
+                          value={newPlot.customerFullAddress}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, customerFullAddress: e.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="More Information (Optional)"
+                          multiline
+                          rows={2}
+                          value={newPlot.moreInformation}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, moreInformation: e.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Final Price per Gaj (Optional)"
+                          type="number"
+                          value={newPlot.finalPrice}
+                          onChange={(e) => {
+                            setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))
+                            clearError('finalPrice')
+                          }}
+                          error={!!errors.finalPrice}
+                          helperText={
+                            errors.finalPrice || 
+                            (newPlot.finalPrice && newPlot.areaGaj ? 
+                              `Total: ₹${Number(newPlot.finalPrice * newPlot.areaGaj).toLocaleString()}` : 
+                              'Enter negotiated price per Gaj'
+                            )
+                          }
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          select
+                          label="Tahsil (Optional)"
+                          value={newPlot.tahsil}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, tahsil: e.target.value }))}
+                        >
+                          <MenuItem value="">Select Tahsil</MenuItem>
+                          {TAHSIL_OPTIONS.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
                           size="small"
                           label="Agent Name (Optional)"
                           value={newPlot.agentName}
                           onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
-                          sx={{ flex: 1 }}
                         />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
                         <TextField
+                          fullWidth
                           size="small"
                           label="Agent Code (Optional)"
                           value={newPlot.agentCode}
                           onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
-                          sx={{ flex: 1 }}
                         />
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 2 }}>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
                         <TextField
+                          fullWidth
                           size="small"
                           label="Advocate Name (Optional)"
                           value={newPlot.advocateName}
                           onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
-                          sx={{ flex: 1 }}
                         />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
                         <TextField
+                          fullWidth
                           size="small"
                           label="Advocate Code (Optional)"
                           value={newPlot.advocateCode}
                           onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
-                          sx={{ flex: 1 }}
                         />
-                      </Box>
-                      <TextField
-                        size="small"
-                        select
-                        label="Tahsil (Optional)"
-                        value={newPlot.tahsil}
-                        onChange={(e) => setNewPlot((s) => ({ ...s, tahsil: e.target.value }))}
-                      >
-                        <MenuItem value="">Select Tahsil</MenuItem>
-                        {TAHSIL_OPTIONS.map((option) => (
-                          <MenuItem key={option.value} value={option.value}>
-                            {option.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                      <TextField
-                        size="small"
-                        select
-                        label="Mode of Payment (Optional)"
-                        value={newPlot.modeOfPayment}
-                        onChange={(e) => setNewPlot((s) => ({ ...s, modeOfPayment: e.target.value }))}
-                      >
-                        <MenuItem value="">Select Mode</MenuItem>
-                        <MenuItem value="cash">Cash</MenuItem>
-                        <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
-                        <MenuItem value="upi">UPI</MenuItem>
-                        <MenuItem value="cheque">Cheque</MenuItem>
-                        <MenuItem value="card">Card</MenuItem>
-                      </TextField>
-                      <TextField
-                        size="small"
-                        label="Transaction Date & Time (Optional)"
-                        type="datetime-local"
-                        value={newPlot.transactionDate}
-                        onChange={(e) => setNewPlot((s) => ({ ...s, transactionDate: e.target.value }))}
-                        InputLabelProps={{ shrink: true }}
-                      />
-                      <TextField
-                        size="small"
-                        label="Amount Paid (Optional)"
-                        type="number"
-                        value={newPlot.paidAmount}
-                        onChange={(e) => {
-                          setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))
-                          clearError('paidAmount')
-                        }}
-                        error={!!errors.paidAmount}
-                        helperText={errors.paidAmount}
-                      />
-                      <Box>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          select
+                          label="Mode of Payment (Optional)"
+                          value={newPlot.modeOfPayment}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, modeOfPayment: e.target.value }))}
+                        >
+                          <MenuItem value="">Select Mode</MenuItem>
+                          <MenuItem value="cash">Cash</MenuItem>
+                          <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                          <MenuItem value="upi">UPI</MenuItem>
+                          <MenuItem value="cheque">Cheque</MenuItem>
+                          <MenuItem value="card">Card</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Transaction Date & Time (Optional)"
+                          type="datetime-local"
+                          value={newPlot.transactionDate}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, transactionDate: e.target.value }))}
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Amount Paid (Optional)"
+                          type="number"
+                          value={newPlot.paidAmount}
+                          onChange={(e) => {
+                            setNewPlot((s) => ({ ...s, paidAmount: e.target.value }))
+                            clearError('paidAmount')
+                          }}
+                          error={!!errors.paidAmount}
+                          helperText={errors.paidAmount}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
                         <Button
                           variant="outlined"
                           component="label"
@@ -1628,9 +1679,9 @@ const PlotManagement = () => {
                             ✓ {newPlot.paymentSlip.name}
                           </Typography>
                         )}
-                      </Box>
+                      </Grid>
                       {newPlot.status === 'sold' && (
-                        <Box>
+                        <Grid item xs={12} sm={6}>
                           <Button
                             variant="outlined"
                             component="label"
@@ -1651,9 +1702,9 @@ const PlotManagement = () => {
                               ✓ {newPlot.registryDocument.name}
                             </Typography>
                           )}
-                        </Box>
+                        </Grid>
                       )}
-                    </Box>
+                    </Grid>
                   </Box>
                 )}
               </Box>
