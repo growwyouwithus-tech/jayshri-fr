@@ -87,7 +87,11 @@ const PropertyManagement = () => {
     moreImages: [],
     agreeTerms: false,
     roads: [],
-    parks: []
+    parks: [],
+    coordinates: {
+      latitude: '',
+      longitude: ''
+    }
   })
   
   const [newFacility, setNewFacility] = useState('')
@@ -269,7 +273,11 @@ const PropertyManagement = () => {
       moreImages: [],
       agreeTerms: false,
       roads: [],
-      parks: []
+      parks: [],
+      coordinates: {
+        latitude: '',
+        longitude: ''
+      }
     })
     setNewFacility('')
     setAddDialogOpen(true)
@@ -280,7 +288,7 @@ const PropertyManagement = () => {
     setCurrentProperty(property)
     setActiveStep(0)
     setFormData({
-      categories: property.categories || (property.category ? [property.category] : []),
+      categories: property.categories || [],
       colonyId: property.colonyId?._id || property.colony?._id || '',
       name: property.name || '',
       facilities: property.facilities || [],
@@ -298,8 +306,13 @@ const PropertyManagement = () => {
       moreImages: [],
       agreeTerms: true,
       roads: property.roads || [],
-      parks: property.parks || []
+      parks: property.parks || [],
+      coordinates: {
+        latitude: property.coordinates?.latitude || '',
+        longitude: property.coordinates?.longitude || ''
+      }
     })
+    setNewFacility('')
     setAddDialogOpen(true)
   }
 
@@ -363,6 +376,10 @@ const PropertyManagement = () => {
               }
             })
           }
+        } else if (key === 'coordinates') {
+          // Handle coordinates separately
+          payload.append('latitude', formData.coordinates.latitude || '')
+          payload.append('longitude', formData.coordinates.longitude || '')
         } else if (formData[key] instanceof File) {
           payload.append(key, formData[key])
         } else if (formData[key] !== null && formData[key] !== undefined) {
@@ -527,7 +544,11 @@ const PropertyManagement = () => {
       moreImages: [],
       agreeTerms: false,
       roads: [],
-      parks: []
+      parks: [],
+      coordinates: {
+        latitude: '',
+        longitude: ''
+      }
     })
     setNewFacility('')
     closeAddDialog()
@@ -958,6 +979,86 @@ const PropertyManagement = () => {
               ))}
             </Grid>
 
+            {/* Property Location Section */}
+            <Box sx={{ mt: 4, p: 3, bgcolor: '#f8f9fa', borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight="bold" mb={3} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ fontSize: 24 }}>📍</Box>
+                Property Current Location
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Latitude"
+                    type="number"
+                    step="any"
+                    placeholder="e.g., 27.1767"
+                    value={formData.coordinates.latitude}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      coordinates: {
+                        ...formData.coordinates,
+                        latitude: e.target.value
+                      }
+                    })}
+                    helperText="Enter property latitude coordinates"
+                    InputProps={{
+                      startAdornment: <Box sx={{ mr: 1, color: 'text.secondary' }}>🌍</Box>
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Longitude"
+                    type="number"
+                    step="any"
+                    placeholder="e.g., 78.0081"
+                    value={formData.coordinates.longitude}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      coordinates: {
+                        ...formData.coordinates,
+                        longitude: e.target.value
+                      }
+                    })}
+                    helperText="Enter property longitude coordinates"
+                    InputProps={{
+                      startAdornment: <Box sx={{ mr: 1, color: 'text.secondary' }}>🌍</Box>
+                    }}
+                  />
+                </Grid>
+              </Grid>
+
+              <Box sx={{ mt: 3, p: 2, bgcolor: 'white', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  <strong>How to get coordinates:</strong>
+                </Typography>
+                <Typography variant="body2" component="div">
+                  1. Open Google Maps<br/>
+                  2. Search for your property location<br/>
+                  3. Right-click on the exact location<br/>
+                  4. Click on the coordinates to copy<br/>
+                  5. Paste latitude and longitude above
+                </Typography>
+              </Box>
+
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    // Open Google Maps in a new tab
+                    window.open('https://maps.google.com', '_blank');
+                  }}
+                  startIcon={<Box sx={{ fontSize: 16 }}>🗺️</Box>}
+                >
+                  Open Google Maps
+                </Button>
+              </Box>
+            </Box>
+
             <FormControlLabel
               control={
                 <Checkbox
@@ -1012,6 +1113,29 @@ const PropertyManagement = () => {
                       <Typography variant="body2" color="text.secondary">Address</Typography>
                       <Typography variant="body1">{formData.address || '-'}</Typography>
                     </Grid>
+                    {(formData.coordinates.latitude || formData.coordinates.longitude) && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2" color="text.secondary">Location Coordinates</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
+                          <Typography variant="body1">
+                            📍 Lat: {formData.coordinates.latitude || '-'}, Lng: {formData.coordinates.longitude || '-'}
+                          </Typography>
+                          {(formData.coordinates.latitude && formData.coordinates.longitude) && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => {
+                                const url = `https://maps.google.com/?q=${formData.coordinates.latitude},${formData.coordinates.longitude}`;
+                                window.open(url, '_blank');
+                              }}
+                              sx={{ ml: 1 }}
+                            >
+                              View on Map
+                            </Button>
+                          )}
+                        </Box>
+                      </Grid>
+                    )}
                   </Grid>
                 </Paper>
               </Grid>

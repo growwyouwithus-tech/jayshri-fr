@@ -290,7 +290,6 @@ const PlotManagement = () => {
       : Math.round(area * pricePerSqFt)
 
     const payload = {
-      plotNumber: newPlot.plotNo,
       propertyId: newPlot.propertyId,
       colony: newPlot.colonyId,
       area,
@@ -299,6 +298,7 @@ const PlotManagement = () => {
       facing: newPlot.facing,
       status: newPlot.status,
       ownerType: newPlot.ownerType,
+      plotType: newPlot.plotType || 'residential',
       dimensions: {
         length: toNumber(newPlot.frontSide),
         width: toNumber(newPlot.leftSide),
@@ -311,24 +311,55 @@ const PlotManagement = () => {
         right: toNumber(newPlot.rightSide),
       },
     }
+    
+    // Only include plotNumber when editing (not creating new)
+    if (editingPlotId && newPlot.plotNo) {
+      payload.plotNumber = newPlot.plotNo
+    }
 
     // Add booking/sale details if status is booked or sold
     if (newPlot.status === 'booked' || newPlot.status === 'sold') {
       payload.customerName = newPlot.customerName
       payload.customerNumber = newPlot.customerNumber
       payload.customerShortAddress = newPlot.customerShortAddress
-      payload.customerFullAddress = newPlot.customerFullAddress
-      payload.registryDate = newPlot.registryDate
-      payload.moreInformation = newPlot.moreInformation
-      payload.finalPrice = newPlot.finalPrice ? Number(newPlot.finalPrice) : 0
-      payload.agentName = newPlot.agentName
-      payload.agentCode = newPlot.agentCode
-      payload.advocateName = newPlot.advocateName
-      payload.advocateCode = newPlot.advocateCode
-      payload.tahsil = newPlot.tahsil
-      payload.modeOfPayment = newPlot.modeOfPayment
-      payload.transactionDate = newPlot.transactionDate
-      payload.paidAmount = newPlot.paidAmount ? Number(newPlot.paidAmount) : 0
+      
+      // Only include optional fields if they have values
+      if (newPlot.customerFullAddress) {
+        payload.customerFullAddress = newPlot.customerFullAddress
+      }
+      if (newPlot.registryDate) {
+        payload.registryDate = newPlot.registryDate
+      }
+      if (newPlot.moreInformation) {
+        payload.moreInformation = newPlot.moreInformation
+      }
+      if (newPlot.finalPrice) {
+        payload.finalPrice = Number(newPlot.finalPrice)
+      }
+      if (newPlot.agentName) {
+        payload.agentName = newPlot.agentName
+      }
+      if (newPlot.agentCode) {
+        payload.agentCode = newPlot.agentCode
+      }
+      if (newPlot.advocateName) {
+        payload.advocateName = newPlot.advocateName
+      }
+      if (newPlot.advocateCode) {
+        payload.advocateCode = newPlot.advocateCode
+      }
+      if (newPlot.tahsil) {
+        payload.tahsil = newPlot.tahsil
+      }
+      if (newPlot.modeOfPayment) {
+        payload.modeOfPayment = newPlot.modeOfPayment
+      }
+      if (newPlot.transactionDate) {
+        payload.transactionDate = newPlot.transactionDate
+      }
+      if (newPlot.paidAmount) {
+        payload.paidAmount = Number(newPlot.paidAmount)
+      }
     }
 
     return payload
@@ -491,6 +522,7 @@ const PlotManagement = () => {
       propertyId: typeof propertyRef === 'string' ? propertyRef : propertyRef?._id || '',
       colonyId: typeof colonyRef === 'string' ? colonyRef : colonyRef?._id || '',
       plotNo: plot.plotNo || plot.plotNumber || '',
+      plotType: plot.plotType || 'residential',
       frontSide: plot.sideMeasurements?.front?.toString() || plot.dimensions?.length?.toString() || '',
       backSide: plot.sideMeasurements?.back?.toString() || plot.dimensions?.length?.toString() || '',
       leftSide: plot.sideMeasurements?.left?.toString() || plot.dimensions?.width?.toString() || '',
@@ -501,6 +533,7 @@ const PlotManagement = () => {
       facing: plot.facing || '',
       status: plot.status || 'available',
       ownerType: plot.ownerType || 'owner',
+      plotImages: [],
       customerName: plot.customerName || '',
       customerNumber: plot.customerNumber || '',
       customerShortAddress: plot.customerShortAddress || '',
@@ -530,6 +563,7 @@ const PlotManagement = () => {
       propertyId: '',
       colonyId: '', 
       plotNo: '', 
+      plotType: 'residential',
       frontSide: '', 
       backSide: '', 
       leftSide: '', 
@@ -540,6 +574,7 @@ const PlotManagement = () => {
       facing: '', 
       status: 'available', 
       ownerType: 'owner', 
+      plotImages: [],
       customerName: '', 
       customerNumber: '', 
       customerShortAddress: '',
@@ -1281,7 +1316,7 @@ const PlotManagement = () => {
 
                 <TextField 
                   size="small" 
-                  label="Price per Gaj *" 
+                  label="Asking Price per Gaj *" 
                   type="number" 
                   value={newPlot.pricePerGaj} 
                   onChange={(e) => {
@@ -1477,7 +1512,7 @@ const PlotManagement = () => {
                       />
                       <TextField
                         size="small"
-                        label="Final Price (Optional)"
+                        label="Final Price per Gaj (Optional)"
                         type="number"
                         value={newPlot.finalPrice}
                         onChange={(e) => {
@@ -1485,7 +1520,13 @@ const PlotManagement = () => {
                           clearError('finalPrice')
                         }}
                         error={!!errors.finalPrice}
-                        helperText={errors.finalPrice}
+                        helperText={
+                          errors.finalPrice || 
+                          (newPlot.finalPrice && newPlot.areaGaj ? 
+                            `Total: ₹${Number(newPlot.finalPrice * newPlot.areaGaj).toLocaleString()}` : 
+                            'Enter negotiated price per Gaj'
+                          )
+                        }
                       />
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <TextField
@@ -2141,10 +2182,13 @@ const PlotManagement = () => {
               </TableRow>
             ) : (
               paginatedPlots.map((plot) => {
-                const finalPricePerGaj = plot.finalPrice && plot.areaGaj 
-                  ? (plot.finalPrice / plot.areaGaj).toFixed(2)
+                // finalPrice is stored as per Gaj rate
+                const finalPricePerGaj = plot.finalPrice || null;
+                // Calculate total from finalPrice per Gaj
+                const finalTotalPrice = plot.finalPrice && plot.areaGaj 
+                  ? plot.finalPrice * plot.areaGaj 
                   : null;
-                const displayTotalPrice = plot.finalPrice || plot.totalPrice;
+                const displayTotalPrice = finalTotalPrice || plot.totalPrice;
                 
                 return (
                   <TableRow key={plot._id} hover>
@@ -3261,8 +3305,17 @@ const PlotManagement = () => {
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">Total Price</Typography>
                       <Typography variant="h6" fontWeight={700} color="primary.main">
-                        ₹{Number(viewingPlot.finalPrice || viewingPlot.totalPrice).toLocaleString()}
+                        ₹{Number(
+                          viewingPlot.finalPrice && viewingPlot.areaGaj 
+                            ? viewingPlot.finalPrice * viewingPlot.areaGaj 
+                            : viewingPlot.totalPrice
+                        ).toLocaleString()}
                       </Typography>
+                      {viewingPlot.finalPrice && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Final: ₹{Number(viewingPlot.finalPrice).toLocaleString()}/Gaj
+                        </Typography>
+                      )}
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">Paid Amount</Typography>
@@ -3273,7 +3326,13 @@ const PlotManagement = () => {
                     <Grid item xs={12}>
                       <Typography variant="body2" color="text.secondary">Remaining Payment</Typography>
                       <Typography variant="h5" fontWeight={700} color="error.main">
-                        ₹{Number((viewingPlot.finalPrice || viewingPlot.totalPrice) - (viewingPlot.paidAmount || 0)).toLocaleString()}
+                        ₹{Number(
+                          (
+                            viewingPlot.finalPrice && viewingPlot.areaGaj 
+                              ? viewingPlot.finalPrice * viewingPlot.areaGaj 
+                              : viewingPlot.totalPrice
+                          ) - (viewingPlot.paidAmount || 0)
+                        ).toLocaleString()}
                       </Typography>
                     </Grid>
                     {viewingPlot.transactionDate && (

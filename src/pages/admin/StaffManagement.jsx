@@ -102,11 +102,19 @@ const StaffManagement = () => {
 
   const fetchRoles = async () => {
     try {
+      console.log('Fetching roles from /users/roles/all...')
       const { data } = await axios.get('/users/roles/all')
+      console.log('Roles fetched:', data)
       setRoles(data.data || [])
+      
+      if (!data.data || data.data.length === 0) {
+        toast.error('No roles found. Please contact admin.')
+      }
     } catch (error) {
       console.error('Failed to fetch roles:', error)
-      toast.error('Failed to fetch roles')
+      console.error('Error details:', error.response?.data)
+      toast.error(error.response?.data?.message || 'Failed to fetch roles. Please refresh.')
+      setRoles([]) // Set empty array on error
     }
   }
 
@@ -156,15 +164,26 @@ const StaffManagement = () => {
       return
     }
     
+    // Validate role exists in roles list
+    const roleExists = roles.find(r => r._id === formData.role)
+    if (!roleExists) {
+      toast.error('Invalid role selected. Please refresh and try again.')
+      return
+    }
+    
     if (!editMode) {
       // Password is optional - will use default if not provided
       if (formData.password) {
-        if (formData.password.length < 6) {
+        const password = formData.password.trim()
+        const confirmPassword = formData.confirmPassword.trim()
+        
+        if (password.length < 6) {
           toast.error('Password must be at least 6 characters')
           return
         }
         
-        if (formData.password !== formData.confirmPassword) {
+        if (password !== confirmPassword) {
+          console.log('Password mismatch:', { password, confirmPassword })
           toast.error('Passwords do not match')
           return
         }
@@ -172,12 +191,15 @@ const StaffManagement = () => {
     }
 
     const payload = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
       role: formData.role,
-      ...(formData.password ? { password: formData.password } : {})
+      ...(formData.password ? { password: formData.password.trim() } : {})
     }
+
+    console.log('Submitting staff with payload:', payload)
+    console.log('Selected role details:', roleExists)
 
     try {
       if (editMode) {
@@ -329,14 +351,11 @@ if (openDialog) {
             </Grid>
           )}
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth select label="Role" value={formData.roleId} onChange={(e) => setFormData({ ...formData, roleId: e.target.value })} required>
+            <TextField fullWidth select label="Role" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} required>
               {roles.map((role) => (
                 <MenuItem key={role._id} value={role._id}>{role.name}</MenuItem>
               ))}
             </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Department" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
@@ -428,6 +447,7 @@ return (
               </TableCell>
               <TableCell><strong>SL.</strong></TableCell>
               <TableCell><strong>Name</strong></TableCell>
+              <TableCell><strong>Code</strong></TableCell>
               <TableCell><strong>Phone</strong></TableCell>
               <TableCell><strong>Email</strong></TableCell>
               <TableCell><strong>Role</strong></TableCell>
@@ -437,7 +457,7 @@ return (
           <TableBody>
             {filteredStaff.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={8} align="center">
                   No staff found. Click "Add Staff" to create one.
                 </TableCell>
               </TableRow>
@@ -458,6 +478,11 @@ return (
                       </Avatar>
                       {staffMember.name}
                     </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600} color="primary">
+                      {staffMember.userCode || '-'}
+                    </Typography>
                   </TableCell>
                   <TableCell>{staffMember.phone}</TableCell>
                   <TableCell>{staffMember.email}</TableCell>
@@ -530,6 +555,7 @@ return (
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required={!editMode}
+                helperText={!editMode && !formData.password ? "Leave empty for auto-generated password" : ""}
               />
             </Grid>
             <Grid item xs={4}>
@@ -541,6 +567,12 @@ return (
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 required={!editMode}
+                error={formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()}
+                helperText={
+                  formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()
+                    ? "Passwords do not match"
+                    : ""
+                }
               />
             </Grid>
             <Grid item xs={4}>
@@ -551,13 +583,25 @@ return (
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 required
+                error={!formData.role && roles.length > 0}
+                helperText={
+                  roles.length === 0 
+                    ? "Loading roles..." 
+                    : !formData.role 
+                      ? "Please select a role" 
+                      : ""
+                }
               >
                 <MenuItem value="">Select One</MenuItem>
-                {roles.map((role) => (
-                  <MenuItem key={role._id} value={role._id}>
-                    {role.name}
-                  </MenuItem>
-                ))}
+                {roles.length === 0 ? (
+                  <MenuItem disabled>Loading roles...</MenuItem>
+                ) : (
+                  roles.map((role) => (
+                    <MenuItem key={role._id} value={role._id}>
+                      {role.name}
+                    </MenuItem>
+                  ))
+                )}
               </TextField>
             </Grid>
             <Grid item xs={12}>

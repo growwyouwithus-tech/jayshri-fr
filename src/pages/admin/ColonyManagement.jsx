@@ -22,7 +22,11 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Select
+  Select,
+  Popover,
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material'
 import { Add, Edit, Delete, Visibility, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
@@ -66,6 +70,8 @@ const ColonyManagement = () => {
 
   const [newKhatoniHolder, setNewKhatoniHolder] = useState({ name: '', address: '', mobile: '' })
   const [errors, setErrors] = useState({})
+  const [khatoniPopoverAnchor, setKhatoniPopoverAnchor] = useState(null)
+  const [selectedKhatoniHolders, setSelectedKhatoniHolders] = useState([])
 
   // Clear error for a specific field
   const clearError = (fieldName) => {
@@ -656,6 +662,13 @@ const ColonyManagement = () => {
                 Colony Side Measurements (in Feet)
               </Typography>
             </Grid>
+              {calculateColonyArea() && (
+              <Grid item xs={12}>
+                <Paper sx={{ p: 2, bgcolor: 'success.light', color: 'white' }}>
+                  <Typography variant="body2">Total Area: <strong>{calculateColonyArea().areaFeet} sq ft = {calculateColonyArea().areaGaj} Gaj</strong></Typography>
+                </Paper>
+              </Grid>
+            )}
             <Grid item xs={3}>
               <TextField
                 fullWidth
@@ -704,13 +717,7 @@ const ColonyManagement = () => {
                 })}
               />
             </Grid>
-            {calculateColonyArea() && (
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, bgcolor: 'success.light', color: 'white' }}>
-                  <Typography variant="body2">Total Area: <strong>{calculateColonyArea().areaFeet} sq ft = {calculateColonyArea().areaGaj} Gaj</strong></Typography>
-                </Paper>
-              </Grid>
-            )}
+          
           </Grid>
           
           <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
@@ -777,18 +784,31 @@ const ColonyManagement = () => {
                   <TableCell>
                     {colony.khatoniHolderDetails && colony.khatoniHolderDetails.length > 0 ? (
                       <Box>
-                        {colony.khatoniHolderDetails.map((holder, idx) => (
-                          <Box key={holder.id || idx} mb={0.5}>
-                            <Typography variant="body2">
-                              {holder.name || '-'}
+                        {/* Show first Khatoni Holder */}
+                        <Box mb={0.5}>
+                          <Typography variant="body2">
+                            {colony.khatoniHolderDetails[0].name || '-'}
+                          </Typography>
+                          {colony.khatoniHolderDetails[0].mobile && (
+                            <Typography variant="caption" color="text.secondary">
+                              {colony.khatoniHolderDetails[0].mobile}
                             </Typography>
-                            {holder.mobile && (
-                              <Typography variant="caption" color="text.secondary">
-                                {holder.mobile}
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
+                          )}
+                        </Box>
+                        {/* Show "See More" if there are multiple holders */}
+                        {colony.khatoniHolderDetails.length > 1 && (
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={(e) => {
+                              setKhatoniPopoverAnchor(e.currentTarget)
+                              setSelectedKhatoniHolders(colony.khatoniHolderDetails)
+                            }}
+                            sx={{ textTransform: 'none', p: 0, minWidth: 'auto', fontSize: '0.75rem' }}
+                          >
+                            See More ({colony.khatoniHolderDetails.length - 1} more)
+                          </Button>
+                        )}
                       </Box>
                     ) : (
                       <Typography variant="body2" color="text.secondary">-</Typography>
@@ -818,6 +838,42 @@ const ColonyManagement = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Khatoni Holders Popover */}
+      <Popover
+        open={Boolean(khatoniPopoverAnchor)}
+        anchorEl={khatoniPopoverAnchor}
+        onClose={() => setKhatoniPopoverAnchor(null)}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+      >
+        <Box sx={{ p: 2, maxWidth: 400 }}>
+          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+            All Khatoni Holders
+          </Typography>
+          <List dense>
+            {selectedKhatoniHolders.map((holder, idx) => (
+              <ListItem key={holder.id || idx} sx={{ px: 0 }}>
+                <ListItemText
+                  primary={holder.name || '-'}
+                  secondary={
+                    <>
+                      {holder.mobile && <Typography variant="caption" display="block">{holder.mobile}</Typography>}
+                      {holder.address && <Typography variant="caption" display="block" color="text.secondary">{holder.address}</Typography>}
+                    </>
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Popover>
 
       {/* Add/Edit Form - Full Screen */}
       {showForm && (
@@ -1175,13 +1231,7 @@ const ColonyManagement = () => {
                 })}
               />
             </Grid>
-            {calculateColonyArea() && (
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, bgcolor: 'success.light', color: 'white' }}>
-                  <Typography variant="body2">Total Area: <strong>{calculateColonyArea().areaFeet} sq ft = {calculateColonyArea().areaGaj} Gaj</strong></Typography>
-                </Paper>
-              </Grid>
-            )}
+     
 
           </Grid>
           
