@@ -1377,7 +1377,7 @@ const PropertyManagement = () => {
                 <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                   <TableCell><strong>Property Name</strong></TableCell>
                   <TableCell><strong>Category</strong></TableCell>
-                  <TableCell><strong>Land</strong></TableCell>
+                  {/* <TableCell><strong>Land</strong></TableCell> */}
                   <TableCell><strong>Total Land (Gaj)</strong></TableCell>
                   <TableCell><strong>Used Land (Gaj)</strong></TableCell>
                   <TableCell><strong>Land Sold (Gaj)</strong></TableCell>
@@ -1425,9 +1425,9 @@ const PropertyManagement = () => {
                         <TableCell>
                           <Typography variant="body2" fontWeight={600}>{property.name}</Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {property.categories && property.categories.length > 0 
+                            {/* {property.categories && property.categories.length > 0 
                               ? property.categories.join(', ') 
-                              : property.category || '-'}
+                              : property.category || '-'} */}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -1440,7 +1440,7 @@ const PropertyManagement = () => {
                             }
                           </Box>
                         </TableCell>
-                        <TableCell>{property.colonyId?.name || '-'}</TableCell>
+                        {/* <TableCell>{property.colonyId?.name || '-'}</TableCell> */}
                         <TableCell>
                           <Typography variant="body2" fontWeight={600}>
                             {totalLand > 0 ? totalLand.toFixed(2) : '-'}

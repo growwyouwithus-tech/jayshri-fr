@@ -126,20 +126,33 @@ const ColonyManagement = () => {
       const rawColonies = data?.data?.colonies || [];
       console.log('Raw colony data from API:', rawColonies);
 
-      const coloniesWithPlotCounts = await Promise.all(
-        rawColonies.map(async (colony) => {
-          try {
-            const plotData = await axios.get(`/plots`, { params: { colony: colony._id, limit: 1 } });
-            const totalPlots = plotData.data?.data?.pagination?.total ?? 0;
-            return normalizeColony({ ...colony, totalPlots });
-          } catch (plotError) {
-            console.error(`Failed to fetch plot count for colony ${colony._id}:`, plotError);
-            return normalizeColony(colony); // Return colony without plot count on error
+      // Fetch all plots in one call
+      try {
+        const plotsResponse = await axios.get('/plots', { params: { limit: 1000 } });
+        const allPlots = plotsResponse.data?.data?.plots || [];
+        
+        // Group plots by colony
+        const plotCountsByColony = {};
+        allPlots.forEach(plot => {
+          const colonyId = plot.colony?._id || plot.colony;
+          if (colonyId) {
+            plotCountsByColony[colonyId] = (plotCountsByColony[colonyId] || 0) + 1;
           }
-        })
-      );
+        });
 
-      setColonies(coloniesWithPlotCounts);
+        // Add plot counts to colonies
+        const coloniesWithPlotCounts = rawColonies.map(colony => {
+          const totalPlots = plotCountsByColony[colony._id] || 0;
+          return normalizeColony({ ...colony, totalPlots });
+        });
+
+        setColonies(coloniesWithPlotCounts);
+      } catch (plotError) {
+        console.error('Failed to fetch plots:', plotError);
+        // If plot fetching fails, still show colonies without plot counts
+        setColonies(rawColonies.map(colony => normalizeColony(colony)));
+      }
+
       setLoading(false)
     } catch (error) {
       console.error('Failed to fetch colonies:', error)
@@ -155,22 +168,43 @@ const ColonyManagement = () => {
     if (colony) {
       setEditMode(true)
       setCurrentColony(colony)
+      
+      // Ensure all khatoni holders have unique IDs
+      const khatoniHoldersWithIds = (colony.khatoniHolders || (colony.sellerName ? [{
+        name: colony.sellerName,
+        address: colony.sellerAddress || '',
+        mobile: colony.sellerMobile || ''
+      }] : [])).map((holder, index) => ({
+        ...holder,
+        id: holder.id || holder._id || `existing-${index}-${Date.now()}`
+      }));
+      
       setFormData({
-        name: colony.name,
+        name: colony.name || '',
         address: colony.address || colony.location?.address || '',
         purchasePrice: colony.purchasePrice || '',
-        khatoniHolders: colony.khatoniHolders || (colony.sellerName ? [{
-          name: colony.sellerName,
-          address: colony.sellerAddress || '',
-          mobile: colony.sellerMobile || ''
-        }] : []),
-        sideMeasurements: colony.sideMeasurements || { front: '', back: '', left: '', right: '' },
-        location: colony.location || { address: '', city: '', state: '', pincode: '', coordinates: { lat: '', lng: '' } },
+        khatoniHolders: khatoniHoldersWithIds,
+        sideMeasurements: {
+          front: colony.sideMeasurements?.front || '',
+          back: colony.sideMeasurements?.back || '',
+          left: colony.sideMeasurements?.left || '',
+          right: colony.sideMeasurements?.right || ''
+        },
+        location: {
+          address: colony.location?.address || colony.address || '',
+          city: colony.location?.city || colony.city?.name || '',
+          state: colony.location?.state || colony.city?.state || '',
+          pincode: colony.location?.pincode || '',
+          coordinates: {
+            lat: colony.location?.coordinates?.lat || colony.coordinates?.latitude || '',
+            lng: colony.location?.coordinates?.lng || colony.coordinates?.longitude || ''
+          }
+        },
         latitude: colony.coordinates?.latitude ?? colony.location?.coordinates?.lat ?? '',
         longitude: colony.coordinates?.longitude ?? colony.location?.coordinates?.lng ?? '',
         layoutUrl: colony.layoutUrl || '',
-        basePricePerGaj: colony.basePricePerGaj,
-        status: colony.status
+        basePricePerGaj: colony.basePricePerGaj || colony.ratePerGaj || '',
+        status: colony.status || 'planning'
       })
     } else {
       setEditMode(false)
@@ -211,7 +245,10 @@ const ColonyManagement = () => {
   }
 
   const removeKhatoniHolder = (id) => {
-    setFormData({ ...formData, khatoniHolders: formData.khatoniHolders.filter(s => s.id !== id) })
+    setFormData({ 
+      ...formData, 
+      khatoniHolders: formData.khatoniHolders.filter(holder => holder.id !== id) 
+    })
   }
 
   const calculateColonyArea = () => {
