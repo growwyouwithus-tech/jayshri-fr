@@ -27,6 +27,12 @@ api.interceptors.request.use(
       }
     }
     
+    // If data is FormData, remove Content-Type header to let browser set it with boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+      console.log('[API Request] FormData detected, removing Content-Type header')
+    }
+    
     // Log request in development
     if (import.meta.env.DEV) {
       console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`)

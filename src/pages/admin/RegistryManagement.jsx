@@ -18,9 +18,13 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
-  MenuItem
+  MenuItem,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material'
-import { Download, Visibility, Edit } from '@mui/icons-material'
+import { Download, Visibility, Edit, Add, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
@@ -31,8 +35,23 @@ const RegistryManagement = () => {
   const [filterStatus, setFilterStatus] = useState('')
   const [selectedRegistry, setSelectedRegistry] = useState(null)
   const [openDialog, setOpenDialog] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [newStatus, setNewStatus] = useState('')
   const [note, setNote] = useState('')
+  const [formData, setFormData] = useState({
+    plotNo: '',
+    dimension: '',
+    sqYard: '',
+    santoshJainPath: '',
+    buyerName: '',
+    partyMobileNo: '',
+    regTime: '',
+    partyAddress: '',
+    plotBookedName: '',
+    tahsilAdvName: '',
+    lakhmiSharma: '',
+    status: 'Pending'
+  })
 
   useEffect(() => {
     fetchRegistries()
@@ -129,81 +148,271 @@ const RegistryManagement = () => {
     )
   }
 
+  // Show form if showForm is true
+  if (showForm) {
+    return (
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold">
+            Add New Registry
+          </Typography>
+          <Button variant="outlined" startIcon={<ArrowBack />} onClick={() => setShowForm(false)}>
+            Back to Registry List
+          </Button>
+        </Box>
+        
+        <Paper sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Plot No *"
+                value={formData.plotNo}
+                onChange={(e) => setFormData({ ...formData, plotNo: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Dimension"
+                value={formData.dimension}
+                onChange={(e) => setFormData({ ...formData, dimension: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Sq Yard"
+                type="number"
+                value={formData.sqYard}
+                onChange={(e) => setFormData({ ...formData, sqYard: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Santosh/jain/umez/other</InputLabel>
+                <Select
+                  value={formData.santoshJainPath}
+                  label="Santosh/jain/umez/other"
+                  onChange={(e) => setFormData({ ...formData, santoshJainPath: e.target.value })}
+                >
+                  <MenuItem value="Santosh/jain/umez/other">Santosh/jain/umez/other</MenuItem>
+                  <MenuItem value="Rajni/Avdesh">Rajni/Avdesh</MenuItem>
+                  <MenuItem value="Satish devi/Lakhan Singh">Satish devi/Lakhan Singh</MenuItem>
+                  <MenuItem value="Lakhmi Sharma">Lakhmi Sharma</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Buyer Name/PARTY NAME *"
+                value={formData.buyerName}
+                onChange={(e) => setFormData({ ...formData, buyerName: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="PARTY Mobile NO *"
+                value={formData.partyMobileNo}
+                onChange={(e) => setFormData({ ...formData, partyMobileNo: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Reg. Time"
+                type="date"
+                value={formData.regTime}
+                onChange={(e) => setFormData({ ...formData, regTime: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="PARTY Address"
+                value={formData.partyAddress}
+                onChange={(e) => setFormData({ ...formData, partyAddress: e.target.value })}
+                multiline
+                rows={2}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Plot Booked Name"
+                value={formData.plotBookedName}
+                onChange={(e) => setFormData({ ...formData, plotBookedName: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="TAHSIL ADV Name"
+                value={formData.tahsilAdvName}
+                onChange={(e) => setFormData({ ...formData, tahsilAdvName: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Lakhmi Sharma"
+                value={formData.lakhmiSharma}
+                onChange={(e) => setFormData({ ...formData, lakhmiSharma: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={formData.status}
+                  label="Status"
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                >
+                  <MenuItem value="Pending">Pending</MenuItem>
+                  <MenuItem value="Completed">Completed</MenuItem>
+                  <MenuItem value="Kuldeep">Kuldeep</MenuItem>
+                  <MenuItem value="Ramvilas">Ramvilas</MenuItem>
+                  <MenuItem value="Sompal foji">Sompal foji</MenuItem>
+                  <MenuItem value="Manish Dixit">Manish Dixit</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+          
+          <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
+            <Button onClick={() => setShowForm(false)} size="large">Cancel</Button>
+            <Button 
+              onClick={async () => {
+                try {
+                  await axios.post('/registry', formData)
+                  toast.success('Registry added successfully!')
+                  setShowForm(false)
+                  setFormData({
+                    plotNo: '',
+                    dimension: '',
+                    sqYard: '',
+                    santoshJainPath: '',
+                    buyerName: '',
+                    partyMobileNo: '',
+                    regTime: '',
+                    partyAddress: '',
+                    plotBookedName: '',
+                    tahsilAdvName: '',
+                    lakhmiSharma: '',
+                    status: 'Pending'
+                  })
+                  fetchRegistries()
+                } catch (error) {
+                  toast.error(error.response?.data?.message || 'Failed to add registry')
+                }
+              }} 
+              variant="contained" 
+              size="large"
+            >
+              Add Registry
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    )
+  }
+
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Typography variant="h4" fontWeight="bold">
           Registry Management
         </Typography>
-        <TextField
-          select
-          size="small"
-          label="Filter by Status"
-          value={filterStatus}
-          onChange={(e) => handleFilterChange(e.target.value)}
-          sx={{ minWidth: 200 }}
-        >
-          <MenuItem value="">All Registries</MenuItem>
-          <MenuItem value="generated">Generated</MenuItem>
-          <MenuItem value="downloaded">Downloaded</MenuItem>
-          <MenuItem value="under_review">Under Review</MenuItem>
-          <MenuItem value="verified">Verified</MenuItem>
-          <MenuItem value="completed">Completed</MenuItem>
-        </TextField>
+        <Box display="flex" gap={2}>
+          <TextField
+            select
+            size="small"
+            label="Filter by Status"
+            value={filterStatus}
+            onChange={(e) => handleFilterChange(e.target.value)}
+            sx={{ minWidth: 200 }}
+          >
+            <MenuItem value="">All Registries</MenuItem>
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+            <MenuItem value="Kuldeep">Kuldeep</MenuItem>
+            <MenuItem value="Ramvilas">Ramvilas</MenuItem>
+          </TextField>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setShowForm(true)}
+          >
+            Add Registry
+          </Button>
+        </Box>
       </Box>
 
       <TableContainer component={Paper}>
-        <Table>
+        <Table size="small">
           <TableHead>
-            <TableRow>
-              <TableCell><strong>Registry #</strong></TableCell>
-              <TableCell><strong>Booking #</strong></TableCell>
-              <TableCell><strong>Customer</strong></TableCell>
-              <TableCell><strong>Plot</strong></TableCell>
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell><strong>PLOT NO</strong></TableCell>
+              <TableCell><strong>Dimension</strong></TableCell>
+              <TableCell><strong>Sq Yard</strong></TableCell>
+              <TableCell><strong>Santosh/jain/umez/other</strong></TableCell>
+              <TableCell><strong>Buyer Name/PARTY NAME</strong></TableCell>
+              <TableCell><strong>PARTY Mobile NO</strong></TableCell>
+              <TableCell><strong>Reg. Time</strong></TableCell>
+              <TableCell><strong>PARTY Address</strong></TableCell>
+              <TableCell><strong>Plot Booked Name</strong></TableCell>
+              <TableCell><strong>TAHSIL ADV Name</strong></TableCell>
+              <TableCell><strong>Lakhmi Sharma</strong></TableCell>
               <TableCell><strong>Status</strong></TableCell>
-              <TableCell><strong>Generated Date</strong></TableCell>
-              <TableCell><strong>Downloads</strong></TableCell>
               <TableCell align="right"><strong>Actions</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {registries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={13} align="center">
                   No registries found.
                 </TableCell>
               </TableRow>
             ) : (
-              registries.map((registry) => (
-                <TableRow key={registry._id}>
-                  <TableCell>{registry.registryNumber}</TableCell>
-                  <TableCell>{registry.bookingId?.bookingNumber}</TableCell>
-                  <TableCell>{registry.bookingId?.userId?.name}</TableCell>
-                  <TableCell>{registry.bookingId?.plotId?.plotNo}</TableCell>
+              registries.map((registry, index) => (
+                <TableRow key={registry._id} hover>
+                  <TableCell>{registry.plotNo}</TableCell>
+                  <TableCell>{registry.dimension}</TableCell>
+                  <TableCell>{registry.sqYard}</TableCell>
+                  <TableCell>{registry.santoshJainPath}</TableCell>
+                  <TableCell>{registry.buyerName}</TableCell>
+                  <TableCell>{registry.partyMobileNo}</TableCell>
+                  <TableCell>{registry.regTime ? format(new Date(registry.regTime), 'dd-MMM-yy') : '-'}</TableCell>
+                  <TableCell sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {registry.partyAddress}
+                  </TableCell>
+                  <TableCell>{registry.plotBookedName}</TableCell>
+                  <TableCell>{registry.tahsilAdvName}</TableCell>
+                  <TableCell>{registry.lakhmiSharma}</TableCell>
                   <TableCell>
                     <Chip
-                      label={registry.status?.replace('_', ' ').toUpperCase()}
-                      color={getStatusColor(registry.status)}
+                      label={registry.status}
+                      color={registry.status === 'Pending' ? 'warning' : registry.status === 'Completed' ? 'success' : 'default'}
                       size="small"
+                      sx={{ 
+                        backgroundColor: registry.status === 'Pending' ? '#FFF59D' : undefined,
+                        color: registry.status === 'Pending' ? '#000' : undefined
+                      }}
                     />
                   </TableCell>
-                  <TableCell>
-                    {registry.generatedAt ? format(new Date(registry.generatedAt), 'dd MMM yyyy') : '-'}
-                  </TableCell>
-                  <TableCell>{registry.downloadCount || 0}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
-                      color="primary"
-                      onClick={() => handleDownload(registry._id)}
-                      title="Download PDF"
-                    >
-                      <Download fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
                       onClick={() => handleOpenStatusDialog(registry)}
-                      title="Update Status"
+                      title="Edit Registry"
                     >
                       <Edit fontSize="small" />
                     </IconButton>

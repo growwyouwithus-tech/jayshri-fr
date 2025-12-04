@@ -27,7 +27,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Alert
+  Alert,
+  Autocomplete
 } from '@mui/material'
 import {
   NavigateNext,
@@ -94,7 +95,26 @@ const PropertyManagement = () => {
     }
   })
   
-  const [newFacility, setNewFacility] = useState('')
+  const predefinedFacilities = [
+    'Nearby Schools and Colleges',
+    'Nearby metro station',
+    'Nearby universities',
+    'Nearby Long and wide roads',
+    "Colony's 35' wide Road",
+    'Nearby hospitals',
+    'Nice environment',
+    "The colony's own plantation",
+    'The colony is electrified',
+    'The colony has its own CCTV cameras installed.',
+    'The colony has its own watchman and guards posted.',
+    'The colony has its own RCC roads.',
+    'The Taj Mahal is near the colony.',
+    'There is a temple near the colony.',
+    'There is a beautiful temple inside the colony',
+    'Big market is available inside the colony'
+  ]
+
+  const [selectedFacility, setSelectedFacility] = useState('')
 
   const steps = [
     'Select Type',
@@ -279,7 +299,7 @@ const PropertyManagement = () => {
         longitude: ''
       }
     })
-    setNewFacility('')
+    setSelectedFacility('')
     setAddDialogOpen(true)
   }
 
@@ -312,7 +332,7 @@ const PropertyManagement = () => {
         longitude: property.coordinates?.longitude || ''
       }
     })
-    setNewFacility('')
+    setSelectedFacility('')
     setAddDialogOpen(true)
   }
 
@@ -359,6 +379,12 @@ const PropertyManagement = () => {
   const handleSubmit = async () => {
     console.log('🚀 Property Submit Started')
     console.log('📝 Form Data:', formData)
+    console.log('📁 Files check:', {
+      mainPicture: formData.mainPicture instanceof File,
+      videoUpload: formData.videoUpload instanceof File,
+      mapImage: formData.mapImage instanceof File,
+      moreImages: Array.isArray(formData.moreImages) && formData.moreImages.length
+    })
     
     setLoading(true)
     try {
@@ -389,16 +415,14 @@ const PropertyManagement = () => {
 
       if (editMode && currentProperty) {
         console.log('✏️ Updating property:', currentProperty._id)
-        const response = await axios.put(`/properties/${currentProperty._id}`, payload, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        // Don't set Content-Type header - let axios interceptor handle it for FormData
+        const response = await axios.put(`/properties/${currentProperty._id}`, payload)
         console.log('✅ Update Response:', response.data)
         toast.success('Property updated successfully!')
       } else {
         console.log('➕ Creating new property')
-        const response = await axios.post('/properties', payload, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        // Don't set Content-Type header - let axios interceptor handle it for FormData
+        const response = await axios.post('/properties', payload)
         console.log('✅ Create Response:', response.data)
         toast.success('Property created successfully!')
       }
@@ -438,11 +462,16 @@ const PropertyManagement = () => {
   }
 
   const addFacility = () => {
-    if (newFacility.trim()) {
-      setFormData({ ...formData, facilities: [...formData.facilities, newFacility.trim()] })
-      setNewFacility('')
+    console.log('addFacility called:', selectedFacility)
+    console.log('Current facilities:', formData.facilities)
+    if (selectedFacility && selectedFacility.trim() && !formData.facilities.includes(selectedFacility.trim())) {
+      setFormData({ ...formData, facilities: [...formData.facilities, selectedFacility.trim()] })
+      setSelectedFacility('')
+      console.log('Facility added successfully')
+    } else if (formData.facilities.includes(selectedFacility.trim())) {
+      toast.error('This facility is already added')
     } else {
-      toast.error('Please enter a facility name')
+      toast.error('Please select a facility')
     }
   }
 
@@ -451,6 +480,7 @@ const PropertyManagement = () => {
   }
 
   const handleFileUpload = (field, file) => {
+    console.log(`📎 File uploaded for ${field}:`, file)
     setFormData({ ...formData, [field]: file })
   }
 
@@ -550,7 +580,7 @@ const PropertyManagement = () => {
         longitude: ''
       }
     })
-    setNewFacility('')
+    setSelectedFacility('')
     closeAddDialog()
     fetchProperties()
   }
@@ -672,19 +702,32 @@ const PropertyManagement = () => {
               What are the facilities?
             </Typography>
             
-            {/* Dynamic Facility Input */}
+            {/* Dynamic Facility Dropdown - Test Version */}
             <Box sx={{ mb: 3, p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={9}>
                   <TextField
                     fullWidth
+                    select
                     size="small"
                     label="Add Facility"
-                    value={newFacility}
-                    onChange={(e) => setNewFacility(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addFacility()}
-                    placeholder="e.g., Swimming Pool, Gym, etc."
-                  />
+                    value={selectedFacility}
+                    onChange={(e) => {
+                      console.log('TextField onChange:', e.target.value)
+                      setSelectedFacility(e.target.value)
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select a facility...</em>
+                    </MenuItem>
+                    {predefinedFacilities
+                      .filter(facility => !formData.facilities.includes(facility))
+                      .map((facility, index) => (
+                        <MenuItem key={index} value={facility}>
+                          {facility}
+                        </MenuItem>
+                      ))}
+                  </TextField>
                 </Grid>
                 <Grid item xs={3}>
                   <Button
@@ -692,6 +735,7 @@ const PropertyManagement = () => {
                     variant="contained"
                     onClick={addFacility}
                     startIcon={<Add />}
+                    disabled={!selectedFacility}
                   >
                     Add
                   </Button>
@@ -958,6 +1002,7 @@ const PropertyManagement = () => {
                       id={upload.key}
                       type="file"
                       hidden
+                      accept={upload.key === 'videoUpload' ? 'video/*' : upload.key === 'mapImage' || upload.key === 'noc' || upload.key === 'registry' || upload.key === 'legalDoc' ? 'image/*,application/pdf' : 'image/*'}
                       multiple={upload.key === 'moreImages'}
                       onChange={(e) => {
                         const files = upload.key === 'moreImages' 
