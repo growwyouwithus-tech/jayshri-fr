@@ -47,6 +47,12 @@ import {
 } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
+import {
+  validateRequired,
+  validateMinLength,
+  validateMaxLength,
+  validateNumeric
+} from '@/utils/validation'
 
 const PropertyManagement = () => {
   const navigate = useNavigate()
@@ -68,6 +74,7 @@ const PropertyManagement = () => {
   const [areas, setAreas] = useState([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [errors, setErrors] = useState({})
   
   const [formData, setFormData] = useState({
     categories: [],
@@ -274,6 +281,7 @@ const PropertyManagement = () => {
     setEditMode(false)
     setCurrentProperty(null)
     setActiveStep(0)
+    setErrors({})
     setFormData({
       categories: [],
       colonyId: '',
@@ -307,6 +315,7 @@ const PropertyManagement = () => {
     setEditMode(true)
     setCurrentProperty(property)
     setActiveStep(0)
+    setErrors({})
     setFormData({
       categories: property.categories || [],
       colonyId: property.colonyId?._id || property.colony?._id || '',
@@ -350,30 +359,107 @@ const PropertyManagement = () => {
     setActiveStep((prevStep) => prevStep - 1)
   }
 
+  /**
+   * Clears error for a specific field
+   * @param {string} fieldName - Name of the field
+   */
+  const clearError = (fieldName) => {
+    setErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[fieldName]
+      return newErrors
+    })
+  }
+
+  /**
+   * Validates current step with detailed error messages
+   * @returns {boolean} - True if step is valid, false otherwise
+   */
   const validateStep = () => {
+    const newErrors = {}
+    let isValid = true
+
     switch (activeStep) {
       case 0:
-        if (formData.categories.length === 0 || !formData.colonyId) {
-          toast.error('Please select at least one category and colony')
-          return false
+        // Colony validation
+        const colonyError = validateRequired(formData.colonyId, 'Colony')
+        if (colonyError) {
+          newErrors.colonyId = colonyError
+          isValid = false
+        }
+        
+        // Categories validation
+        if (formData.categories.length === 0) {
+          newErrors.categories = 'Please select at least one category'
+          isValid = false
         }
         break
+        
+      case 1:
+        // Property name validation
+        const nameError = validateRequired(formData.name, 'Property name') ||
+                         validateMinLength(formData.name, 3, 'Property name') ||
+                         validateMaxLength(formData.name, 100, 'Property name')
+        if (nameError) {
+          newErrors.name = nameError
+          isValid = false
+        }
+        break
+        
       case 2:
-        if (!formData.tagline || !formData.description) {
-          toast.error('Please fill tagline and description')
-          return false
+        // Tagline validation
+        const taglineError = validateRequired(formData.tagline, 'Tagline') ||
+                            validateMinLength(formData.tagline, 5, 'Tagline') ||
+                            validateMaxLength(formData.tagline, 200, 'Tagline')
+        if (taglineError) {
+          newErrors.tagline = taglineError
+          isValid = false
+        }
+        
+        // Description validation
+        const descriptionError = validateRequired(formData.description, 'Description') ||
+                                validateMinLength(formData.description, 10, 'Description') ||
+                                validateMaxLength(formData.description, 2000, 'Description')
+        if (descriptionError) {
+          newErrors.description = descriptionError
+          isValid = false
+        }
+        
+        // Address validation (optional but if provided should be valid)
+        if (formData.address) {
+          const addressError = validateMinLength(formData.address, 5, 'Address') ||
+                              validateMaxLength(formData.address, 500, 'Address')
+          if (addressError) {
+            newErrors.address = addressError
+            isValid = false
+          }
         }
         break
+        
       case 3:
+        // Terms agreement validation
         if (!formData.agreeTerms) {
-          toast.error('Please agree to terms and conditions')
-          return false
+          newErrors.agreeTerms = 'Please agree to terms and conditions'
+          isValid = false
         }
         break
+        
       default:
         break
     }
-    return true
+
+    setErrors(newErrors)
+
+    // Show specific toast message for validation errors
+    if (!isValid) {
+      const firstError = Object.values(newErrors)[0]
+      toast.error(firstError, {
+        duration: 4000,
+        position: 'top-right'
+      })
+    }
+
+    return isValid
   }
 
   const handleSubmit = async () => {
@@ -555,6 +641,7 @@ const PropertyManagement = () => {
 
   const resetFormAndCloseDialog = () => {
     setActiveStep(0)
+    setErrors({})
     setFormData({
       categories: [],
       colonyId: '',
@@ -630,38 +717,46 @@ const PropertyManagement = () => {
               fullWidth
               select
               value={formData.colonyId}
-              onChange={(e) => handleColonySelect(e.target.value)}
+              onChange={(e) => {
+                handleColonySelect(e.target.value)
+                clearError('colonyId')
+              }}
               placeholder="-- Select Colony --"
+              error={!!errors.colonyId}
+              helperText={errors.colonyId}
+              required
             >
               <MenuItem value="">-- Select Colony --</MenuItem>
               {colonies.map((colony) => (
-                <MenuItem key={colony._id} value={colony._id}>
+                <MenuItem  key={colony._id} value={colony._id}>
                   {colony.name}
                 </MenuItem>
               ))}
             </TextField>
 
-             <Typography variant="body2" color="text.secondary" mb={3} mt={3}>
+             <Typography variant="body2" color="text.secondary"  mb={3} mt={3}>
               Select A Category
             </Typography>
 
-            <Grid container spacing={3} mb={4}>
+            <Grid container spacing={2} mb={4}>
               {categories.map((cat) => (
-                <Grid item xs={12} md={4} key={cat.value}>
+                <Grid item xs={12} sm={6} md={4} key={cat.value}>
                   <Card
                     sx={{
                       cursor: 'pointer',
                       border: formData.categories.includes(cat.value) ? '2px solid #7c4dff' : '1px solid #e0e0e0',
                       bgcolor: formData.categories.includes(cat.value) ? '#f3e5f5' : 'white',
-                      '&:hover': { bgcolor: '#f5f5f5' }
+                      '&:hover': { bgcolor: '#f5f5f5' },
+                      transform: 'scale(0.9)',
+                      height: 135
                     }}
                     onClick={() => handleCategoryToggle(cat.value)}
                   >
-                    <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                      <Box sx={{ fontSize: 48, color: '#7c4dff', mb: 2 }}>
+                    <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                      <Box sx={{ fontSize: 36, color: '#7c4dff', mb: 1 }}>
                         {cat.icon}
                       </Box>
-                      <Typography variant="h6" fontWeight="bold">
+                      <Typography variant="body2" fontWeight="bold">
                         {cat.label}
                       </Typography>
                       {formData.categories.includes(cat.value) && (
@@ -672,6 +767,11 @@ const PropertyManagement = () => {
                 </Grid>
               ))}
             </Grid>
+            {errors.categories && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {errors.categories}
+              </Alert>
+            )}
             <Alert severity="info" sx={{ mb: 3 }}>
               You can select multiple categories (e.g., Residential + Commercial)
             </Alert>
@@ -692,10 +792,31 @@ const PropertyManagement = () => {
               fullWidth
               label="Property Name *"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value })
+                clearError('name')
+              }}
               placeholder="Enter property name"
-              sx={{ mb: 3 }}
+              sx={{ 
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#7c4dff',
+                    borderWidth: 2
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#7c4dff'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#7c4dff',
+                    borderWidth: 2
+                  }
+                },
+                backgroundColor: '#f3e5f5'
+              }}
               required
+              error={!!errors.name}
+              helperText={errors.name}
             />
             
             <Typography variant="h6" fontWeight="bold" mb={2}>
@@ -735,7 +856,7 @@ const PropertyManagement = () => {
                     variant="contained"
                     onClick={addFacility}
                     startIcon={<Add />}
-                    disabled={!selectedFacility}
+                    // disabled={!selectedFacility}
                   >
                     Add
                   </Button>
@@ -899,29 +1020,44 @@ const PropertyManagement = () => {
               fullWidth
               label="Property Tagline *"
               value={formData.tagline}
-              onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, tagline: e.target.value })
+                clearError('tagline')
+              }}
               placeholder="Enter Tagline / Title"
               sx={{ mb: 3 }}
+              error={!!errors.tagline}
+              helperText={errors.tagline}
             />
 
             <TextField
               fullWidth
               label="Description *"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, description: e.target.value })
+                clearError('description')
+              }}
               placeholder="Enter description"
               multiline
               rows={4}
               sx={{ mb: 3 }}
+              error={!!errors.description}
+              helperText={errors.description}
             />
 
             <TextField
               fullWidth
               label="Address"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, address: e.target.value })
+                clearError('address')
+              }}
               placeholder="Enter address"
               sx={{ mb: 3 }}
+              error={!!errors.address}
+              helperText={errors.address}
             />
 
             <Grid container spacing={2}>
@@ -1104,11 +1240,19 @@ const PropertyManagement = () => {
               </Box>
             </Box>
 
+            {errors.agreeTerms && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {errors.agreeTerms}
+              </Alert>
+            )}
             <FormControlLabel
               control={
                 <Checkbox
                   checked={formData.agreeTerms}
-                  onChange={(e) => setFormData({ ...formData, agreeTerms: e.target.checked })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, agreeTerms: e.target.checked })
+                    clearError('agreeTerms')
+                  }}
                 />
               }
               label={

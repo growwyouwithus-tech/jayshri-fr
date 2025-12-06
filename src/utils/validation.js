@@ -104,14 +104,50 @@ export const validateURL = (value) => {
 }
 
 /**
- * Validates password strength
+ * Validates password strength (minimum 8 characters)
  * @param {string} value - Password
  * @returns {string|null} - Error message or null if valid
  */
 export const validatePassword = (value) => {
   if (!value) return null
-  if (value.length < 6) {
-    return 'Password must be at least 6 characters'
+  if (value.length < 8) {
+    return 'Password must be at least 8 characters'
+  }
+  return null
+}
+
+/**
+ * Validates password for exactly 8 digits
+ * @param {string} value - Password
+ * @returns {string|null} - Error message or null if valid
+ */
+export const validatePasswordDigits = (value) => {
+  if (!value) return null
+  const digitsRegex = /^[0-9]{8}$/
+  if (!digitsRegex.test(value)) {
+    return 'Password must be exactly 8 digits'
+  }
+  return null
+}
+
+/**
+ * Validates password contains at least 8 characters with mixed requirements
+ * @param {string} value - Password
+ * @returns {string|null} - Error message or null if valid
+ */
+export const validateStrongPassword = (value) => {
+  if (!value) return null
+  if (value.length < 8) {
+    return 'Password must be at least 8 characters long'
+  }
+  if (!/[A-Z]/.test(value)) {
+    return 'Password must contain at least one uppercase letter'
+  }
+  if (!/[a-z]/.test(value)) {
+    return 'Password must contain at least one lowercase letter'
+  }
+  if (!/[0-9]/.test(value)) {
+    return 'Password must contain at least one number'
   }
   return null
 }

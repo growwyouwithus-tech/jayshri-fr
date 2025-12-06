@@ -34,6 +34,15 @@ import {
 import { Add, Edit, Delete, Visibility, Payment, Search, CloudUpload, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
+import {
+  validateRequired,
+  validateMinLength,
+  validateMaxLength,
+  validateNumeric,
+  validatePhone,
+  validateEmail,
+  validatePasswordDigits
+} from '@/utils/validation'
 
 const FACING_OPTIONS = [
   { label: 'North', value: 'north' },
@@ -663,42 +672,53 @@ const PlotManagement = () => {
       isValid = false
     }
 
-    const plotNoError = validateRequired(newPlot.plotNo, 'Plot Number')
+    // Plot Number validation with specific requirements
+    const plotNoError = validateRequired(newPlot.plotNo, 'Plot number') ||
+                       validateMinLength(newPlot.plotNo, 1, 'Plot number') ||
+                       validateMaxLength(newPlot.plotNo, 20, 'Plot number')
     if (plotNoError) {
       newErrors.plotNo = plotNoError
       isValid = false
     }
 
-    // Dimensions Validation
-    const frontSideError = validateRequired(newPlot.frontSide, 'Front Side') || 
-                          validateNumeric(newPlot.frontSide, 'Front Side')
+    // Dimensions Validation with specific messages
+    const frontSideError = validateRequired(newPlot.frontSide, 'Front side dimension') || 
+                          validateNumeric(newPlot.frontSide, 'Front side dimension')
     if (frontSideError) {
       newErrors.frontSide = frontSideError
       isValid = false
     }
 
-    const backSideError = validateRequired(newPlot.backSide, 'Back Side') || 
-                         validateNumeric(newPlot.backSide, 'Back Side')
+    const backSideError = validateRequired(newPlot.backSide, 'Back side dimension') || 
+                         validateNumeric(newPlot.backSide, 'Back side dimension')
     if (backSideError) {
       newErrors.backSide = backSideError
       isValid = false
     }
 
-    const leftSideError = validateRequired(newPlot.leftSide, 'Left Side') || 
-                         validateNumeric(newPlot.leftSide, 'Left Side')
+    const leftSideError = validateRequired(newPlot.leftSide, 'Left side dimension') || 
+                         validateNumeric(newPlot.leftSide, 'Left side dimension')
     if (leftSideError) {
       newErrors.leftSide = leftSideError
       isValid = false
     }
 
-    const rightSideError = validateRequired(newPlot.rightSide, 'Right Side') || 
-                          validateNumeric(newPlot.rightSide, 'Right Side')
+    const rightSideError = validateRequired(newPlot.rightSide, 'Right side dimension') || 
+                          validateNumeric(newPlot.rightSide, 'Right side dimension')
     if (rightSideError) {
       newErrors.rightSide = rightSideError
       isValid = false
     }
 
-    // Pricing Validation
+    // Area validation
+    const areaError = validateRequired(newPlot.areaGaj, 'Area in Gaj') || 
+                     validateNumeric(newPlot.areaGaj, 'Area in Gaj')
+    if (areaError) {
+      newErrors.areaGaj = areaError
+      isValid = false
+    }
+
+    // Pricing Validation with specific requirements
     const pricePerGajError = validateRequired(newPlot.pricePerGaj, 'Price per Gaj') || 
                             validateNumeric(newPlot.pricePerGaj, 'Price per Gaj')
     if (pricePerGajError) {
@@ -706,8 +726,17 @@ const PlotManagement = () => {
       isValid = false
     }
 
+    // Total Price validation
+    if (newPlot.totalPrice) {
+      const totalPriceError = validateNumeric(newPlot.totalPrice, 'Total price')
+      if (totalPriceError) {
+        newErrors.totalPrice = totalPriceError
+        isValid = false
+      }
+    }
+
     // Facing Validation
-    const facingError = validateRequired(newPlot.facing, 'Facing')
+    const facingError = validateRequired(newPlot.facing, 'Facing direction')
     if (facingError) {
       newErrors.facing = facingError
       isValid = false
@@ -715,22 +744,24 @@ const PlotManagement = () => {
 
     // Sale/Booking Details Validation (only if status is booked or sold)
     if (newPlot.status === 'booked' || newPlot.status === 'sold') {
-      const customerNameError = validateRequired(newPlot.customerName, 'Customer Name') ||
-                               validateMinLength(newPlot.customerName, 2, 'Customer Name')
+      const customerNameError = validateRequired(newPlot.customerName, 'Customer name') ||
+                               validateMinLength(newPlot.customerName, 2, 'Customer name') ||
+                               validateMaxLength(newPlot.customerName, 100, 'Customer name')
       if (customerNameError) {
         newErrors.customerName = customerNameError
         isValid = false
       }
 
-      const customerNumberError = validateRequired(newPlot.customerNumber, 'Customer Number') ||
+      const customerNumberError = validateRequired(newPlot.customerNumber, 'Customer phone number') ||
                                  validatePhone(newPlot.customerNumber)
       if (customerNumberError) {
         newErrors.customerNumber = customerNumberError
         isValid = false
       }
 
-      const customerAddressError = validateRequired(newPlot.customerShortAddress, 'Customer Short Address') ||
-                                  validateMinLength(newPlot.customerShortAddress, 5, 'Customer Short Address')
+      const customerAddressError = validateRequired(newPlot.customerShortAddress, 'Customer short address') ||
+                                  validateMinLength(newPlot.customerShortAddress, 5, 'Customer short address') ||
+                                  validateMaxLength(newPlot.customerShortAddress, 200, 'Customer short address')
       if (customerAddressError) {
         newErrors.customerShortAddress = customerAddressError
         isValid = false
@@ -738,7 +769,7 @@ const PlotManagement = () => {
 
       // Optional field validations (only validate if filled)
       if (newPlot.finalPrice) {
-        const finalPriceError = validateNumeric(newPlot.finalPrice, 'Final Price')
+        const finalPriceError = validateNumeric(newPlot.finalPrice, 'Sold price')
         if (finalPriceError) {
           newErrors.finalPrice = finalPriceError
           isValid = false
@@ -746,7 +777,7 @@ const PlotManagement = () => {
       }
 
       if (newPlot.paidAmount) {
-        const paidAmountError = validateNumeric(newPlot.paidAmount, 'Amount Paid')
+        const paidAmountError = validateNumeric(newPlot.paidAmount, 'Amount paid')
         if (paidAmountError) {
           newErrors.paidAmount = paidAmountError
           isValid = false
@@ -756,16 +787,12 @@ const PlotManagement = () => {
 
     setErrors(newErrors)
 
-    // Show appropriate toast messages
+    // Show appropriate toast messages with specific requirements
     if (!isValid) {
       const firstError = Object.values(newErrors)[0]
       toast.error(firstError, {
-        position: 'top-right',
-        autoClose: 4000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
+        duration: 4000,
+        position: 'top-right'
       })
     }
 
@@ -1546,7 +1573,7 @@ const PlotManagement = () => {
                         <TextField
                           fullWidth
                           size="small"
-                          label="Final Price per Gaj (Optional)"
+                          label="Sold Price per Gaj (Optional)"
                           type="number"
                           value={newPlot.finalPrice}
                           onChange={(e) => {
@@ -2017,7 +2044,7 @@ const PlotManagement = () => {
                       />
                       <TextField
                         size="small"
-                        label="Final Price (Optional)"
+                        label="Sold Price (Optional)"
                         type="number"
                         value={newPlot.finalPrice}
                         onChange={(e) => setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))}
@@ -2214,7 +2241,7 @@ const PlotManagement = () => {
               <TableCell><strong>Khatoni Holders / Owners</strong></TableCell>
               <TableCell><strong>Area (Gaj)</strong></TableCell>
               <TableCell><strong>Asking Price/Gaj</strong></TableCell>
-              <TableCell><strong>Final Price/Gaj</strong></TableCell>
+              <TableCell><strong>Sold Price/Gaj</strong></TableCell>
               <TableCell><strong>Total Price</strong></TableCell>
               <TableCell><strong>Remaining Payment</strong></TableCell>
               <TableCell><strong>Facing</strong></TableCell>
@@ -2778,7 +2805,7 @@ const PlotManagement = () => {
                   />
                   <TextField
                     size="small"
-                    label="Final Price (Optional)"
+                    label="Sold Price (Optional)"
                     type="number"
                     value={newPlot.finalPrice}
                     onChange={(e) => {
@@ -3157,7 +3184,7 @@ const PlotManagement = () => {
                   />
                   <TextField
                     size="small"
-                    label="Final Price (Optional)"
+                    label="Sold Price (Optional)"
                     type="number"
                     value={newPlot.finalPrice}
                     onChange={(e) => {
@@ -3559,7 +3586,7 @@ const PlotManagement = () => {
                     )}
                     {viewingPlot.finalPrice && (
                       <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary">Final Price</Typography>
+                        <Typography variant="body2" color="text.secondary">Sold Price</Typography>
                         <Typography variant="body1" fontWeight={600}>₹{viewingPlot.finalPrice?.toLocaleString()}</Typography>
                       </Grid>
                     )}
