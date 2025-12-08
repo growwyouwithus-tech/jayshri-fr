@@ -115,6 +115,7 @@ const PlotManagement = () => {
   const [plots, setPlots] = useState([])
   const [colonies, setColonies] = useState([])
   const [properties, setProperties] = useState([])
+  const [agents, setAgents] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterColony, setFilterColony] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -412,6 +413,7 @@ const PlotManagement = () => {
     fetchProperties()
     fetchColonies()
     fetchPlots()
+    fetchAgents()
   }, [])
 
   // Handle pre-selected property from navigation state
@@ -481,9 +483,40 @@ const PlotManagement = () => {
     }
   }
 
+  const fetchAgents = async () => {
+    try {
+      const { data } = await axios.get('/users?role=Agent&limit=1000')
+      const agentList = Array.isArray(data?.data) ? data.data : []
+      setAgents(agentList)
+    } catch (error) {
+      console.error('Failed to fetch agents:', error)
+    }
+  }
+
   const handleFilterChange = (colonyId) => {
     setFilterColony(colonyId)
     fetchPlots(colonyId)
+  }
+
+  // Auto-fill handlers for Agent fields
+  const handleAgentNameChange = (value) => {
+    setNewPlot((s) => ({ ...s, agentName: value }))
+    
+    // Find agent by name and auto-fill code
+    const agent = agents.find(a => a.name.toLowerCase() === value.toLowerCase())
+    if (agent && agent.userCode) {
+      setNewPlot((s) => ({ ...s, agentName: value, agentCode: agent.userCode }))
+    }
+  }
+
+  const handleAgentCodeChange = (value) => {
+    setNewPlot((s) => ({ ...s, agentCode: value }))
+    
+    // Find agent by code and auto-fill name
+    const agent = agents.find(a => a.userCode && a.userCode.toLowerCase() === value.toLowerCase())
+    if (agent && agent.name) {
+      setNewPlot((s) => ({ ...s, agentCode: value, agentName: agent.name }))
+    }
   }
 
   const openAddDialog = () => setAddDialogOpen(true)
@@ -1613,7 +1646,7 @@ const PlotManagement = () => {
                           size="small"
                           label="Agent Name (Optional)"
                           value={newPlot.agentName}
-                          onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
+                          onChange={(e) => handleAgentNameChange(e.target.value)}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -1622,7 +1655,7 @@ const PlotManagement = () => {
                           size="small"
                           label="Agent Code (Optional)"
                           value={newPlot.agentCode}
-                          onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
+                          onChange={(e) => handleAgentCodeChange(e.target.value)}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -2054,14 +2087,14 @@ const PlotManagement = () => {
                           size="small"
                           label="Agent Name (Optional)"
                           value={newPlot.agentName}
-                          onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
+                          onChange={(e) => handleAgentNameChange(e.target.value)}
                           sx={{ flex: 1 }}
                         />
                         <TextField
                           size="small"
                           label="Agent Code (Optional)"
                           value={newPlot.agentCode}
-                          onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
+                          onChange={(e) => handleAgentCodeChange(e.target.value)}
                           sx={{ flex: 1 }}
                         />
                       </Box>
@@ -2820,14 +2853,14 @@ const PlotManagement = () => {
                       size="small"
                       label="Agent Name (Optional)"
                       value={newPlot.agentName}
-                      onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
+                      onChange={(e) => handleAgentNameChange(e.target.value)}
                       sx={{ flex: 1 }}
                     />
                     <TextField
                       size="small"
                       label="Agent Code (Optional)"
                       value={newPlot.agentCode}
-                      onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
+                      onChange={(e) => handleAgentCodeChange(e.target.value)}
                       sx={{ flex: 1 }}
                     />
                   </Box>
@@ -3199,14 +3232,14 @@ const PlotManagement = () => {
                       size="small"
                       label="Agent Name (Optional)"
                       value={newPlot.agentName}
-                      onChange={(e) => setNewPlot((s) => ({ ...s, agentName: e.target.value }))}
+                      onChange={(e) => handleAgentNameChange(e.target.value)}
                       sx={{ flex: 1 }}
                     />
                     <TextField
                       size="small"
                       label="Agent Code (Optional)"
                       value={newPlot.agentCode}
-                      onChange={(e) => setNewPlot((s) => ({ ...s, agentCode: e.target.value }))}
+                      onChange={(e) => handleAgentCodeChange(e.target.value)}
                       sx={{ flex: 1 }}
                     />
                   </Box>
