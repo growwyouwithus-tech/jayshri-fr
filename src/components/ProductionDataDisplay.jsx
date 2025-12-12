@@ -7,20 +7,12 @@ import { AlertCircle, RefreshCw, Filter, Search, MapPin, Home, IndianRupee, Squa
  * Demonstrates proper loading states, error handling, and data presentation
  */
 
-const LoadingSpinner = ({ size = 'medium', message = 'Loading...' }) => {
-  const sizeClasses = {
-    small: 'w-4 h-4',
-    medium: 'w-8 h-8',
-    large: 'w-12 h-12'
-  }
-
-  return (
-    <div className="flex flex-col items-center justify-center p-8 space-y-4">
-      <div className={`animate-spin ${sizeClasses[size]} border-4 border-blue-200 border-t-blue-600 rounded-full`}></div>
-      <p className="text-gray-600 text-sm">{message}</p>
-    </div>
-  )
-}
+const LoadingSpinner = ({ message = 'Loading...' }) => (
+  <div className="flex flex-col items-center justify-center p-8 space-y-4">
+    <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full" />
+    <p className="text-gray-600 text-sm">{message}</p>
+  </div>
+)
 
 const ErrorDisplay = ({ error, onRetry, canRetry = true }) => {
   const getErrorMessage = () => {
@@ -346,7 +338,7 @@ const ProductionDataDisplay = () => {
               disabled={isRefetching}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+              <RefreshCw className="w-4 h-4 mr-2" />
               {isRefetching ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
@@ -388,7 +380,7 @@ const ProductionDataDisplay = () => {
           </p>
           {isRefetching && (
             <div className="flex items-center text-blue-600 text-sm">
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <RefreshCw className="w-4 h-4 mr-2" />
               Updating...
             </div>
           )}

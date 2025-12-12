@@ -639,6 +639,32 @@ const PropertyManagement = () => {
     return usedLand
   }
 
+  const calculateTotalRoadAreaGaj = (property) => {
+    let roadAreaGaj = 0
+
+    if (property?.roads && Array.isArray(property.roads)) {
+      property.roads.forEach((road) => {
+        const lengthFt = parseFloat(road.lengthFt) || 0
+        const widthFt = parseFloat(road.widthFt) || 0
+        roadAreaGaj += (lengthFt * widthFt) / 9
+      })
+    }
+
+    return roadAreaGaj
+  }
+
+  const calculateTotalAmenityAreaGaj = (property) => {
+    let amenityAreaGaj = 0
+
+    if (property?.parks && Array.isArray(property.parks)) {
+      property.parks.forEach((park) => {
+        amenityAreaGaj += parseFloat(park.areaGaj) || 0
+      })
+    }
+
+    return amenityAreaGaj
+  }
+
   const resetFormAndCloseDialog = () => {
     setActiveStep(0)
     setErrors({})
@@ -1347,7 +1373,7 @@ const PropertyManagement = () => {
               {formData.roads.length > 0 && (
                 <Grid item xs={12}>
                   <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" fontWeight="bold" mb={2}>Roads ({formData.roads.length})</Typography>
+                  <Typography variant="h6" fontWeight="bold" mb={2}>Roads ({formData.roads.length})</Typography>
                     {formData.roads.map((road, idx) => (
                       <Typography key={idx} variant="body2" mb={1}>
                         • {road.name}: {road.lengthFt}ft × {road.widthFt}ft = {((road.lengthFt * road.widthFt) / 9).toFixed(3)} Gaj
@@ -1567,13 +1593,13 @@ const PropertyManagement = () => {
                   <TableCell><strong>Property Name</strong></TableCell>
                   <TableCell><strong>Category</strong></TableCell>
                   {/* <TableCell><strong>Land</strong></TableCell> */}
-                  <TableCell><strong>Total Land (Gaj)</strong></TableCell>
-                  <TableCell><strong>Roads</strong></TableCell>
-                  <TableCell><strong>Amenity Areas</strong></TableCell>
-                  <TableCell><strong>Used Land (Gaj)</strong></TableCell>
-                  <TableCell><strong>Land Sold (Gaj)</strong></TableCell>
-                  <TableCell><strong>Remaining Land (Gaj)</strong></TableCell>
-                  <TableCell><strong>Total Revenue</strong></TableCell>
+                  <TableCell><strong>Total Land(Gaj)</strong></TableCell>
+                  <TableCell><strong>Roads Areas(Gaj)</strong></TableCell>
+                  <TableCell><strong>Amenity Areas(Gaj)</strong></TableCell>
+                  <TableCell><strong>Used Land(Gaj)</strong></TableCell>
+                  <TableCell><strong>Sold Land(Gaj)</strong></TableCell>
+                  <TableCell><strong>Remaining Land(Gaj)</strong></TableCell>
+                  {/* <TableCell><strong>Total Revenue</strong></TableCell> */}
                   <TableCell><strong>Plots</strong></TableCell>
                   <TableCell><strong>Actions</strong></TableCell>
                 </TableRow>
@@ -1603,6 +1629,8 @@ const PropertyManagement = () => {
                     const stats = propertyStats[property._id] || { totalSold: 0, totalRevenue: 0, plots: [] }
                     const totalLand = property.totalLandAreaGaj || 0
                     const usedLand = calculateUsedLand(property)
+                    const totalRoadAreaGaj = calculateTotalRoadAreaGaj(property)
+                    const totalAmenityAreaGaj = calculateTotalAmenityAreaGaj(property)
                     const soldLandGaj = stats.totalSold / 9
                     const remainingLand = calculateRemainingLand(property)
                     
@@ -1638,18 +1666,28 @@ const PropertyManagement = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Chip 
-                            label={`${property.roads?.length || 0} road${(property.roads?.length || 0) === 1 ? '' : 's'}`} 
-                            size="small"
-                            color="info"
-                          />
+                          <Box>
+                            {/* <Chip 
+                              label={`${property.roads?.length || 0} road${(property.roads?.length || 0) === 1 ? '' : 's'}`} 
+                              size="small"
+                              color="info"
+                            /> */}
+                            <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                              {totalRoadAreaGaj.toFixed(2)}
+                            </Typography>
+                          </Box>
                         </TableCell>
                         <TableCell>
-                          <Chip 
-                            label={`${property.parks?.length || 0} amenit${(property.parks?.length || 0) === 1 ? 'y' : 'ies'}`} 
-                            size="small"
-                            color="secondary"
-                          />
+                          <Box>
+                            {/* <Chip 
+                              label={`${property.parks?.length || 0} amenit${(property.parks?.length || 0) === 1 ? 'y' : 'ies'}`} 
+                              size="small"
+                              color="secondary"
+                            /> */}
+                            <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                              {totalAmenityAreaGaj.toFixed(2)}
+                            </Typography>
+                          </Box>
                         </TableCell>
                         <TableCell>
                           <Chip 
@@ -1671,11 +1709,11 @@ const PropertyManagement = () => {
                             color={remainingLand > 0 ? 'success' : 'error'}
                           />
                         </TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                           <Typography variant="body2" fontWeight={600} color="success.main">
                             ₹{stats.totalRevenue.toLocaleString('en-IN')}
                           </Typography>
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell>
                           <Chip 
                             label={`${stats.plots.length} plots`} 
