@@ -302,6 +302,8 @@ const PlotManagement = () => {
     const payload = {
       propertyId: newPlot.propertyId,
       colony: newPlot.colonyId,
+      // Ensure the user-entered plot number is sent as-is for both create and edit
+      plotNumber: newPlot.plotNo,
       area,
       pricePerSqFt,
       totalPrice,
@@ -321,12 +323,6 @@ const PlotManagement = () => {
         right: toNumber(newPlot.rightSide),
       },
     }
-    
-    // Only include plotNumber when editing (not creating new)
-    if (editingPlotId && newPlot.plotNo) {
-      payload.plotNumber = newPlot.plotNo
-    }
-
     // Add booking/sale details if status is booked or sold
     if (newPlot.status === 'booked' || newPlot.status === 'sold') {
       payload.customerName = newPlot.customerName
