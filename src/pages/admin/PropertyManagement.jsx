@@ -1568,6 +1568,8 @@ const PropertyManagement = () => {
                   <TableCell><strong>Category</strong></TableCell>
                   {/* <TableCell><strong>Land</strong></TableCell> */}
                   <TableCell><strong>Total Land (Gaj)</strong></TableCell>
+                  <TableCell><strong>Roads</strong></TableCell>
+                  <TableCell><strong>Amenity Areas</strong></TableCell>
                   <TableCell><strong>Used Land (Gaj)</strong></TableCell>
                   <TableCell><strong>Land Sold (Gaj)</strong></TableCell>
                   <TableCell><strong>Remaining Land (Gaj)</strong></TableCell>
@@ -1634,6 +1636,20 @@ const PropertyManagement = () => {
                           <Typography variant="body2" fontWeight={600}>
                             {totalLand > 0 ? totalLand.toFixed(2) : '-'}
                           </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={`${property.roads?.length || 0} road${(property.roads?.length || 0) === 1 ? '' : 's'}`} 
+                            size="small"
+                            color="info"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={`${property.parks?.length || 0} amenit${(property.parks?.length || 0) === 1 ? 'y' : 'ies'}`} 
+                            size="small"
+                            color="secondary"
+                          />
                         </TableCell>
                         <TableCell>
                           <Chip 

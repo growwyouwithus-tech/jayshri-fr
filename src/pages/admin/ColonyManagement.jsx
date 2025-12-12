@@ -791,8 +791,8 @@ const ColonyManagement = () => {
               <TableCell><strong>Total Land (Gaj)</strong></TableCell>
               <TableCell><strong>plots</strong></TableCell>
               <TableCell><strong>asking price Gaj</strong></TableCell>
-              <TableCell><strong>Khatoni Holder</strong></TableCell>
-              <TableCell><strong>Status</strong></TableCell>
+              {/* <TableCell><strong>Khatoni Holder</strong></TableCell> */}
+              {/* <TableCell><strong>Status</strong></TableCell> */}
               <TableCell align="right"><strong>Action</strong></TableCell>
             </TableRow>
           </TableHead>
@@ -818,11 +818,11 @@ const ColonyManagement = () => {
                   <TableCell>{colony.totalLandAreaGaj ? colony.totalLandAreaGaj.toLocaleString('en-IN') : '-'}</TableCell>
                   <TableCell>{colony.totalPlots ?? '-'}</TableCell>
                   <TableCell>₹{colony.ratePerGaj ? colony.ratePerGaj.toLocaleString('en-IN') : '-'}</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     {colony.khatoniHolderDetails && colony.khatoniHolderDetails.length > 0 ? (
-                      <Box>
+                      <Box> */}
                         {/* Show first Khatoni Holder */}
-                        <Box mb={0.5}>
+                        {/* <Box mb={0.5}>
                           <Typography variant="body2">
                             {colony.khatoniHolderDetails[0].name || '-'}
                           </Typography>
@@ -831,9 +831,9 @@ const ColonyManagement = () => {
                               {colony.khatoniHolderDetails[0].mobile}
                             </Typography>
                           )}
-                        </Box>
+                        </Box> */}
                         {/* Show "See More" if there are multiple holders */}
-                        {colony.khatoniHolderDetails.length > 1 && (
+                        {/* {colony.khatoniHolderDetails.length > 1 && (
                           <Button
                             size="small"
                             variant="text"
@@ -850,14 +850,14 @@ const ColonyManagement = () => {
                     ) : (
                       <Typography variant="body2" color="text.secondary">-</Typography>
                     )}
-                  </TableCell>
-                  <TableCell>
+                  </TableCell> */}
+                  {/* <TableCell>
                     <Chip
                       label={colony.status.replace('_', ' ').toUpperCase()}
                       color={getStatusColor(colony.status)}
                       size="small"
                     />
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell align="right">
                     <IconButton size="small" color="primary" onClick={() => handleOpenDialog(colony)}>
                       <Visibility fontSize="small" />
