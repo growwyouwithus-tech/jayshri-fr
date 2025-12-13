@@ -2180,7 +2180,7 @@ const PlotManagement = () => {
                             size="small"
                             type="number"
                             label="Commission Amount"
-                            value={newPlot.commissionAmount.toFixed(2)}
+                            value={newPlot.commissionAmount}
                             onChange={(e) => handleCommissionAmountChange(e.target.value)}
                             InputProps={{
                               startAdornment: <InputAdornment position="start">₹</InputAdornment>
