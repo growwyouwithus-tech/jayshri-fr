@@ -163,6 +163,8 @@ const PlotManagement = () => {
     finalPrice: '',
     agentName: '',
     agentCode: '',
+    commissionPercentage: '',
+    commissionAmount: '',
     advocateName: '',
     advocateCode: '',
     tahsil: '',
@@ -515,6 +517,33 @@ const PlotManagement = () => {
     }
   }
 
+  // Commission calculation handlers
+  const handleCommissionPercentageChange = (value) => {
+    const percentage = value === '' ? '' : Number(value)
+    setNewPlot((s) => {
+      const totalPrice = Number(s.totalPrice) || 0
+      const commissionAmount = totalPrice && percentage !== '' ? (totalPrice * percentage / 100) : ''
+      return { ...s, commissionPercentage: value, commissionAmount: commissionAmount }
+    })
+  }
+
+  const handleCommissionAmountChange = (value) => {
+    const amount = value === '' ? '' : Number(value)
+    setNewPlot((s) => {
+      const totalPrice = Number(s.totalPrice) || 0
+      const percentage = totalPrice && amount !== '' ? ((amount / totalPrice) * 100).toFixed(2) : ''
+      return { ...s, commissionAmount: value, commissionPercentage: percentage }
+    })
+  }
+
+  const handleTotalPriceChange = (totalPrice) => {
+    setNewPlot((s) => {
+      const percentage = Number(s.commissionPercentage) || 0
+      const commissionAmount = totalPrice && percentage ? (Number(totalPrice) * percentage / 100) : s.commissionAmount
+      return { ...s, totalPrice: totalPrice, commissionAmount: commissionAmount }
+    })
+  }
+
   const openAddDialog = () => setAddDialogOpen(true)
   const closeAddDialog = () => {
     setAddDialogOpen(false)
@@ -541,6 +570,8 @@ const PlotManagement = () => {
       finalPrice: '',
       agentName: '',
       agentCode: '',
+      commissionPercentage: '',
+      commissionAmount: '',
       advocateName: '',
       advocateCode: '',
       tahsil: '',
@@ -622,6 +653,8 @@ const PlotManagement = () => {
       finalPrice: '',
       agentName: '',
       agentCode: '',
+      commissionPercentage: '',
+      commissionAmount: '',
       advocateName: '',
       advocateCode: '',
       tahsil: '',
@@ -671,10 +704,13 @@ const PlotManagement = () => {
   const updatePricingFromTotal = (totalPrice) => {
     setNewPlot((prev) => {
       const pricePerGaj = calculatePricePerGajFromTotal(totalPrice, prev.areaGaj)
+      const percentage = Number(prev.commissionPercentage) || 0
+      const commissionAmount = totalPrice && percentage ? (Number(totalPrice) * percentage / 100) : prev.commissionAmount
       return {
         ...prev,
         totalPrice,
-        pricePerGaj: pricePerGaj || prev.pricePerGaj
+        pricePerGaj: pricePerGaj || prev.pricePerGaj,
+        commissionAmount: commissionAmount
       }
     })
   }
@@ -1654,6 +1690,38 @@ const PlotManagement = () => {
                           onChange={(e) => handleAgentCodeChange(e.target.value)}
                         />
                       </Grid>
+                      {(newPlot.agentName || newPlot.agentCode) && (
+                        <>
+                          <Grid item xs={12} sm={6}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type="number"
+                              label="Commission Percentage (%)"
+                              value={newPlot.commissionPercentage}
+                              onChange={(e) => handleCommissionPercentageChange(e.target.value)}
+                              InputProps={{
+                                endAdornment: <InputAdornment position="end">%</InputAdornment>
+                              }}
+                              helperText="Enter percentage to auto-calculate amount"
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type="number"
+                              label="Commission Amount (₹)"
+                              value={newPlot.commissionAmount}
+                              onChange={(e) => handleCommissionAmountChange(e.target.value)}
+                              InputProps={{
+                                startAdornment: <InputAdornment position="start">₹</InputAdornment>
+                              }}
+                              helperText="Enter amount to auto-calculate percentage"
+                            />
+                          </Grid>
+                        </>
+                      )}
                       <Grid item xs={12} sm={6}>
                         <TextField
                           fullWidth
@@ -2094,6 +2162,34 @@ const PlotManagement = () => {
                           sx={{ flex: 1 }}
                         />
                       </Box>
+                      {(newPlot.agentName || newPlot.agentCode) && (
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <TextField
+                            size="small"
+                            type="number"
+                            label="Commission %"
+                            value={newPlot.commissionPercentage}
+                            onChange={(e) => handleCommissionPercentageChange(e.target.value)}
+                            InputProps={{
+                              endAdornment: <InputAdornment position="end">%</InputAdornment>
+                            }}
+                            sx={{ flex: 1 }}
+                            helperText="Auto-calculates amount"
+                          />
+                          <TextField
+                            size="small"
+                            type="number"
+                            label="Commission Amount"
+                            value={newPlot.commissionAmount.toFixed(2)}
+                            onChange={(e) => handleCommissionAmountChange(e.target.value)}
+                            InputProps={{
+                              startAdornment: <InputAdornment position="start">₹</InputAdornment>
+                            }}
+                            sx={{ flex: 1 }}
+                            helperText="Auto-calculates %"
+                          />
+                        </Box>
+                      )}
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <TextField
                           size="small"
