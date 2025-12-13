@@ -1647,13 +1647,21 @@ const PlotManagement = () => {
                             clearError('finalPrice')
                           }}
                           error={!!errors.finalPrice}
-                          helperText={
-                            errors.finalPrice || 
-                            (newPlot.finalPrice && newPlot.areaGaj ? 
-                              `Total: ₹${Number(newPlot.finalPrice * newPlot.areaGaj).toLocaleString()}` : 
-                              'Enter negotiated price per Gaj'
-                            )
-                          }
+                          helperText={errors.finalPrice || 'Enter negotiated price per Gaj'}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Total Sold Amount"
+                          type="number"
+                          value={newPlot.finalPrice && newPlot.areaGaj ? (Number(newPlot.finalPrice) * Number(newPlot.areaGaj)).toFixed(2) : ''}
+                          InputProps={{ 
+                            readOnly: true,
+                            startAdornment: <InputAdornment position="start">₹</InputAdornment>
+                          }}
+                          helperText="Auto-calculated from Sold Price × Area"
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -2142,10 +2150,21 @@ const PlotManagement = () => {
                       />
                       <TextField
                         size="small"
-                        label="Sold Price (Optional)"
+                        label="Sold Price per Gaj (Optional)"
                         type="number"
                         value={newPlot.finalPrice}
                         onChange={(e) => handleFinalPriceChange(e.target.value)}
+                      />
+                      <TextField
+                        size="small"
+                        label="Total Sold Amount"
+                        type="number"
+                        value={newPlot.finalPrice && newPlot.areaGaj ? (Number(newPlot.finalPrice) * Number(newPlot.areaGaj)).toFixed(2) : ''}
+                        InputProps={{ 
+                          readOnly: true,
+                          startAdornment: <InputAdornment position="start">₹</InputAdornment>
+                        }}
+                        helperText="Auto-calculated from Sold Price × Area"
                       />
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <TextField
