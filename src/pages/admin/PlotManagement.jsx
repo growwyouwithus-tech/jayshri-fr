@@ -521,8 +521,8 @@ const PlotManagement = () => {
   const handleCommissionPercentageChange = (value) => {
     const percentage = value === '' ? '' : Number(value)
     setNewPlot((s) => {
-      const totalPrice = Number(s.totalPrice) || 0
-      const commissionAmount = totalPrice && percentage !== '' ? (totalPrice * percentage / 100) : ''
+      const soldTotalPrice = (Number(s.finalPrice) || 0) * (Number(s.areaGaj) || 0)
+      const commissionAmount = soldTotalPrice && percentage !== '' ? (soldTotalPrice * percentage / 100) : ''
       return { ...s, commissionPercentage: value, commissionAmount: commissionAmount }
     })
   }
@@ -530,17 +530,18 @@ const PlotManagement = () => {
   const handleCommissionAmountChange = (value) => {
     const amount = value === '' ? '' : Number(value)
     setNewPlot((s) => {
-      const totalPrice = Number(s.totalPrice) || 0
-      const percentage = totalPrice && amount !== '' ? ((amount / totalPrice) * 100).toFixed(2) : ''
+      const soldTotalPrice = (Number(s.finalPrice) || 0) * (Number(s.areaGaj) || 0)
+      const percentage = soldTotalPrice && amount !== '' ? ((amount / soldTotalPrice) * 100).toFixed(2) : ''
       return { ...s, commissionAmount: value, commissionPercentage: percentage }
     })
   }
 
-  const handleTotalPriceChange = (totalPrice) => {
+  const handleFinalPriceChange = (value) => {
     setNewPlot((s) => {
+      const soldTotalPrice = (Number(value) || 0) * (Number(s.areaGaj) || 0)
       const percentage = Number(s.commissionPercentage) || 0
-      const commissionAmount = totalPrice && percentage ? (Number(totalPrice) * percentage / 100) : s.commissionAmount
-      return { ...s, totalPrice: totalPrice, commissionAmount: commissionAmount }
+      const commissionAmount = soldTotalPrice && percentage ? (soldTotalPrice * percentage / 100) : s.commissionAmount
+      return { ...s, finalPrice: value, commissionAmount: commissionAmount }
     })
   }
 
@@ -1642,7 +1643,7 @@ const PlotManagement = () => {
                           type="number"
                           value={newPlot.finalPrice}
                           onChange={(e) => {
-                            setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))
+                            handleFinalPriceChange(e.target.value)
                             clearError('finalPrice')
                           }}
                           error={!!errors.finalPrice}
@@ -2144,7 +2145,7 @@ const PlotManagement = () => {
                         label="Sold Price (Optional)"
                         type="number"
                         value={newPlot.finalPrice}
-                        onChange={(e) => setNewPlot((s) => ({ ...s, finalPrice: e.target.value }))}
+                        onChange={(e) => handleFinalPriceChange(e.target.value)}
                       />
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <TextField
