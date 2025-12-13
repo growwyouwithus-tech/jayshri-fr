@@ -42,20 +42,38 @@ const AgentDashboard = () => {
   const fetchAgentData = async () => {
     try {
       setLoading(true)
-      // Fetch bookings assigned to this agent
-      const { data } = await axios.get('/bookings')
-      const agentBookings = data.data?.bookings || []
+      // Fetch all bookings with high limit to get agent's bookings
+      const { data } = await axios.get('/bookings?limit=10000')
+      const allBookings = data.data || []
+      
+      // Get current user info
+      const userStr = localStorage.getItem('user')
+      const currentUser = userStr ? JSON.parse(userStr) : null
+      
+      // Filter bookings where current user is the agent
+      const agentBookings = allBookings.filter(b => 
+        b.agent?._id === currentUser?._id || b.agent === currentUser?._id
+      )
       
       setBookings(agentBookings)
       
       // Calculate stats
+      const totalCommission = agentBookings.reduce((sum, booking) => {
+        // Check if booking has commissions array
+        if (booking.commissions && Array.isArray(booking.commissions)) {
+          const agentCommission = booking.commissions.find(c => 
+            c.agent?._id === currentUser?._id || c.agent === currentUser?._id
+          )
+          return sum + (agentCommission?.amount || 0)
+        }
+        return sum
+      }, 0)
+      
       const stats = {
         totalBookings: agentBookings.length,
         pendingBookings: agentBookings.filter(b => b.status === 'pending').length,
-        approvedBookings: agentBookings.filter(b => b.status === 'approved').length,
-        totalCommission: agentBookings
-          .filter(b => b.status === 'approved')
-          .reduce((sum, b) => sum + (b.totalAmount * 0.02), 0) // 2% commission
+        approvedBookings: agentBookings.filter(b => b.status === 'confirmed' || b.status === 'completed').length,
+        totalCommission: totalCommission
       }
       
       setStats(stats)
@@ -70,8 +88,9 @@ const AgentDashboard = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'warning'
-      case 'approved': return 'success'
-      case 'rejected': return 'error'
+      case 'confirmed': return 'success'
+      case 'completed': return 'success'
+      case 'cancelled': return 'error'
       default: return 'default'
     }
   }
@@ -181,50 +200,71 @@ const AgentDashboard = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Booking ID</strong></TableCell>
+                    <TableCell><strong>Booking No.</strong></TableCell>
                     <TableCell><strong>Customer</strong></TableCell>
                     <TableCell><strong>Plot</strong></TableCell>
-                    <TableCell><strong>Colony</strong></TableCell>
                     <TableCell><strong>Amount</strong></TableCell>
+                    <TableCell><strong>Commission</strong></TableCell>
                     <TableCell><strong>Status</strong></TableCell>
                     <TableCell><strong>Date</strong></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {bookings.slice(0, 10).map((booking) => (
-                    <TableRow key={booking._id} hover>
-                      <TableCell>#{booking._id.slice(-6)}</TableCell>
-                      <TableCell>
-                        <Box>
+                  {bookings.slice(0, 10).map((booking) => {
+                    const userStr = localStorage.getItem('user')
+                    const currentUser = userStr ? JSON.parse(userStr) : null
+                    const agentCommission = booking.commissions?.find(c => 
+                      c.agent?._id === currentUser?._id || c.agent === currentUser?._id
+                    )
+                    
+                    return (
+                      <TableRow key={booking._id} hover>
+                        <TableCell>
                           <Typography variant="body2" fontWeight="bold">
-                            {booking.buyerDetails?.name || booking.userId?.name}
+                            {booking.bookingNumber || `#${booking._id.slice(-6)}`}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" fontWeight="bold">
+                              {booking.buyer?.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {booking.buyer?.email}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {booking.plot?.plotNumber}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {booking.buyerDetails?.email || booking.userId?.email}
+                            {booking.plot?.area} Sq.Ft
                           </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        Plot #{booking.plotId?.plotNo}
-                        <br />
-                        <Typography variant="caption" color="text.secondary">
-                          {booking.plotId?.areaGaj} Gaj
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{booking.colonyId?.name}</TableCell>
-                      <TableCell>₹{booking.totalAmount?.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={booking.status} 
-                          color={getStatusColor(booking.status)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {new Date(booking.createdAt).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="600">
+                            ₹{booking.totalAmount?.toLocaleString('en-IN')}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="600" color="success.main">
+                            ₹{agentCommission?.amount?.toLocaleString('en-IN') || '0'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={booking.status} 
+                            color={getStatusColor(booking.status)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {new Date(booking.bookingDate || booking.createdAt).toLocaleDateString('en-IN')}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>

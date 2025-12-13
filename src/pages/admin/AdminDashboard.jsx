@@ -24,7 +24,7 @@ const AdminDashboard = () => {
       const [coloniesRes, bookingsRes, plotsRes] = await Promise.all([
         axios.get('/colonies'),
         axios.get('/bookings'),
-        axios.get('/plots')
+        axios.get('/plots?limit=10000')
       ])
 
       const colonies = coloniesRes?.data?.data?.colonies || []

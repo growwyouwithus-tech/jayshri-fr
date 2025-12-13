@@ -40,6 +40,7 @@ import {
   ExpandLess,
   ExpandMore,
   LocationCity,
+  AccountBalance,
 } from '@mui/icons-material'
 import { logout } from '@/store/slices/authSlice'
 import toast from 'react-hot-toast'
@@ -217,6 +218,11 @@ const MainLayout = () => {
     // Kisan Payment
     if (hasPermission('colony_read') || hasPermission('colonies_read') || roleName === 'Admin' || roleName === 'Manager') {
       dynamicItems.push({ text: 'Kisan Payment', icon: <TrendingUp />, path: '/admin/kisan-payments' })
+    }
+
+    // Accounts & Expenses
+    if (roleName === 'Admin' || roleName === 'Manager') {
+      dynamicItems.push({ text: 'Accounts & Expenses', icon: <AccountBalance />, path: '/admin/expenses' })
     }
 
     // Settings

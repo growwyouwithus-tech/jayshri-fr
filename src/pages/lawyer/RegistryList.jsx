@@ -20,10 +20,15 @@ const RegistryList = () => {
   const fetchRegistries = async () => {
     try {
       const { data } = await axios.get('/registry')
-      setRegistries(data.data.registries)
+      console.log('[API Response]', data)
+      // Handle different response structures
+      const registriesData = data?.data?.registries || data?.registries || data?.data || []
+      setRegistries(Array.isArray(registriesData) ? registriesData : [])
       setLoading(false)
     } catch (error) {
+      console.error('[API Error]', error)
       toast.error('Failed to fetch registries')
+      setRegistries([])
       setLoading(false)
     }
   }
