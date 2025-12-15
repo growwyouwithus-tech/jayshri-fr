@@ -30,6 +30,7 @@ import {
   IconButton,
   TablePagination,
   InputAdornment,
+  Autocomplete,
 } from '@mui/material'
 import { Add, Edit, Delete, Visibility, Payment, Search, CloudUpload, ArrowBack } from '@mui/icons-material'
 import axios from '@/api/axios'
@@ -116,6 +117,7 @@ const PlotManagement = () => {
   const [colonies, setColonies] = useState([])
   const [properties, setProperties] = useState([])
   const [agents, setAgents] = useState([])
+  const [advocates, setAdvocates] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterColony, setFilterColony] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -412,6 +414,7 @@ const PlotManagement = () => {
     fetchColonies()
     fetchPlots()
     fetchAgents()
+    fetchAdvocates()
   }, [])
 
   // Handle pre-selected property from navigation state
@@ -491,6 +494,16 @@ const PlotManagement = () => {
     }
   }
 
+  const fetchAdvocates = async () => {
+    try {
+      const { data } = await axios.get('/users?role=Lawyer&limit=1000')
+      const advocateList = Array.isArray(data?.data) ? data.data : []
+      setAdvocates(advocateList)
+    } catch (error) {
+      console.error('Failed to fetch advocates:', error)
+    }
+  }
+
   const handleFilterChange = (colonyId) => {
     setFilterColony(colonyId)
     fetchPlots(colonyId)
@@ -534,6 +547,27 @@ const PlotManagement = () => {
       const percentage = soldTotalPrice && amount !== '' ? ((amount / soldTotalPrice) * 100).toFixed(2) : ''
       return { ...s, commissionAmount: value, commissionPercentage: percentage }
     })
+  }
+
+  // Auto-fill handlers for Advocate fields
+  const handleAdvocateNameChange = (value) => {
+    setNewPlot((s) => ({ ...s, advocateName: value }))
+    
+    // Find advocate by name and auto-fill code
+    const advocate = advocates.find(a => a.name.toLowerCase() === value.toLowerCase())
+    if (advocate && advocate.userCode) {
+      setNewPlot((s) => ({ ...s, advocateName: value, advocateCode: advocate.userCode }))
+    }
+  }
+
+  const handleAdvocateCodeChange = (value) => {
+    setNewPlot((s) => ({ ...s, advocateCode: value }))
+    
+    // Find advocate by code and auto-fill name
+    const advocate = advocates.find(a => a.userCode && a.userCode.toLowerCase() === value.toLowerCase())
+    if (advocate && advocate.name) {
+      setNewPlot((s) => ({ ...s, advocateCode: value, advocateName: advocate.name }))
+    }
   }
 
   const handleFinalPriceChange = (value) => {
@@ -1682,21 +1716,41 @@ const PlotManagement = () => {
                         </TextField>
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Agent Name (Optional)"
+                        <Autocomplete
+                          freeSolo
+                          options={agents.map(a => a.name)}
                           value={newPlot.agentName}
-                          onChange={(e) => handleAgentNameChange(e.target.value)}
+                          onInputChange={(event, newValue) => {
+                            handleAgentNameChange(newValue || '')
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              fullWidth
+                              size="small"
+                              label="Agent Name (Optional)"
+                              placeholder="Type to search..."
+                            />
+                          )}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Agent Code (Optional)"
+                        <Autocomplete
+                          freeSolo
+                          options={agents.map(a => a.userCode).filter(Boolean)}
                           value={newPlot.agentCode}
-                          onChange={(e) => handleAgentCodeChange(e.target.value)}
+                          onInputChange={(event, newValue) => {
+                            handleAgentCodeChange(newValue || '')
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              fullWidth
+                              size="small"
+                              label="Agent Code (Optional)"
+                              placeholder="Type to search..."
+                            />
+                          )}
                         />
                       </Grid>
                       {(newPlot.agentName || newPlot.agentCode) && (
@@ -1732,21 +1786,41 @@ const PlotManagement = () => {
                         </>
                       )}
                       <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Advocate Name (Optional)"
+                        <Autocomplete
+                          freeSolo
+                          options={advocates.map(a => a.name)}
                           value={newPlot.advocateName}
-                          onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
+                          onInputChange={(event, newValue) => {
+                            handleAdvocateNameChange(newValue || '')
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              fullWidth
+                              size="small"
+                              label="Advocate Name (Optional)"
+                              placeholder="Type to search..."
+                            />
+                          )}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Advocate Code (Optional)"
+                        <Autocomplete
+                          freeSolo
+                          options={advocates.map(a => a.userCode).filter(Boolean)}
                           value={newPlot.advocateCode}
-                          onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
+                          onInputChange={(event, newValue) => {
+                            handleAdvocateCodeChange(newValue || '')
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              fullWidth
+                              size="small"
+                              label="Advocate Code (Optional)"
+                              placeholder="Type to search..."
+                            />
+                          )}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -2167,19 +2241,39 @@ const PlotManagement = () => {
                         helperText="Auto-calculated from Sold Price × Area"
                       />
                       <Box sx={{ display: 'flex', gap: 2 }}>
-                        <TextField
-                          size="small"
-                          label="Agent Name (Optional)"
+                        <Autocomplete
+                          freeSolo
+                          options={agents.map(a => a.name)}
                           value={newPlot.agentName}
-                          onChange={(e) => handleAgentNameChange(e.target.value)}
+                          onInputChange={(event, newValue) => {
+                            handleAgentNameChange(newValue || '')
+                          }}
                           sx={{ flex: 1 }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              size="small"
+                              label="Agent Name (Optional)"
+                              placeholder="Type to search..."
+                            />
+                          )}
                         />
-                        <TextField
-                          size="small"
-                          label="Agent Code (Optional)"
+                        <Autocomplete
+                          freeSolo
+                          options={agents.map(a => a.userCode).filter(Boolean)}
                           value={newPlot.agentCode}
-                          onChange={(e) => handleAgentCodeChange(e.target.value)}
+                          onInputChange={(event, newValue) => {
+                            handleAgentCodeChange(newValue || '')
+                          }}
                           sx={{ flex: 1 }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              size="small"
+                              label="Agent Code (Optional)"
+                              placeholder="Type to search..."
+                            />
+                          )}
                         />
                       </Box>
                       {(newPlot.agentName || newPlot.agentCode) && (
@@ -2211,19 +2305,39 @@ const PlotManagement = () => {
                         </Box>
                       )}
                       <Box sx={{ display: 'flex', gap: 2 }}>
-                        <TextField
-                          size="small"
-                          label="Advocate Name (Optional)"
+                        <Autocomplete
+                          freeSolo
+                          options={advocates.map(a => a.name)}
                           value={newPlot.advocateName}
-                          onChange={(e) => setNewPlot((s) => ({ ...s, advocateName: e.target.value }))}
+                          onInputChange={(event, newValue) => {
+                            handleAdvocateNameChange(newValue || '')
+                          }}
                           sx={{ flex: 1 }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              size="small"
+                              label="Advocate Name (Optional)"
+                              placeholder="Type to search..."
+                            />
+                          )}
                         />
-                        <TextField
-                          size="small"
-                          label="Advocate Code (Optional)"
+                        <Autocomplete
+                          freeSolo
+                          options={advocates.map(a => a.userCode).filter(Boolean)}
                           value={newPlot.advocateCode}
-                          onChange={(e) => setNewPlot((s) => ({ ...s, advocateCode: e.target.value }))}
+                          onInputChange={(event, newValue) => {
+                            handleAdvocateCodeChange(newValue || '')
+                          }}
                           sx={{ flex: 1 }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              size="small"
+                              label="Advocate Code (Optional)"
+                              placeholder="Type to search..."
+                            />
+                          )}
                         />
                       </Box>
                       <TextField
