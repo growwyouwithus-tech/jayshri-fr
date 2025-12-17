@@ -171,22 +171,20 @@ const StaffManagement = () => {
       return
     }
     
-    if (!editMode) {
-      // Password is optional - will use default if not provided
-      if (formData.password) {
-        const password = formData.password.trim()
-        const confirmPassword = formData.confirmPassword.trim()
-        
-        if (password.length < 6) {
-          toast.error('Password must be at least 6 characters')
-          return
-        }
-        
-        if (password !== confirmPassword) {
-          console.log('Password mismatch:', { password, confirmPassword })
-          toast.error('Passwords do not match')
-          return
-        }
+    // Password validation (for both create and edit modes)
+    if (formData.password) {
+      const password = formData.password.trim()
+      const confirmPassword = formData.confirmPassword.trim()
+      
+      if (password.length < 6) {
+        toast.error('Password must be at least 6 characters')
+        return
+      }
+      
+      if (password !== confirmPassword) {
+        console.log('Password mismatch:', { password, confirmPassword })
+        toast.error('Passwords do not match')
+        return
       }
     }
 
@@ -352,35 +350,31 @@ if (openDialog) {
               ))}
             </TextField>
           </Grid>
-          {!editMode && (
-            <>
-              <Grid item xs={12} sm={6}>
-                <TextField 
-                  fullWidth 
-                  label="Password" 
-                  type="password" 
-                  value={formData.password} 
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
-                  helperText="Leave empty for auto-generated password"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField 
-                  fullWidth 
-                  label="Confirm Password" 
-                  type="password" 
-                  value={formData.confirmPassword} 
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  error={formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()}
-                  helperText={
-                    formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()
-                      ? "Passwords do not match"
-                      : ""
-                  }
-                />
-              </Grid>
-            </>
-          )}
+          <Grid item xs={12} sm={6}>
+            <TextField 
+              fullWidth 
+              label="Password" 
+              type="password" 
+              value={formData.password} 
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+              helperText={editMode ? "Leave empty to keep current password" : "Leave empty for auto-generated password"}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField 
+              fullWidth 
+              label="Confirm Password" 
+              type="password" 
+              value={formData.confirmPassword} 
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              error={formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()}
+              helperText={
+                formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()
+                  ? "Passwords do not match"
+                  : ""
+              }
+            />
+          </Grid>
         </Grid>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
           <Button onClick={handleCloseDialog} variant="outlined">Cancel</Button>
@@ -525,151 +519,6 @@ return (
           </TableBody>
         </Table>
       </TableContainer>
-
-      {/* Add/Edit Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>{editMode ? 'Edit Staff' : 'Add Staff'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" mb={1}>Full Name</Typography>
-              <TextField
-                fullWidth
-                placeholder="Enter full name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" mb={1}>Email Address</Typography>
-              <TextField
-                fullWidth
-                type="email"
-                placeholder="superadmin@jayshree.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                disabled={editMode}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" mb={1}>Phone</Typography>
-              <TextField
-                fullWidth
-                placeholder="Enter Phone Number"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                required
-                InputProps={{
-                  startAdornment: (
-                    <Box display="flex" alignItems="center" mr={1}>
-                      🇮🇳 +91
-                    </Box>
-                  )
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" mb={1}>Role*</Typography>
-              <TextField
-                fullWidth
-                select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                required
-                error={!formData.role && roles.length > 0}
-                helperText={
-                  roles.length === 0 
-                    ? "Loading roles..." 
-                    : !formData.role 
-                      ? "Please select a role" 
-                      : ""
-                }
-              >
-                <MenuItem value="">Select One</MenuItem>
-                {roles.length === 0 ? (
-                  <MenuItem disabled>Loading roles...</MenuItem>
-                ) : (
-                  roles.map((role) => (
-                    <MenuItem key={role._id} value={role._id}>
-                      {role.name}
-                    </MenuItem>
-                  ))
-                )}
-              </TextField>
-            </Grid>
-            {!editMode && (
-              <>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" mb={1}>Password</Typography>
-                  <TextField
-                    fullWidth
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    helperText="Leave empty for auto-generated password"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" mb={1}>Confirm Password</Typography>
-                  <TextField
-                    fullWidth
-                    type="password"
-                    placeholder="••••••"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    error={formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()}
-                    helperText={
-                      formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()
-                        ? "Passwords do not match"
-                        : ""
-                    }
-                  />
-                </Grid>
-              </>
-            )}
-            <Grid item xs={12}>
-              <Typography variant="body2" mb={1}>Profile Image (optional)</Typography>
-              <Box
-                sx={{
-                  border: '2px dashed #e0e0e0',
-                  borderRadius: 2,
-                  p: 4,
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  '&:hover': { bgcolor: '#f5f5f5' }
-                }}
-                onClick={() => document.getElementById('profile-image').click()}
-              >
-                <Add sx={{ fontSize: 48, color: '#ccc', mb: 1 }} />
-                <Typography variant="body2" color="text.secondary">
-                  Click to upload profile image
-                </Typography>
-                <input
-                  id="profile-image"
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => setFormData({ ...formData, profileImage: e.target.files[0] })}
-                />
-                {formData.profileImage && (
-                  <Typography variant="body2" color="success.main" mt={1}>
-                    ✓ {formData.profileImage.name}
-                  </Typography>
-                )}
-              </Box>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   )
 }
