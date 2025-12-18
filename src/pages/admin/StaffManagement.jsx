@@ -25,7 +25,7 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material'
-import { Add, Edit, Delete, CloudUpload, GetApp, Print, Search, FileDownload, ArrowBack } from '@mui/icons-material'
+import { Add, Edit, Delete, CloudUpload, GetApp, Print, Search, FileDownload, ArrowBack, Visibility } from '@mui/icons-material'
 import apiService from '@/services/apiService'
 import mockApiService from '@/services/mockApiService'
 import errorService from '@/services/errorService'
@@ -43,6 +43,8 @@ const StaffManagement = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [exportAnchor, setExportAnchor] = useState(null)
   const [selectedStaff, setSelectedStaff] = useState([])
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [viewingStaff, setViewingStaff] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -319,6 +321,94 @@ const StaffManagement = () => {
   )
 }
 
+// Show view dialog if viewing staff
+if (viewDialogOpen && viewingStaff) {
+  return (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" fontWeight="bold">
+          Staff Details - {viewingStaff.name}
+        </Typography>
+        <Button 
+          variant="outlined" 
+          startIcon={<ArrowBack />} 
+          onClick={() => {
+            setViewDialogOpen(false)
+            setViewingStaff(null)
+          }}
+        >
+          Back to Staff List
+        </Button>
+      </Box>
+      
+      <Paper sx={{ p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
+            <Avatar 
+              src={viewingStaff.profileImage} 
+              sx={{ width: 150, height: 150, margin: '0 auto', mb: 2, fontSize: '3rem' }}
+            >
+              {viewingStaff.name.charAt(0)}
+            </Avatar>
+            <Typography variant="h5" fontWeight={600}>{viewingStaff.name}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {viewingStaff.role?.name || viewingStaff.roleName || 'No Role'}
+            </Typography>
+          </Grid>
+          
+          <Grid item xs={12} md={8}>
+            <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+              Contact Information
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary">User Code</Typography>
+                <Typography variant="body1" fontWeight={600}>{viewingStaff.userCode || 'N/A'}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary">Email</Typography>
+                <Typography variant="body1" fontWeight={600}>{viewingStaff.email}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary">Phone</Typography>
+                <Typography variant="body1" fontWeight={600}>{viewingStaff.phone}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary">Role</Typography>
+                <Typography variant="body1" fontWeight={600}>{viewingStaff.role?.name || viewingStaff.roleName || 'N/A'}</Typography>
+              </Grid>
+              {viewingStaff.createdAt && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">Joined Date</Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {new Date(viewingStaff.createdAt).toLocaleDateString('en-IN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </Typography>
+                </Grid>
+              )}
+              {viewingStaff.updatedAt && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">Last Updated</Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {new Date(viewingStaff.updatedAt).toLocaleDateString('en-IN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Box>
+  )
+}
+
 // Show form if dialog is open
 if (openDialog) {
   return (
@@ -452,24 +542,24 @@ return (
         </MenuItem>
       </Menu>
 
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
+              <TableCell padding="checkbox" sx={{ bgcolor: '#f5f5f5' }}>
                 <Checkbox
                   indeterminate={selectedStaff.length > 0 && selectedStaff.length < filteredStaff.length}
                   checked={filteredStaff.length > 0 && selectedStaff.length === filteredStaff.length}
                   onChange={handleSelectAll}
                 />
               </TableCell>
-              <TableCell><strong>SL.</strong></TableCell>
-              <TableCell><strong>Name</strong></TableCell>
-              <TableCell><strong>Code</strong></TableCell>
-              <TableCell><strong>Phone</strong></TableCell>
-              <TableCell><strong>Email</strong></TableCell>
-              <TableCell><strong>Role</strong></TableCell>
-              <TableCell align="right"><strong>Action</strong></TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>SL.</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Code</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Phone</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Email</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Role</TableCell>
+              <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -506,6 +596,12 @@ return (
                   <TableCell>{staffMember.email}</TableCell>
                   <TableCell>{staffMember.role?.name || staffMember.roleName || '-'}</TableCell>
                   <TableCell align="right">
+                    <IconButton size="small" onClick={() => {
+                      setViewingStaff(staffMember)
+                      setViewDialogOpen(true)
+                    }} sx={{ color: 'primary.main' }}>
+                      <Visibility fontSize="small" />
+                    </IconButton>
                     <IconButton size="small" onClick={() => handleOpenDialog(staffMember)} sx={{ color: 'orange' }}>
                       <Edit fontSize="small" />
                     </IconButton>

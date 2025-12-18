@@ -1586,22 +1586,20 @@ const PropertyManagement = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <TableContainer component={Paper}>
-            <Table>
+          <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+            <Table stickyHeader>
               <TableHead>
-                <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                  <TableCell><strong>Property Name</strong></TableCell>
-                  <TableCell><strong>Category</strong></TableCell>
-                  {/* <TableCell><strong>Land</strong></TableCell> */}
-                  <TableCell><strong>Total Land(Gaj)</strong></TableCell>
-                  <TableCell><strong>Roads Areas(Gaj)</strong></TableCell>
-                  <TableCell><strong>Amenity Areas(Gaj)</strong></TableCell>
-                  <TableCell><strong>Used Land(Gaj)</strong></TableCell>
-                  <TableCell><strong>Sold Land(Gaj)</strong></TableCell>
-                  <TableCell><strong>Remaining Land(Gaj)</strong></TableCell>
-                  {/* <TableCell><strong>Total Revenue</strong></TableCell> */}
-                  <TableCell><strong>Plots</strong></TableCell>
-                  <TableCell><strong>Actions</strong></TableCell>
+                <TableRow>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Property Name</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Category</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Land(Gaj)</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Roads Areas(Gaj)</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Amenity Areas(Gaj)</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Used Land(Gaj)</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Land(Gaj)</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Remaining Land(Gaj)</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Plots</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

@@ -783,17 +783,15 @@ const ColonyManagement = () => {
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell><strong>Colony</strong></TableCell>
-              <TableCell><strong>Total Land (Gaj)</strong></TableCell>
-              <TableCell><strong>plots</strong></TableCell>
-              <TableCell><strong>asking price Gaj</strong></TableCell>
-              {/* <TableCell><strong>Khatoni Holder</strong></TableCell> */}
-              {/* <TableCell><strong>Status</strong></TableCell> */}
-              <TableCell align="right"><strong>Action</strong></TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Colony</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Land (Gaj)</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>plots</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>asking price Gaj</TableCell>
+              <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

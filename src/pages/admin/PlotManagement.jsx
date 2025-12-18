@@ -1224,8 +1224,10 @@ const PlotManagement = () => {
     )
   }
 
-  // Show view form if viewing plot
+  // Show view form if viewing plot - Excel-like format
   if (viewDialogOpen && viewingPlot) {
+    const holders = getColonyKhatoniHolders(viewingPlot.colonyId)
+    
     return (
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -1244,172 +1246,283 @@ const PlotManagement = () => {
           </Button>
         </Box>
         
-        <Paper sx={{ p: 3 }}>
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid item xs={12}>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
-                Basic Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="body2" color="text.secondary">Plot Number</Typography>
-                  <Typography variant="body1" fontWeight={600}>{viewingPlot.plotNo}</Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="body2" color="text.secondary">Colony</Typography>
-                  <Typography variant="body1" fontWeight={600}>{viewingPlot.colonyId?.name || 'N/A'}</Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="body2" color="text.secondary">Status</Typography>
-                  <Chip label={viewingPlot.status.toUpperCase()} color={getStatusColor(viewingPlot.status)} size="small" />
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="body2" color="text.secondary">Facing</Typography>
-                  <Typography variant="body1" fontWeight={600}>{getFacingLabel(viewingPlot.facing)}</Typography>
-                </Grid>
-              </Grid>
-            </Grid>
+        <Paper sx={{ p: 0, overflow: 'hidden' }}>
+          <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+            <Table stickyHeader size="small" sx={{ '& td': { borderRight: '1px solid #e0e0e0' }, '& th': { borderRight: '1px solid #e0e0e0' } }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 200 }}>Field</TableCell>
+                  <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 300 }}>Value</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {/* Basic Information Section */}
+                <TableRow>
+                  <TableCell colSpan={2} sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>
+                    BASIC INFORMATION
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Plot Number</TableCell>
+                  <TableCell>{viewingPlot.plotNo}</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Colony</TableCell>
+                  <TableCell>{viewingPlot.colonyId?.name || 'N/A'}</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Property</TableCell>
+                  <TableCell>{viewingPlot.propertyId?.name || 'N/A'}</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Status</TableCell>
+                  <TableCell>
+                    <Chip label={viewingPlot.status.toUpperCase()} color={getStatusColor(viewingPlot.status)} size="small" />
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Plot Type</TableCell>
+                  <TableCell>{viewingPlot.plotType || 'Residential'}</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Facing</TableCell>
+                  <TableCell>{getFacingLabel(viewingPlot.facing)}</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Khatoni Holder / Owner</TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600} color="primary.main" sx={{ mb: 1 }}>
+                        {viewingPlot.ownerType === 'khatoniHolder' ? 'Khatoni Holder' : 'Owner'}
+                      </Typography>
+                      {holders.length > 0 ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          {holders.map((holder, index) => (
+                            <Box key={holder?._id || holder?.id || index} sx={{ p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                              <Typography variant="body2" fontWeight={600}>
+                                {holder?.name || holder?.fullName || holder?.company || 'N/A'}
+                              </Typography>
+                              {(holder?.mobile || holder?.phone || holder?.contact) && (
+                                <Typography variant="caption" color="text.secondary">
+                                  📞 {holder?.mobile || holder?.phone || holder?.contact}
+                                </Typography>
+                              )}
+                              {holder?.address && (
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                  📍 {holder?.address}
+                                </Typography>
+                              )}
+                            </Box>
+                          ))}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">No holders information available</Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                </TableRow>
 
-            {/* Dimensions */}
-            <Grid item xs={12}>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'success.main' }}>
-                Dimensions
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="body2" color="text.secondary">Front Side</Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    {viewingPlot.sideMeasurements?.front || viewingPlot.dimensions?.frontage || viewingPlot.dimensions?.length || 'N/A'} ft
-                  </Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="body2" color="text.secondary">Back Side</Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    {viewingPlot.sideMeasurements?.back || viewingPlot.dimensions?.length || 'N/A'} ft
-                  </Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="body2" color="text.secondary">Left Side</Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    {viewingPlot.sideMeasurements?.left || viewingPlot.dimensions?.width || 'N/A'} ft
-                  </Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="body2" color="text.secondary">Right Side</Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    {viewingPlot.sideMeasurements?.right || viewingPlot.dimensions?.width || 'N/A'} ft
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary">Total Area</Typography>
-                  <Typography variant="h6" fontWeight={700} sx={{ color: 'success.main' }}>
-                    {Number(viewingPlot.areaGaj).toFixed(3)} Gaj ({gajToSqFt(viewingPlot.areaGaj).toFixed(3)} sq ft)
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            {/* Pricing */}
-            <Grid item xs={12}>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
-                Pricing
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6} md={4}>
-                  <Typography variant="body2" color="text.secondary">Price per Gaj</Typography>
-                  <Typography variant="body1" fontWeight={600}>₹{Number(viewingPlot.pricePerGaj).toLocaleString()}</Typography>
-                </Grid>
-                <Grid item xs={6} md={4}>
-                  <Typography variant="body2" color="text.secondary">Total Price</Typography>
-                  <Typography variant="h6" fontWeight={700} sx={{ color: 'error.main' }}>
-                    ₹{Number(viewingPlot.totalPrice).toLocaleString()}
-                  </Typography>
-                </Grid>
-                {viewingPlot.finalPrice && (
-                  <Grid item xs={6} md={4}>
-                    <Typography variant="body2" color="text.secondary">Final Price</Typography>
-                    <Typography variant="h6" fontWeight={700} sx={{ color: 'success.main' }}>
-                      ₹{Number(viewingPlot.finalPrice * viewingPlot.areaGaj).toLocaleString()}
+                {/* Dimensions Section */}
+                <TableRow>
+                  <TableCell colSpan={2} sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>
+                    DIMENSIONS
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Front Side</TableCell>
+                  <TableCell>{viewingPlot.sideMeasurements?.front || viewingPlot.dimensions?.frontage || viewingPlot.dimensions?.length || 'N/A'} ft</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Back Side</TableCell>
+                  <TableCell>{viewingPlot.sideMeasurements?.back || viewingPlot.dimensions?.length || 'N/A'} ft</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Left Side</TableCell>
+                  <TableCell>{viewingPlot.sideMeasurements?.left || viewingPlot.dimensions?.width || 'N/A'} ft</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Right Side</TableCell>
+                  <TableCell>{viewingPlot.sideMeasurements?.right || viewingPlot.dimensions?.width || 'N/A'} ft</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Total Area</TableCell>
+                  <TableCell>
+                    <Typography variant="body1" fontWeight={700} color="success.main">
+                      {Number(viewingPlot.areaGaj).toFixed(3)} Gaj ({gajToSqFt(viewingPlot.areaGaj).toFixed(3)} sq ft)
                     </Typography>
-                  </Grid>
-                )}
-              </Grid>
-            </Grid>
+                  </TableCell>
+                </TableRow>
 
-            {/* Sale/Booking Details */}
-            {(viewingPlot.status === 'booked' || viewingPlot.status === 'sold') && (
-              <Grid item xs={12}>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: '#e65100' }}>
-                  {viewingPlot.status === 'booked' ? 'Booking Details' : 'Sale Details'}
-                </Typography>
-                <Grid container spacing={2}>
-                  {viewingPlot.customerName && (
-                    <Grid item xs={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Customer Name</Typography>
-                      <Typography variant="body1" fontWeight={600}>{viewingPlot.customerName}</Typography>
-                    </Grid>
-                  )}
-                  {viewingPlot.customerNumber && (
-                    <Grid item xs={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Customer Number</Typography>
-                      <Typography variant="body1" fontWeight={600}>{viewingPlot.customerNumber}</Typography>
-                    </Grid>
-                  )}
-                  {viewingPlot.customerShortAddress && (
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="body2" color="text.secondary">Customer Address</Typography>
-                      <Typography variant="body1" fontWeight={600}>{viewingPlot.customerShortAddress}</Typography>
-                    </Grid>
-                  )}
-                  {viewingPlot.agentName && (
-                    <Grid item xs={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Agent Name</Typography>
-                      <Typography variant="body1" fontWeight={600}>{viewingPlot.agentName}</Typography>
-                    </Grid>
-                  )}
-                  {viewingPlot.agentCode && (
-                    <Grid item xs={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Agent Code</Typography>
-                      <Typography variant="body1" fontWeight={600}>{viewingPlot.agentCode}</Typography>
-                    </Grid>
-                  )}
-                  {(viewingPlot.agentName || viewingPlot.agentCode) && (
-                    <>
-                      <Grid item xs={6} md={4}>
-                        <Typography variant="body2" color="text.secondary">Commission Percentage</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {viewingPlot.commissionPercentage != null && viewingPlot.commissionPercentage !== '' 
-                            ? `${viewingPlot.commissionPercentage}%` 
-                            : 'Not Set'}
+                {/* Pricing Section */}
+                <TableRow>
+                  <TableCell colSpan={2} sx={{ bgcolor: '#FF9800', color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>
+                    PRICING
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Asking Price per Gaj</TableCell>
+                  <TableCell>₹{Number(viewingPlot.pricePerGaj).toLocaleString()}</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Total Asking Price</TableCell>
+                  <TableCell>
+                    <Typography variant="body1" fontWeight={700} color="error.main">
+                      ₹{Number(viewingPlot.totalPrice).toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+                {viewingPlot.finalPrice && (
+                  <>
+                    <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                      <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Final Price per Gaj</TableCell>
+                      <TableCell>₹{Number(viewingPlot.finalPrice).toLocaleString()}</TableCell>
+                    </TableRow>
+                    <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                      <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Total Final Price</TableCell>
+                      <TableCell>
+                        <Typography variant="body1" fontWeight={700} color="success.main">
+                          ₹{Number(viewingPlot.finalPrice * viewingPlot.areaGaj).toLocaleString()}
                         </Typography>
-                      </Grid>
-                      <Grid item xs={6} md={4}>
-                        <Typography variant="body2" color="text.secondary">Commission Amount</Typography>
-                        <Typography variant="body1" fontWeight={600}>
-                          {viewingPlot.commissionAmount != null && viewingPlot.commissionAmount !== '' 
-                            ? `₹${Number(viewingPlot.commissionAmount).toLocaleString()}` 
-                            : 'Not Set'}
-                        </Typography>
-                      </Grid>
-                    </>
-                  )}
-                  {viewingPlot.advocateName && (
-                    <Grid item xs={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Advocate Name</Typography>
-                      <Typography variant="body1" fontWeight={600}>{viewingPlot.advocateName}</Typography>
-                    </Grid>
-                  )}
-                  {viewingPlot.advocateCode && (
-                    <Grid item xs={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Advocate Code</Typography>
-                      <Typography variant="body1" fontWeight={600}>{viewingPlot.advocateCode}</Typography>
-                    </Grid>
-                  )}
-                </Grid>
-              </Grid>
-            )}
-          </Grid>
+                      </TableCell>
+                    </TableRow>
+                  </>
+                )}
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Paid Amount</TableCell>
+                  <TableCell>₹{Number(viewingPlot.paidAmount || 0).toLocaleString()}</TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Remaining Payment</TableCell>
+                  <TableCell>
+                    <Typography variant="body1" fontWeight={700} color="error.main">
+                      ₹{Number((viewingPlot.finalPrice ? viewingPlot.finalPrice * viewingPlot.areaGaj : viewingPlot.totalPrice) - (viewingPlot.paidAmount || 0)).toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+
+                {/* Sale/Booking Details */}
+                {(viewingPlot.status === 'booked' || viewingPlot.status === 'sold') && (
+                  <>
+                    <TableRow>
+                      <TableCell colSpan={2} sx={{ bgcolor: '#F44336', color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>
+                        {viewingPlot.status === 'booked' ? 'BOOKING DETAILS' : 'SALE DETAILS'}
+                      </TableCell>
+                    </TableRow>
+                    {viewingPlot.customerName && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Customer Name</TableCell>
+                        <TableCell>{viewingPlot.customerName}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.customerNumber && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Customer Number</TableCell>
+                        <TableCell>{viewingPlot.customerNumber}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.customerShortAddress && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Customer Address</TableCell>
+                        <TableCell>{viewingPlot.customerShortAddress}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.customerFullAddress && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Customer Full Address</TableCell>
+                        <TableCell>{viewingPlot.customerFullAddress}</TableCell>
+                      </TableRow>
+                    )}
+                    <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                      <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>{viewingPlot.status === 'booked' ? 'Booked Date' : 'Sold Date'}</TableCell>
+                      <TableCell>
+                        {viewingPlot.createdAt ? new Date(viewingPlot.createdAt).toLocaleDateString('en-IN', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : 'N/A'}
+                      </TableCell>
+                    </TableRow>
+                    {viewingPlot.registryDate && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Registry Date</TableCell>
+                        <TableCell>{new Date(viewingPlot.registryDate).toLocaleDateString('en-IN')}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.moreInformation && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>More Information</TableCell>
+                        <TableCell>{viewingPlot.moreInformation}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.agentName && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Agent Name</TableCell>
+                        <TableCell>{viewingPlot.agentName}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.agentCode && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Agent Code</TableCell>
+                        <TableCell>{viewingPlot.agentCode}</TableCell>
+                      </TableRow>
+                    )}
+                    {(viewingPlot.agentName || viewingPlot.agentCode) && (
+                      <>
+                        <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                          <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Commission Percentage</TableCell>
+                          <TableCell>
+                            {viewingPlot.commissionPercentage != null && viewingPlot.commissionPercentage !== '' 
+                              ? `${viewingPlot.commissionPercentage}%` 
+                              : 'Not Set'}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                          <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Commission Amount</TableCell>
+                          <TableCell>
+                            {viewingPlot.commissionAmount != null && viewingPlot.commissionAmount !== '' 
+                              ? `₹${Number(viewingPlot.commissionAmount).toLocaleString()}` 
+                              : 'Not Set'}
+                          </TableCell>
+                        </TableRow>
+                      </>
+                    )}
+                    {viewingPlot.advocateName && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Advocate Name</TableCell>
+                        <TableCell>{viewingPlot.advocateName}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.advocateCode && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Advocate Code</TableCell>
+                        <TableCell>{viewingPlot.advocateCode}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.tahsil && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Tahsil</TableCell>
+                        <TableCell>{viewingPlot.tahsil}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.modeOfPayment && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Mode of Payment</TableCell>
+                        <TableCell>{viewingPlot.modeOfPayment}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.transactionDate && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Transaction Date</TableCell>
+                        <TableCell>{new Date(viewingPlot.transactionDate).toLocaleString('en-IN')}</TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Paper>
       </Box>
     )
@@ -2695,21 +2808,21 @@ const PlotManagement = () => {
         </Box>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+        <Table stickyHeader>
           <TableHead>
-            <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-              <TableCell><strong>Plot No</strong></TableCell>
-              <TableCell><strong>Colony</strong></TableCell>
-              <TableCell><strong>Khatoni Holders / Owners</strong></TableCell>
-              <TableCell><strong>Area (Gaj)</strong></TableCell>
-              <TableCell><strong>Asking Price/Gaj</strong></TableCell>
-              <TableCell><strong>Sold Price/Gaj</strong></TableCell>
-              <TableCell><strong>Total Price</strong></TableCell>
-              <TableCell><strong>Remaining Payment</strong></TableCell>
-              <TableCell><strong>Facing</strong></TableCell>
-              <TableCell><strong>Status</strong></TableCell>
-              <TableCell><strong>Actions</strong></TableCell>
+            <TableRow>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Plot No</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Colony</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Khatoni Holders / Owners</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Area (Gaj)</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Asking Price/Gaj</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Price/Gaj</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Price</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Remaining Payment</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Facing</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Status</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
