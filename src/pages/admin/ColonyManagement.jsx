@@ -126,10 +126,15 @@ const ColonyManagement = () => {
       const rawColonies = data?.data?.colonies || [];
       console.log('Raw colony data from API:', rawColonies);
 
-      // Fetch all plots in one call
+      // Fetch all plots and properties in parallel
       try {
-        const plotsResponse = await axios.get('/plots', { params: { limit: 1000 } });
+        const [plotsResponse, propertiesResponse] = await Promise.all([
+          axios.get('/plots', { params: { limit: 1000 } }),
+          axios.get('/properties', { params: { limit: 1000 } })
+        ]);
+        
         const allPlots = plotsResponse.data?.data?.plots || [];
+        const allProperties = propertiesResponse.data?.data?.properties || [];
         
         // Group plots by colony
         const plotCountsByColony = {};
@@ -140,16 +145,72 @@ const ColonyManagement = () => {
           }
         });
 
-        // Add plot counts to colonies
-        const coloniesWithPlotCounts = rawColonies.map(colony => {
-          const totalPlots = plotCountsByColony[colony._id] || 0;
-          return normalizeColony({ ...colony, totalPlots });
+        // Calculate property stats by colony
+        const propertyStatsByColony = {};
+        allProperties.forEach(property => {
+          const colonyId = property.colony?._id || property.colony;
+          if (colonyId) {
+            if (!propertyStatsByColony[colonyId]) {
+              propertyStatsByColony[colonyId] = {
+                roadAreaGaj: 0,
+                amenityAreaGaj: 0,
+                usedLandGaj: 0
+              };
+            }
+            
+            // Calculate road area from roads array
+            if (property.roads && Array.isArray(property.roads)) {
+              property.roads.forEach(road => {
+                if (road.lengthFt && road.widthFt) {
+                  const roadAreaSqFt = road.lengthFt * road.widthFt;
+                  propertyStatsByColony[colonyId].roadAreaGaj += roadAreaSqFt / 9;
+                }
+              });
+            }
+            
+            // Calculate amenity area from parks array
+            if (property.parks && Array.isArray(property.parks)) {
+              property.parks.forEach(park => {
+                if (park.areaGaj) {
+                  propertyStatsByColony[colonyId].amenityAreaGaj += park.areaGaj;
+                } else if (park.frontFt && park.backFt && park.leftFt && park.rightFt) {
+                  const avgLength = (park.frontFt + park.backFt) / 2;
+                  const avgWidth = (park.leftFt + park.rightFt) / 2;
+                  const parkAreaSqFt = avgLength * avgWidth;
+                  propertyStatsByColony[colonyId].amenityAreaGaj += parkAreaSqFt / 9;
+                }
+              });
+            }
+          }
         });
 
-        setColonies(coloniesWithPlotCounts);
+        // Calculate used land for each colony
+        Object.keys(propertyStatsByColony).forEach(colonyId => {
+          const stats = propertyStatsByColony[colonyId];
+          stats.usedLandGaj = stats.roadAreaGaj + stats.amenityAreaGaj;
+        });
+
+        // Add plot counts and property stats to colonies
+        const coloniesWithStats = rawColonies.map(colony => {
+          const totalPlots = plotCountsByColony[colony._id] || 0;
+          const propertyStats = propertyStatsByColony[colony._id] || {
+            roadAreaGaj: 0,
+            amenityAreaGaj: 0,
+            usedLandGaj: 0
+          };
+          return normalizeColony({ 
+            ...colony, 
+            totalPlots,
+            roadAreaGaj: Math.round(propertyStats.roadAreaGaj * 100) / 100,
+            amenityAreaGaj: Math.round(propertyStats.amenityAreaGaj * 100) / 100,
+            usedLandGaj: Math.round(propertyStats.usedLandGaj * 100) / 100
+          });
+        });
+
+        setColonies(coloniesWithStats);
       } catch (plotError) {
-        console.error('Failed to fetch plots:', plotError);
-        // If plot fetching fails, still show colonies without plot counts
+        console.error('Failed to fetch plots/properties:', plotError);
+        // If fetching fails, still show colonies without stats
         setColonies(rawColonies.map(colony => normalizeColony(colony)));
       }
 
@@ -789,8 +850,11 @@ const ColonyManagement = () => {
             <TableRow>
               <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Colony</TableCell>
               <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Land (Gaj)</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>plots</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>asking price Gaj</TableCell>
+              <TableCell sx={{ bgcolor: '#e3f2fd', fontWeight: 'bold', color: '#1976d2' }}>Road Area (Gaj)</TableCell>
+              <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 'bold', color: '#2e7d32' }}>Park/Temple(Gaj)</TableCell>
+              <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 'bold', color: '#f57c00' }}>Used Land (Gaj)</TableCell>
+              <TableCell sx={{ bgcolor: '#f3e5f5', fontWeight: 'bold', color: '#7b1fa2' }}>Total Plots</TableCell>
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Asking Price/Gaj</TableCell>
               <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Action</TableCell>
             </TableRow>
           </TableHead>
@@ -806,15 +870,26 @@ const ColonyManagement = () => {
                 <TableRow key={colony._id}>
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>{colony.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" display="block">
                       {colony.address || colony.location?.address || '-'}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" display="block">
                       {colony.city?.name || '-'}
                     </Typography>
                   </TableCell>
                   <TableCell>{colony.totalLandAreaGaj ? colony.totalLandAreaGaj.toLocaleString('en-IN') : '-'}</TableCell>
-                  <TableCell>{colony.totalPlots ?? '-'}</TableCell>
+                  <TableCell sx={{ bgcolor: '#e3f2fd', fontWeight: 600, color: '#1976d2' }}>
+                    {colony.roadAreaGaj ? colony.roadAreaGaj.toLocaleString('en-IN') : '0'}
+                  </TableCell>
+                  <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600, color: '#2e7d32' }}>
+                    {colony.amenityAreaGaj ? colony.amenityAreaGaj.toLocaleString('en-IN') : '0'}
+                  </TableCell>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600, color: '#f57c00' }}>
+                    {colony.usedLandGaj ? colony.usedLandGaj.toLocaleString('en-IN') : '0'}
+                  </TableCell>
+                  <TableCell sx={{ bgcolor: '#f3e5f5', fontWeight: 600, color: '#7b1fa2' }}>
+                    {colony.totalPlots ?? '0'}
+                  </TableCell>
                   <TableCell>₹{colony.ratePerGaj ? colony.ratePerGaj.toLocaleString('en-IN') : '-'}</TableCell>
                   {/* <TableCell>
                     {colony.khatoniHolderDetails && colony.khatoniHolderDetails.length > 0 ? (
