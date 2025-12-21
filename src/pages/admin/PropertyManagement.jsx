@@ -1597,9 +1597,10 @@ const PropertyManagement = () => {
                   {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Amenity Areas(Gaj)</TableCell> */}
                   {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Used Land(Gaj)</TableCell> */}
                   {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Land(Gaj)</TableCell> */}
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Plots</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>booked Plots</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>sold plots</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Plots</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Booked Plots</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Plots</TableCell>
+                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Available Plots</TableCell>
                   <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -1634,6 +1635,7 @@ const PropertyManagement = () => {
                     const remainingLand = calculateRemainingLand(property)
                     const bookedplots = stats.plots.filter(plot => plot.status === 'booked')
                     const soldplots = stats.plots.filter(plot => plot.status === 'sold')
+                    const availableplots = stats.plots.filter(plot => plot.status === 'available')
                     
                     return (
                       <TableRow 
@@ -1740,6 +1742,17 @@ const PropertyManagement = () => {
                           <TableCell>
                           <Chip 
                             label={`${soldplots.length} plots`} 
+                            size="small" 
+                            color="primary"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleViewPlots(property)
+                            }}
+                          />
+                        </TableCell>
+                          <TableCell>
+                          <Chip 
+                            label={`${availableplots.length} plots`} 
                             size="small" 
                             color="primary"
                             onClick={(e) => {
