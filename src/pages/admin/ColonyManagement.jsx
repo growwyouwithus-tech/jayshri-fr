@@ -198,12 +198,18 @@ const ColonyManagement = () => {
             amenityAreaGaj: 0,
             usedLandGaj: 0
           };
+          
+          const totalLandAreaGaj = colony.totalLandAreaGaj ?? (typeof colony.totalArea === 'number' ? Math.round(colony.totalArea / SQFT_PER_GAJ) : 0);
+          const usedLandGaj = Math.round(propertyStats.usedLandGaj * 100) / 100;
+          const remainingLandGaj = totalLandAreaGaj > 0 ? Math.round((totalLandAreaGaj - usedLandGaj) * 100) / 100 : 0;
+          
           return normalizeColony({ 
             ...colony, 
             totalPlots,
             roadAreaGaj: Math.round(propertyStats.roadAreaGaj * 100) / 100,
             amenityAreaGaj: Math.round(propertyStats.amenityAreaGaj * 100) / 100,
-            usedLandGaj: Math.round(propertyStats.usedLandGaj * 100) / 100
+            usedLandGaj,
+            remainingLandGaj
           });
         });
 
