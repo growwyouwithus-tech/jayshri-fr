@@ -854,7 +854,7 @@ const ColonyManagement = () => {
               <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 'bold', color: '#2e7d32' }}>Park/Temple(Gaj)</TableCell>
               <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 'bold', color: '#f57c00' }}>Used Land (Gaj)</TableCell>
               <TableCell sx={{ bgcolor: '#f3e5f5', fontWeight: 'bold', color: '#7b1fa2' }}>Total Plots</TableCell>
-              {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Asking Price/Gaj</TableCell> */}
+              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Remaining Land(Gaj)</TableCell>
               <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Action</TableCell>
             </TableRow>
           </TableHead>
@@ -891,6 +891,7 @@ const ColonyManagement = () => {
                     {colony.totalPlots ?? '0'}
                   </TableCell>
                   {/* <TableCell>₹{colony.ratePerGaj ? colony.ratePerGaj.toLocaleString('en-IN') : '-'}</TableCell> */}
+                  <TableCell>{colony.remainingLandGaj ? colony.remainingLandGaj.toLocaleString('en-IN') : '0'}</TableCell>
                   {/* <TableCell>
                     {colony.khatoniHolderDetails && colony.khatoniHolderDetails.length > 0 ? (
                       <Box> */}
