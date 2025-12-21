@@ -723,7 +723,7 @@ const ColonyManagement = () => {
               </Box>
             </Grid>
 
-            {/* <Grid item xs={6}>
+            <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Asking Price per Gaj (Optional)"
@@ -736,7 +736,7 @@ const ColonyManagement = () => {
                 error={!!errors.basePricePerGaj}
                 helperText={errors.basePricePerGaj}
               />
-            </Grid> */}
+            </Grid>
             <Grid item xs={6}>
               <TextField
                 fullWidth
@@ -890,7 +890,7 @@ const ColonyManagement = () => {
                   <TableCell sx={{ bgcolor: '#f3e5f5', fontWeight: 600, color: '#7b1fa2' }}>
                     {colony.totalPlots ?? '0'}
                   </TableCell>
-                  <TableCell>₹{colony.ratePerGaj ? colony.ratePerGaj.toLocaleString('en-IN') : '-'}</TableCell>
+                  {/* <TableCell>₹{colony.ratePerGaj ? colony.ratePerGaj.toLocaleString('en-IN') : '-'}</TableCell> */}
                   {/* <TableCell>
                     {colony.khatoniHolderDetails && colony.khatoniHolderDetails.length > 0 ? (
                       <Box> */}
@@ -1255,7 +1255,7 @@ const ColonyManagement = () => {
                 placeholder="https://example.com/layout-image.jpg"
               />
             </Grid> */}
-            {/* <Grid item xs={6}>
+            <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Asking
@@ -1269,7 +1269,7 @@ const ColonyManagement = () => {
                 error={!!errors.basePricePerGaj}
                 helperText={errors.basePricePerGaj}
               />
-            </Grid> */}
+            </Grid>
             <Grid item xs={6}>
               <TextField
                 fullWidth
