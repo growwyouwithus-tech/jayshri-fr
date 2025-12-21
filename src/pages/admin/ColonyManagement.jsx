@@ -723,7 +723,7 @@ const ColonyManagement = () => {
               </Box>
             </Grid>
 
-            <Grid item xs={6}>
+            {/* <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Asking Price per Gaj (Optional)"
@@ -736,7 +736,7 @@ const ColonyManagement = () => {
                 error={!!errors.basePricePerGaj}
                 helperText={errors.basePricePerGaj}
               />
-            </Grid>
+            </Grid> */}
             <Grid item xs={6}>
               <TextField
                 fullWidth
@@ -854,7 +854,7 @@ const ColonyManagement = () => {
               <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 'bold', color: '#2e7d32' }}>Park/Temple(Gaj)</TableCell>
               <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 'bold', color: '#f57c00' }}>Used Land (Gaj)</TableCell>
               <TableCell sx={{ bgcolor: '#f3e5f5', fontWeight: 'bold', color: '#7b1fa2' }}>Total Plots</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Asking Price/Gaj</TableCell>
+              {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Asking Price/Gaj</TableCell> */}
               <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Action</TableCell>
             </TableRow>
           </TableHead>
@@ -1255,7 +1255,7 @@ const ColonyManagement = () => {
                 placeholder="https://example.com/layout-image.jpg"
               />
             </Grid> */}
-            <Grid item xs={6}>
+            {/* <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Asking
@@ -1269,7 +1269,7 @@ const ColonyManagement = () => {
                 error={!!errors.basePricePerGaj}
                 helperText={errors.basePricePerGaj}
               />
-            </Grid>
+            </Grid> */}
             <Grid item xs={6}>
               <TextField
                 fullWidth
