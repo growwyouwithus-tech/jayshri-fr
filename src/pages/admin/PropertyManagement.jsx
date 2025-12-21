@@ -1592,12 +1592,12 @@ const PropertyManagement = () => {
                 <TableRow>
                   <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Property Name</TableCell>
                   <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Category</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Land(Gaj)</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Roads Areas(Gaj)</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Amenity Areas(Gaj)</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Used Land(Gaj)</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Land(Gaj)</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Remaining Land(Gaj)</TableCell>
+                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Land(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Roads Areas(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Amenity Areas(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Used Land(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Land(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Remaining Land(Gaj)</TableCell> */}
                   <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Plots</TableCell>
                   <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Actions</TableCell>
                 </TableRow>
@@ -1658,55 +1658,55 @@ const PropertyManagement = () => {
                           </Box>
                         </TableCell>
                         {/* <TableCell>{property.colonyId?.name || '-'}</TableCell> */}
-                        <TableCell>
+                        {/* <TableCell>
                           <Typography variant="body2" fontWeight={600}>
                             {totalLand > 0 ? totalLand.toFixed(2) : '-'}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box>
+                        </TableCell> */}
+                        {/* <TableCell>
+                          <Box> */}
                             {/* <Chip 
                               label={`${property.roads?.length || 0} road${(property.roads?.length || 0) === 1 ? '' : 's'}`} 
                               size="small"
                               color="info"
                             /> */}
-                            <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {/* <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
                               {totalRoadAreaGaj.toFixed(2)}
                             </Typography>
                           </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Box>
+                        </TableCell> */}
+                        {/* <TableCell>
+                          <Box> */}
                             {/* <Chip 
                               label={`${property.parks?.length || 0} amenit${(property.parks?.length || 0) === 1 ? 'y' : 'ies'}`} 
                               size="small"
                               color="secondary"
                             /> */}
-                            <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {/* <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
                               {totalAmenityAreaGaj.toFixed(2)}
                             </Typography>
                           </Box>
-                        </TableCell>
-                        <TableCell>
+                        </TableCell> */}
+                        {/* <TableCell>
                           <Chip 
                             label={usedLand.toFixed(2)} 
                             size="small" 
                             color="warning"
                             title="Land used by roads, parks, and amenities"
                           />
-                        </TableCell>
-                        <TableCell>
+                        </TableCell> */}
+                        {/* <TableCell>
                           <Typography variant="body2" color="error.main">
                             {soldLandGaj > 0 ? soldLandGaj.toFixed(2) : '0.00'}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
+                        </TableCell> */}
+                        {/* <TableCell>
                           <Chip 
                             label={remainingLand.toFixed(2)} 
                             size="small" 
                             color={remainingLand > 0 ? 'success' : 'error'}
                           />
-                        </TableCell>
+                        </TableCell> */}
                         {/* <TableCell>
                           <Typography variant="body2" fontWeight={600} color="success.main">
                             ₹{stats.totalRevenue.toLocaleString('en-IN')}
