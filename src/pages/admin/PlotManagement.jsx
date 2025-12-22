@@ -120,6 +120,7 @@ const PlotManagement = () => {
   const [advocates, setAdvocates] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterColony, setFilterColony] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(20)
@@ -175,6 +176,7 @@ const PlotManagement = () => {
     paidAmount: '',
     paymentSlip: null,
     registryDocument: null,
+    registryStatus: 'pending',
   })
 
   const toNumber = (value) => {
@@ -375,6 +377,9 @@ const PlotManagement = () => {
       }
       if (newPlot.paidAmount) {
         payload.paidAmount = Number(newPlot.paidAmount)
+      }
+      if (newPlot.registryStatus) {
+        payload.registryStatus = newPlot.registryStatus
       }
     }
 
@@ -620,7 +625,8 @@ const PlotManagement = () => {
       transactionDate: '', 
       paidAmount: '', 
       paymentSlip: null, 
-      registryDocument: null 
+      registryDocument: null,
+      registryStatus: 'pending'
     })
   }
 
@@ -663,6 +669,7 @@ const PlotManagement = () => {
       paidAmount: plot.paidAmount?.toString() || '',
       paymentSlip: null,
       registryDocument: null,
+      registryStatus: plot.registryStatus || 'pending',
     })
     setEditDialogOpen(true)
   }
@@ -705,7 +712,8 @@ const PlotManagement = () => {
       transactionDate: '', 
       paidAmount: '', 
       paymentSlip: null, 
-      registryDocument: null 
+      registryDocument: null,
+      registryStatus: 'pending'
     })
   }
 
@@ -1111,14 +1119,32 @@ const PlotManagement = () => {
 
   // Filter and paginate plots
   const filteredPlots = plots.filter((plot) => {
-    if (!searchQuery) return true
-    const query = searchQuery.toLowerCase()
-    return (
-      plot.plotNo?.toLowerCase().includes(query) ||
-      plot.colonyId?.name?.toLowerCase().includes(query) ||
-      plot.customerName?.toLowerCase().includes(query) ||
-      plot._id?.toLowerCase().includes(query)
-    )
+    // Search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const matchesSearch = (
+        plot.plotNo?.toLowerCase().includes(query) ||
+        plot.colonyId?.name?.toLowerCase().includes(query) ||
+        plot.customerName?.toLowerCase().includes(query) ||
+        plot._id?.toLowerCase().includes(query)
+      )
+      if (!matchesSearch) return false
+    }
+    
+    // Status filter
+    if (filterStatus) {
+      if (filterStatus === 'sold_registered') {
+        return plot.status === 'sold' && plot.registryStatus === 'completed'
+      } else if (filterStatus === 'sold_not_registered') {
+        return plot.status === 'sold' && plot.registryStatus !== 'completed'
+      } else if (filterStatus === 'booked') {
+        return plot.status === 'booked'
+      } else if (filterStatus === 'available') {
+        return plot.status === 'available'
+      }
+    }
+    
+    return true
   })
 
   const paginatedPlots = filteredPlots.slice(
@@ -1498,6 +1524,18 @@ const PlotManagement = () => {
                       <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                         <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Advocate Code</TableCell>
                         <TableCell>{viewingPlot.advocateCode}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.status === 'sold' && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Registry Status</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={viewingPlot.registryStatus === 'completed' ? 'Registry Completed' : 'Registry Pending'} 
+                            color={viewingPlot.registryStatus === 'completed' ? 'success' : 'warning'}
+                            size="small"
+                          />
+                        </TableCell>
                       </TableRow>
                     )}
                     {viewingPlot.tahsil && (
@@ -2205,28 +2243,43 @@ const PlotManagement = () => {
                         )}
                       </Grid>
                       {newPlot.status === 'sold' && (
-                        <Grid item xs={12} sm={6}>
-                          <Button
-                            variant="outlined"
-                            component="label"
-                            fullWidth
-                            size="small"
-                            color="secondary"
-                          >
-                            Upload Registry Document (Optional)
-                            <input
-                              type="file"
-                              hidden
-                              accept="image/*,.pdf"
-                              onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
-                            />
-                          </Button>
-                          {newPlot.registryDocument && (
-                            <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
-                              ✓ {newPlot.registryDocument.name}
-                            </Typography>
-                          )}
-                        </Grid>
+                        <>
+                          <Grid item xs={12}>
+                            <FormControl component="fieldset">
+                              <FormLabel component="legend">Registry Status</FormLabel>
+                              <RadioGroup
+                                row
+                                value={newPlot.registryStatus}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, registryStatus: e.target.value }))}
+                              >
+                                <FormControlLabel value="pending" control={<Radio />} label="Registry Pending" />
+                                <FormControlLabel value="completed" control={<Radio />} label="Registry Completed" />
+                              </RadioGroup>
+                            </FormControl>
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              fullWidth
+                              size="small"
+                              color="secondary"
+                            >
+                              Upload Registry Document (Optional)
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*,.pdf"
+                                onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
+                              />
+                            </Button>
+                            {newPlot.registryDocument && (
+                              <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                                ✓ {newPlot.registryDocument.name}
+                              </Typography>
+                            )}
+                          </Grid>
+                        </>
                       )}
                     </Grid>
                   </Box>
@@ -2722,28 +2775,43 @@ const PlotManagement = () => {
                         )}
                       </Box>
                       {newPlot.status === 'sold' && (
-                        <Box>
-                          <Button
-                            variant="outlined"
-                            component="label"
-                            fullWidth
-                            size="small"
-                            color="secondary"
-                          >
-                            Upload Registry Document (Optional)
-                            <input
-                              type="file"
-                              hidden
-                              accept="image/*,.pdf"
-                              onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
-                            />
-                          </Button>
-                          {newPlot.registryDocument && (
-                            <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
-                              ✓ {newPlot.registryDocument.name}
-                            </Typography>
-                          )}
-                        </Box>
+                        <>
+                          <Box sx={{ mb: 2 }}>
+                            <FormControl component="fieldset">
+                              <FormLabel component="legend">Registry Status</FormLabel>
+                              <RadioGroup
+                                row
+                                value={newPlot.registryStatus}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, registryStatus: e.target.value }))}
+                              >
+                                <FormControlLabel value="pending" control={<Radio />} label="Registry Pending" />
+                                <FormControlLabel value="completed" control={<Radio />} label="Registry Completed" />
+                              </RadioGroup>
+                            </FormControl>
+                          </Box>
+                          <Box>
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              fullWidth
+                              size="small"
+                              color="secondary"
+                            >
+                              Upload Registry Document (Optional)
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*,.pdf"
+                                onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
+                              />
+                            </Button>
+                            {newPlot.registryDocument && (
+                              <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
+                                ✓ {newPlot.registryDocument.name}
+                              </Typography>
+                            )}
+                          </Box>
+                        </>
                       )}
                     </Box>
                   </Box>
@@ -2800,6 +2868,24 @@ const PlotManagement = () => {
                 {colony.name}
               </MenuItem>
             ))}
+          </TextField>
+
+          <TextField
+            select
+            size="small"
+            label="Filter by Status"
+            value={filterStatus}
+            onChange={(e) => {
+              setFilterStatus(e.target.value)
+              setPage(0)
+            }}
+            sx={{ minWidth: 220 }}
+          >
+            <MenuItem value="">All Status</MenuItem>
+            <MenuItem value="sold_registered">Sold & Registered</MenuItem>
+            <MenuItem value="sold_not_registered">Sold but Not Registered</MenuItem>
+            <MenuItem value="booked">Booked</MenuItem>
+            <MenuItem value="available">Available</MenuItem>
           </TextField>
 
           <Button variant="contained" startIcon={<Add />} onClick={openAddDialog}>

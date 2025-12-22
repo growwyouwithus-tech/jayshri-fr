@@ -185,11 +185,6 @@ const MainLayout = () => {
       dynamicItems.push({ text: 'Bookings', icon: <Receipt />, path: '/admin/bookings' })
     }
 
-    // Registry (check both registry_read and registries_read)
-    if (hasPermission('registry_read') || hasPermission('registries_read') || hasPermission('registry_create') || hasPermission('registries_create')) {
-      dynamicItems.push({ text: 'Registry', icon: <Description />, path: '/admin/registry' })
-    }
-
     // Commissions
     if (hasPermission('commissions_read') || hasPermission('commission_read')) {
       dynamicItems.push({ text: 'Commissions', icon: <TrendingUp />, path: '/admin/commissions' })

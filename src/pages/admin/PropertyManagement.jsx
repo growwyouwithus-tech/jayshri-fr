@@ -66,6 +66,14 @@ const PropertyManagement = () => {
   const [selectedPropertyPlots, setSelectedPropertyPlots] = useState(null)
   const [plotsDialogOpen, setPlotsDialogOpen] = useState(false)
   const [propertyStats, setPropertyStats] = useState({})
+  const [propertyActionModalOpen, setPropertyActionModalOpen] = useState(false)
+  const [selectedProperty, setSelectedProperty] = useState(null)
+  const [colonyDetailDialogOpen, setColonyDetailDialogOpen] = useState(false)
+  const [colonyDetailData, setColonyDetailData] = useState(null)
+  const [viewingPlot, setViewingPlot] = useState(null)
+  const [plotDetailDialogOpen, setPlotDetailDialogOpen] = useState(false)
+  const [colonyAccountDialogOpen, setColonyAccountDialogOpen] = useState(false)
+  const [colonyAccountData, setColonyAccountData] = useState(null)
   
   // Form stepper state
   const [activeStep, setActiveStep] = useState(0)
@@ -583,13 +591,136 @@ const PropertyManagement = () => {
   }
 
   const handleViewPlots = (property) => {
-    const stats = propertyStats[property._id]
+    setSelectedProperty(property)
+    setPropertyActionModalOpen(true)
+  }
+
+  const handleViewPlotsDetail = () => {
+    const stats = propertyStats[selectedProperty._id]
     setSelectedPropertyPlots({
-      property,
+      property: selectedProperty,
       plots: stats?.plots || [],
       stats
     })
+    setPropertyActionModalOpen(false)
     setPlotsDialogOpen(true)
+  }
+
+  const handleViewColonyDetail = async () => {
+    try {
+      const property = selectedProperty
+      const stats = propertyStats[property._id] || { plots: [] }
+      const totalPlots = stats.plots.length
+      const bookedPlots = stats.plots.filter(plot => plot.status === 'booked').length
+      const soldPlots = stats.plots.filter(plot => plot.status === 'sold').length
+      const availablePlots = stats.plots.filter(plot => plot.status === 'available').length
+      
+      const totalArea = property.totalLandAreaGaj || 0
+      const usedLand = calculateUsedLand(property)
+      const soldLandGaj = stats.totalSold / 9 || 0
+      const remainingArea = totalArea - usedLand - soldLandGaj
+      
+      const totalRoadArea = calculateTotalRoadAreaGaj(property)
+      const totalAmenityArea = calculateTotalAmenityAreaGaj(property)
+      
+      // Get colony details
+      const colony = property.colonyId
+      const khatoniHolders = colony?.khatoniHolders || []
+      
+      // Prepare data for dialog display
+      const detailData = {
+        propertyName: property.name || '-',
+        category: property.categories?.join(', ') || property.category || '-',
+        totalPlots,
+        bookedPlots,
+        soldPlots,
+        availablePlots,
+        totalArea: totalArea.toFixed(2),
+        selfUsedArea: usedLand.toFixed(2),
+        remainingArea: remainingArea.toFixed(2),
+        roads: property.roads || [],
+        totalRoadArea: totalRoadArea.toFixed(2),
+        amenities: property.parks || [],
+        totalAmenityArea: totalAmenityArea.toFixed(2),
+        khatoniHolders: khatoniHolders.map(holder => ({
+          name: holder.name || holder.fullName || holder.company || '-',
+          contact: holder.mobile || holder.phone || holder.contact || holder.email || '-'
+        }))
+      }
+      
+      setColonyDetailData(detailData)
+      setPropertyActionModalOpen(false)
+      setColonyDetailDialogOpen(true)
+    } catch (error) {
+      console.error('Failed to load colony detail:', error)
+      toast.error('Failed to load colony detail')
+    }
+  }
+
+  const handleViewColonyAccount = async () => {
+    try {
+      const property = selectedProperty
+      
+      // Fetch full plot details with payment information
+      const { data } = await axios.get(`/plots?propertyId=${property._id}&limit=1000`)
+      const plots = Array.isArray(data?.data?.plots) ? data.data.plots : Array.isArray(data?.data) ? data.data : []
+      
+      // Get colony details
+      const colony = property.colonyId
+      const khatoniHolders = colony?.khatoniHolders || []
+      
+      // Prepare account data with plot details
+      const accountData = {
+        propertyName: property.name || '-',
+        plots: plots.map(plot => {
+          // Calculate area in Gaj
+          const areaGaj = plot.area ? plot.area / 9 : 0
+          
+          // Asking Price (original price)
+          const askingPricePerGaj = plot.pricePerSqFt ? plot.pricePerSqFt * 9 : 0
+          const totalAskingPrice = plot.totalPrice || (plot.area && plot.pricePerSqFt ? plot.area * plot.pricePerSqFt : 0)
+          
+          // Final Price (sold price - can be different from asking price)
+          const finalPricePerGaj = plot.finalPrice ? plot.finalPrice : askingPricePerGaj
+          const totalFinalPrice = plot.finalPrice ? plot.finalPrice * areaGaj : totalAskingPrice
+          
+          // Payment calculations based on Final Price
+          const paidAmount = plot.paidAmount || 0
+          const remainingAmount = totalFinalPrice - paidAmount
+          
+          return {
+            plotNumber: plot.plotNumber || plot.plotNo,
+            ownerType: plot.ownerType || 'owner',
+            khatoniHolder: plot.ownerType === 'khatoniHolder' ? (plot.khatoniHolderId?.name || plot.khatoniHolderId?.fullName || 'N/A') : 'Owner',
+            status: plot.status,
+            registryStatus: plot.registryStatus || 'pending',
+            customerName: plot.customerName || '-',
+            areaGaj: areaGaj,
+            askingPricePerGaj: askingPricePerGaj,
+            totalAskingPrice: totalAskingPrice,
+            finalPricePerGaj: finalPricePerGaj,
+            totalFinalPrice: totalFinalPrice,
+            paidAmount: paidAmount,
+            remainingAmount: remainingAmount,
+            transactionDate: plot.transactionDate || '-',
+            modeOfPayment: plot.modeOfPayment || '-',
+            agentName: plot.agentName || '-',
+            advocateName: plot.advocateName || '-'
+          }
+        }),
+        khatoniHolders: khatoniHolders.map(holder => ({
+          name: holder.name || holder.fullName || holder.company || '-',
+          contact: holder.mobile || holder.phone || holder.contact || holder.email || '-'
+        }))
+      }
+      
+      setColonyAccountData(accountData)
+      setPropertyActionModalOpen(false)
+      setColonyAccountDialogOpen(true)
+    } catch (error) {
+      console.error('Failed to load colony account:', error)
+      toast.error('Failed to load colony account')
+    }
   }
 
   const handleAddPlotForProperty = (property) => {
@@ -1847,6 +1978,82 @@ const PropertyManagement = () => {
     </Box>
       )}
 
+      {/* Property Action Modal */}
+      <Dialog 
+        open={propertyActionModalOpen} 
+        onClose={() => setPropertyActionModalOpen(false)} 
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Select Action</Typography>
+            <IconButton onClick={() => setPropertyActionModalOpen(false)} size="small">
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              Property: <strong>{selectedProperty?.name}</strong>
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  onClick={handleViewPlotsDetail}
+                  sx={{ py: 2, justifyContent: 'flex-start', textAlign: 'left' }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                    <Typography variant="subtitle1" fontWeight={600}>View Plots Detail</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                      View all plots in this property
+                    </Typography>
+                  </Box>
+                </Button>
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="secondary"
+                  size="large"
+                  onClick={handleViewColonyDetail}
+                  sx={{ py: 2, justifyContent: 'flex-start', textAlign: 'left' }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                    <Typography variant="subtitle1" fontWeight={600}>View Colony Detail</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                      Export colony details to Excel
+                    </Typography>
+                  </Box>
+                </Button>
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="info"
+                  size="large"
+                  onClick={handleViewColonyAccount}
+                  sx={{ py: 2, justifyContent: 'flex-start', textAlign: 'left' }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                    <Typography variant="subtitle1" fontWeight={600}>View Colony Account</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                      Coming Soon
+                    </Typography>
+                  </Box>
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
       {/* Plots Dialog */}
       <Dialog open={plotsDialogOpen} onClose={() => setPlotsDialogOpen(false)} fullWidth maxWidth="lg">
         <DialogTitle>
@@ -1928,12 +2135,13 @@ const PropertyManagement = () => {
                       <TableCell><strong>Total Price</strong></TableCell>
                       {/* <TableCell><strong>Paid Amount</strong></TableCell> */}
                       <TableCell><strong>Status</strong></TableCell>
+                      <TableCell><strong>Actions</strong></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {selectedPropertyPlots.plots.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center">No plots found</TableCell>
+                        <TableCell colSpan={7} align="center">No plots found</TableCell>
                       </TableRow>
                     ) : (
                       selectedPropertyPlots.plots.map((plot) => (
@@ -1950,12 +2158,594 @@ const PropertyManagement = () => {
                               color={plot.status === 'sold' ? 'error' : plot.status === 'available' ? 'success' : 'warning'}
                             />
                           </TableCell>
+                          <TableCell>
+                            <IconButton 
+                              size="small" 
+                              color="primary"
+                              onClick={() => {
+                                setViewingPlot(plot)
+                                setPlotDetailDialogOpen(true)
+                              }}
+                            >
+                              <Visibility />
+                            </IconButton>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
                   </TableBody>
                 </Table>
               </TableContainer>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Colony Detail Dialog */}
+      <Dialog open={colonyDetailDialogOpen} onClose={() => setColonyDetailDialogOpen(false)} fullWidth maxWidth="lg">
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Colony Detail - {colonyDetailData?.propertyName}</Typography>
+            <IconButton onClick={() => setColonyDetailDialogOpen(false)} size="small">
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {colonyDetailData && (
+            <Box>
+              <Paper sx={{ p: 0, overflow: 'hidden' }}>
+                <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 200 }}>Field</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 300 }}>Value</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {/* Basic Information */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold' }}>
+                          BASIC INFORMATION
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Property Name</TableCell>
+                        <TableCell>{colonyDetailData.propertyName}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Category</TableCell>
+                        <TableCell>{colonyDetailData.category}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Total Plots</TableCell>
+                        <TableCell>{colonyDetailData.totalPlots}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Booked Plots</TableCell>
+                        <TableCell>{colonyDetailData.bookedPlots}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Sold Plots</TableCell>
+                        <TableCell>{colonyDetailData.soldPlots}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Available Plots</TableCell>
+                        <TableCell>{colonyDetailData.availablePlots}</TableCell>
+                      </TableRow>
+
+                      {/* Area Information */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold' }}>
+                          AREA INFORMATION
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Total Area (Gaj)</TableCell>
+                        <TableCell>{colonyDetailData.totalArea}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Self Used Area (Gaj)</TableCell>
+                        <TableCell>{colonyDetailData.selfUsedArea}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Remaining Area (Gaj)</TableCell>
+                        <TableCell>{colonyDetailData.remainingArea}</TableCell>
+                      </TableRow>
+
+                      {/* Roads Information */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#FF9800', color: 'white', fontWeight: 'bold' }}>
+                          ROADS INFORMATION
+                        </TableCell>
+                      </TableRow>
+                      {colonyDetailData.roads.length > 0 ? (
+                        <>
+                          {colonyDetailData.roads.map((road, index) => (
+                            <TableRow key={index} sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>
+                                {road.name} (Length: {road.lengthFt}ft, Width: {road.widthFt}ft)
+                              </TableCell>
+                              <TableCell>{((road.lengthFt * road.widthFt) / 9).toFixed(3)} Gaj</TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                            <TableCell sx={{ bgcolor: '#ffe0b2', fontWeight: 700 }}>Total Road Area</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>{colonyDetailData.totalRoadArea} Gaj</TableCell>
+                          </TableRow>
+                        </>
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2} align="center">No roads added</TableCell>
+                        </TableRow>
+                      )}
+
+                      {/* Amenities Information */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#9C27B0', color: 'white', fontWeight: 'bold' }}>
+                          AMENITIES INFORMATION
+                        </TableCell>
+                      </TableRow>
+                      {colonyDetailData.amenities.length > 0 ? (
+                        <>
+                          {colonyDetailData.amenities.map((amenity, index) => (
+                            <TableRow key={index} sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#f3e5f5', fontWeight: 600 }}>{amenity.name}</TableCell>
+                              <TableCell>{amenity.areaGaj} Gaj</TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                            <TableCell sx={{ bgcolor: '#e1bee7', fontWeight: 700 }}>Total Amenity Area</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>{colonyDetailData.totalAmenityArea} Gaj</TableCell>
+                          </TableRow>
+                        </>
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2} align="center">No amenities added</TableCell>
+                        </TableRow>
+                      )}
+
+                      {/* Khatoni Holders */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#F44336', color: 'white', fontWeight: 'bold' }}>
+                          KHATONI HOLDERS
+                        </TableCell>
+                      </TableRow>
+                      {colonyDetailData.khatoniHolders.length > 0 ? (
+                        colonyDetailData.khatoniHolders.map((holder, index) => (
+                          <TableRow key={index} sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                            <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>{holder.name}</TableCell>
+                            <TableCell>{holder.contact}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2} align="center">No khatoni holders added</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Plot Detail Dialog */}
+      <Dialog open={plotDetailDialogOpen} onClose={() => setPlotDetailDialogOpen(false)} fullWidth maxWidth="lg">
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Plot Details - {viewingPlot?.plotNumber || viewingPlot?.plotNo}</Typography>
+            <IconButton onClick={() => setPlotDetailDialogOpen(false)} size="small">
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {viewingPlot && (
+            <Box>
+              <Paper sx={{ p: 0, overflow: 'hidden' }}>
+                <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 200 }}>Field</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 300 }}>Value</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {/* Basic Information */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold' }}>
+                          BASIC INFORMATION
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Plot Number</TableCell>
+                        <TableCell>{viewingPlot.plotNumber || viewingPlot.plotNo}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Colony</TableCell>
+                        <TableCell>{viewingPlot.colonyId?.name || viewingPlot.colony?.name || 'N/A'}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Property</TableCell>
+                        <TableCell>{viewingPlot.propertyId?.name || 'N/A'}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Status</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={viewingPlot.status?.toUpperCase()} 
+                            color={viewingPlot.status === 'sold' ? 'error' : viewingPlot.status === 'available' ? 'success' : 'warning'}
+                            size="small" 
+                          />
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Plot Type</TableCell>
+                        <TableCell>{viewingPlot.plotType || 'Residential'}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Facing</TableCell>
+                        <TableCell>{viewingPlot.facing || 'N/A'}</TableCell>
+                      </TableRow>
+
+                      {/* Dimensions */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold' }}>
+                          DIMENSIONS
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Front Side</TableCell>
+                        <TableCell>{viewingPlot.sideMeasurements?.front || viewingPlot.dimensions?.frontage || viewingPlot.dimensions?.length || 'N/A'} ft</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Back Side</TableCell>
+                        <TableCell>{viewingPlot.sideMeasurements?.back || viewingPlot.dimensions?.length || 'N/A'} ft</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Left Side</TableCell>
+                        <TableCell>{viewingPlot.sideMeasurements?.left || viewingPlot.dimensions?.width || 'N/A'} ft</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Right Side</TableCell>
+                        <TableCell>{viewingPlot.sideMeasurements?.right || viewingPlot.dimensions?.width || 'N/A'} ft</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600 }}>Total Area</TableCell>
+                        <TableCell>
+                          <Typography variant="body1" fontWeight={700} color="success.main">
+                            {(viewingPlot.area / 9).toFixed(3)} Gaj ({viewingPlot.area?.toFixed(2)} sqft)
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Pricing */}
+                      <TableRow>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#FF9800', color: 'white', fontWeight: 'bold' }}>
+                          PRICING INFORMATION
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Price Per Gaj</TableCell>
+                        <TableCell>₹{((viewingPlot.pricePerSqFt || 0) * 9).toLocaleString('en-IN')}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Price Per Sqft</TableCell>
+                        <TableCell>₹{(viewingPlot.pricePerSqFt || 0).toLocaleString('en-IN')}</TableCell>
+                      </TableRow>
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Total Price</TableCell>
+                        <TableCell>
+                          <Typography variant="body1" fontWeight={700} color="primary.main">
+                            ₹{(viewingPlot.totalPrice || 0).toLocaleString('en-IN')}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Sale/Booking Details */}
+                      {(viewingPlot.status === 'booked' || viewingPlot.status === 'sold') && (
+                        <>
+                          <TableRow>
+                            <TableCell colSpan={2} sx={{ bgcolor: '#F44336', color: 'white', fontWeight: 'bold' }}>
+                              {viewingPlot.status === 'booked' ? 'BOOKING DETAILS' : 'SALE DETAILS'}
+                            </TableCell>
+                          </TableRow>
+                          {viewingPlot.customerName && (
+                            <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Customer Name</TableCell>
+                              <TableCell>{viewingPlot.customerName}</TableCell>
+                            </TableRow>
+                          )}
+                          {viewingPlot.customerNumber && (
+                            <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Customer Number</TableCell>
+                              <TableCell>{viewingPlot.customerNumber}</TableCell>
+                            </TableRow>
+                          )}
+                          {viewingPlot.customerShortAddress && (
+                            <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Customer Address</TableCell>
+                              <TableCell>{viewingPlot.customerShortAddress}</TableCell>
+                            </TableRow>
+                          )}
+                          {viewingPlot.agentName && (
+                            <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Agent Name</TableCell>
+                              <TableCell>{viewingPlot.agentName}</TableCell>
+                            </TableRow>
+                          )}
+                          {viewingPlot.agentCode && (
+                            <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Agent Code</TableCell>
+                              <TableCell>{viewingPlot.agentCode}</TableCell>
+                            </TableRow>
+                          )}
+                          {(viewingPlot.agentName || viewingPlot.agentCode) && (
+                            <>
+                              <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                                <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Commission Percentage</TableCell>
+                                <TableCell>
+                                  {viewingPlot.commissionPercentage != null && viewingPlot.commissionPercentage !== '' 
+                                    ? `${viewingPlot.commissionPercentage}%` 
+                                    : 'Not Set'}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                                <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Commission Amount</TableCell>
+                                <TableCell>
+                                  {viewingPlot.commissionAmount != null && viewingPlot.commissionAmount !== '' 
+                                    ? `₹${Number(viewingPlot.commissionAmount).toLocaleString('en-IN')}` 
+                                    : 'Not Set'}
+                                </TableCell>
+                              </TableRow>
+                            </>
+                          )}
+                          {viewingPlot.advocateName && (
+                            <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Advocate Name</TableCell>
+                              <TableCell>{viewingPlot.advocateName}</TableCell>
+                            </TableRow>
+                          )}
+                          {viewingPlot.advocateCode && (
+                            <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Advocate Code</TableCell>
+                              <TableCell>{viewingPlot.advocateCode}</TableCell>
+                            </TableRow>
+                          )}
+                          {viewingPlot.status === 'sold' && (
+                            <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                              <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Registry Status</TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={viewingPlot.registryStatus === 'completed' ? 'Registry Completed' : 'Registry Pending'} 
+                                  color={viewingPlot.registryStatus === 'completed' ? 'success' : 'warning'}
+                                  size="small"
+                                />
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Colony Account Dialog */}
+      <Dialog open={colonyAccountDialogOpen} onClose={() => setColonyAccountDialogOpen(false)} fullWidth maxWidth="xl">
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Colony Account - {colonyAccountData?.propertyName}</Typography>
+            <IconButton onClick={() => setColonyAccountDialogOpen(false)} size="small">
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {colonyAccountData && (
+            <Box>
+              <Paper sx={{ p: 0, overflow: 'hidden' }}>
+                <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 100 }}>Plot No</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Ownership Type</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Khatoni Holder</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 120 }}>Status</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Registry Status</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Customer Name</TableCell>
+                        <TableCell sx={{ bgcolor: '#FF9800', color: 'white', fontWeight: 'bold', minWidth: 140 }}>Asking Price/Gaj</TableCell>
+                        <TableCell sx={{ bgcolor: '#FF9800', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Total Asking Price</TableCell>
+                        <TableCell sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold', minWidth: 140 }}>Final Price/Gaj</TableCell>
+                        <TableCell sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Total Final Price</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Paid Amount</TableCell>
+                        <TableCell sx={{ bgcolor: '#F44336', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Remaining Payment</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Transaction Date</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Payment Mode</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Agent Name</TableCell>
+                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Advocate Name</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {colonyAccountData.plots.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={16} align="center">No plots found</TableCell>
+                        </TableRow>
+                      ) : (
+                        colonyAccountData.plots.map((plot, index) => (
+                          <TableRow 
+                            key={index} 
+                            sx={{ 
+                              '&:hover': { bgcolor: '#f5f5f5' },
+                              bgcolor: plot.ownerType === 'khatoniHolder' ? '#fff3e0' : 'inherit'
+                            }}
+                          >
+                            <TableCell sx={{ fontWeight: 600 }}>{plot.plotNumber}</TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={plot.ownerType === 'khatoniHolder' ? 'Khatoni Holder' : 'Owner'} 
+                                size="small"
+                                color={plot.ownerType === 'khatoniHolder' ? 'warning' : 'default'}
+                              />
+                            </TableCell>
+                            <TableCell>{plot.khatoniHolder}</TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={plot.status?.toUpperCase()} 
+                                size="small"
+                                color={
+                                  plot.status === 'sold' ? 'error' : 
+                                  plot.status === 'booked' ? 'warning' : 
+                                  'success'
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {plot.status === 'sold' ? (
+                                <Chip 
+                                  label={plot.registryStatus === 'completed' ? 'Completed' : 'Pending'} 
+                                  size="small"
+                                  color={plot.registryStatus === 'completed' ? 'success' : 'warning'}
+                                />
+                              ) : (
+                                '-'
+                              )}
+                            </TableCell>
+                            <TableCell>{plot.customerName}</TableCell>
+                            <TableCell sx={{ bgcolor: '#fff3e0' }}>
+                              <Typography variant="body2" fontWeight={600}>
+                                ₹{plot.askingPricePerGaj.toLocaleString('en-IN')}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ bgcolor: '#fff3e0' }}>
+                              <Typography variant="body2" fontWeight={600}>
+                                ₹{plot.totalAskingPrice.toLocaleString('en-IN')}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ bgcolor: '#e3f2fd' }}>
+                              <Typography variant="body2" fontWeight={600} color="primary.main">
+                                ₹{plot.finalPricePerGaj.toLocaleString('en-IN')}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ bgcolor: '#e3f2fd' }}>
+                              <Typography variant="body2" fontWeight={700} color="primary.main">
+                                ₹{plot.totalFinalPrice.toLocaleString('en-IN')}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" color="success.main" fontWeight={600}>
+                                ₹{plot.paidAmount.toLocaleString('en-IN')}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ bgcolor: '#ffebee' }}>
+                              <Typography 
+                                variant="body2" 
+                                color={plot.remainingAmount > 0 ? 'error.main' : 'success.main'}
+                                fontWeight={700}
+                              >
+                                ₹{plot.remainingAmount.toLocaleString('en-IN')}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              {plot.transactionDate !== '-' 
+                                ? new Date(plot.transactionDate).toLocaleDateString('en-IN')
+                                : '-'
+                              }
+                            </TableCell>
+                            <TableCell>{plot.modeOfPayment}</TableCell>
+                            <TableCell>{plot.agentName}</TableCell>
+                            <TableCell>{plot.advocateName}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+
+              {/* Summary Section */}
+              <Box sx={{ mt: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Summary</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Total Plots</Typography>
+                    <Typography variant="h6" fontWeight={700}>{colonyAccountData.plots.length}</Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Owner Plots</Typography>
+                    <Typography variant="h6" fontWeight={700} color="primary.main">
+                      {colonyAccountData.plots.filter(p => p.ownerType === 'owner').length}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Khatoni Holder Plots</Typography>
+                    <Typography variant="h6" fontWeight={700} color="warning.main">
+                      {colonyAccountData.plots.filter(p => p.ownerType === 'khatoniHolder').length}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={3}>
+                    <Typography variant="body2" color="text.secondary">Registry Completed</Typography>
+                    <Typography variant="h6" fontWeight={700} color="success.main">
+                      {colonyAccountData.plots.filter(p => p.registryStatus === 'completed').length}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography variant="body2" color="text.secondary">Total Asking Price</Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: '#FF9800' }}>
+                      ₹{colonyAccountData.plots.reduce((sum, p) => sum + p.totalAskingPrice, 0).toLocaleString('en-IN')}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography variant="body2" color="text.secondary">Total Final Price</Typography>
+                    <Typography variant="h6" fontWeight={700} color="primary.main">
+                      ₹{colonyAccountData.plots.reduce((sum, p) => sum + p.totalFinalPrice, 0).toLocaleString('en-IN')}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography variant="body2" color="text.secondary">Total Paid</Typography>
+                    <Typography variant="h6" fontWeight={700} color="success.main">
+                      ₹{colonyAccountData.plots.reduce((sum, p) => sum + p.paidAmount, 0).toLocaleString('en-IN')}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ p: 2, bgcolor: '#ffebee', borderRadius: 1, border: '2px solid #f44336' }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>Total Remaining Payment</Typography>
+                      <Typography variant="h5" fontWeight={700} color="error.main">
+                        ₹{colonyAccountData.plots.reduce((sum, p) => sum + p.remainingAmount, 0).toLocaleString('en-IN')}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Khatoni Holders List */}
+              {colonyAccountData.khatoniHolders.length > 0 && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" gutterBottom>Khatoni Holders</Typography>
+                  <Paper sx={{ p: 2 }}>
+                    <Grid container spacing={2}>
+                      {colonyAccountData.khatoniHolders.map((holder, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={index}>
+                          <Box sx={{ p: 2, bgcolor: '#fff3e0', borderRadius: 1 }}>
+                            <Typography variant="body1" fontWeight={600}>{holder.name}</Typography>
+                            <Typography variant="body2" color="text.secondary">{holder.contact}</Typography>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Paper>
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>
