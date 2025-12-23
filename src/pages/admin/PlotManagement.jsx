@@ -1274,11 +1274,11 @@ const PlotManagement = () => {
         
         <Paper sx={{ p: 0, overflow: 'hidden' }}>
           <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
-            <Table stickyHeader size="small" sx={{ '& td': { borderRight: '1px solid #e0e0e0' }, '& th': { borderRight: '1px solid #e0e0e0' } }}>
+            <Table stickyHeader size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 200 }}>Field</TableCell>
-                  <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 300 }}>Value</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 200, border: '1px solid #000' }}>Field</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 300, border: '1px solid #000' }}>Value</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -2895,20 +2895,20 @@ const PlotManagement = () => {
       </Box>
 
       <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-        <Table stickyHeader>
+        <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Plot No</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Colony</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Khatoni Holders / Owners</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Area (Gaj)</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Asking Price/Gaj</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Price/Gaj</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Price</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Remaining Payment</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Facing</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Actions</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot No</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Colony</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Khatoni Holders / Owners</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Area (Gaj)</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Asking Price/Gaj</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sold Price/Gaj</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Price</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Remaining Payment</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Facing</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Status</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

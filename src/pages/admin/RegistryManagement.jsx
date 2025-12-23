@@ -356,22 +356,22 @@ const RegistryManagement = () => {
       </Box>
 
       <TableContainer component={Paper}>
-        <Table size="small">
+        <Table size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell><strong>PLOT NO</strong></TableCell>
-              <TableCell><strong>Dimension</strong></TableCell>
-              <TableCell><strong>Sq Yard</strong></TableCell>
-              <TableCell><strong>Santosh/jain/umez/other</strong></TableCell>
-              <TableCell><strong>Buyer Name/PARTY NAME</strong></TableCell>
-              <TableCell><strong>PARTY Mobile NO</strong></TableCell>
-              <TableCell><strong>Reg. Time</strong></TableCell>
-              <TableCell><strong>PARTY Address</strong></TableCell>
-              <TableCell><strong>Plot Booked Name</strong></TableCell>
-              <TableCell><strong>TAHSIL ADV Name</strong></TableCell>
-              <TableCell><strong>Lakhmi Sharma</strong></TableCell>
-              <TableCell><strong>Status</strong></TableCell>
-              <TableCell align="right"><strong>Actions</strong></TableCell>
+            <TableRow>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>PLOT NO</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Dimension</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sq Yard</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Santosh/jain/umez/other</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Buyer Name/PARTY NAME</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>PARTY Mobile NO</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Reg. Time</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>PARTY Address</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot Booked Name</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>TAHSIL ADV Name</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Lakhmi Sharma</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Status</TableCell>
+              <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

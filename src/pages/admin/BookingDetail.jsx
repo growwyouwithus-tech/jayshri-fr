@@ -277,15 +277,15 @@ const BookingDetail = () => {
         </Typography>
 
         <TableContainer>
-          <Table>
+          <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
             <TableHead>
               <TableRow>
-                <TableCell><strong>Receipt No</strong></TableCell>
-                <TableCell><strong>Amount</strong></TableCell>
-                <TableCell><strong>Mode</strong></TableCell>
-                <TableCell><strong>Date</strong></TableCell>
-                <TableCell><strong>File</strong></TableCell>
-                <TableCell align="right"><strong>Action</strong></TableCell>
+                <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Receipt No</TableCell>
+                <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Amount</TableCell>
+                <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Mode</TableCell>
+                <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Date</TableCell>
+                <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>File</TableCell>
+                <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

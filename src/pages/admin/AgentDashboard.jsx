@@ -243,15 +243,15 @@ const AgentDashboard = () => {
             </Box>
           ) : (
             <TableContainer component={Paper} variant="outlined">
-              <Table>
+              <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Customer</strong></TableCell>
-                    <TableCell><strong>Contact</strong></TableCell>
-                    <TableCell><strong>Joined Date</strong></TableCell>
-                    <TableCell><strong>Bookings</strong></TableCell>
-                    <TableCell><strong>Status</strong></TableCell>
-                    <TableCell align="center"><strong>Actions</strong></TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Customer</TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Contact</TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Joined Date</TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Bookings</TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Status</TableCell>
+                    <TableCell align="center" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

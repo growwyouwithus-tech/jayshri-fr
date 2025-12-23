@@ -161,13 +161,13 @@ const AreasManagement = () => {
       </Box>
 
       <TableContainer component={Paper}>
-        <Table>
+        <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
-              <TableCell><strong>SL</strong></TableCell>
-              <TableCell><strong>Area</strong></TableCell>
-              <TableCell><strong>City</strong></TableCell>
-              <TableCell align="right"><strong>Action</strong></TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>SL</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Area</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>City</TableCell>
+              <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

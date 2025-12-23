@@ -543,23 +543,24 @@ return (
       </Menu>
 
       <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-        <Table stickyHeader>
+        <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox" sx={{ bgcolor: '#f5f5f5' }}>
+              <TableCell padding="checkbox" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', border: '1px solid #000' }}>
                 <Checkbox
                   indeterminate={selectedStaff.length > 0 && selectedStaff.length < filteredStaff.length}
                   checked={filteredStaff.length > 0 && selectedStaff.length === filteredStaff.length}
                   onChange={handleSelectAll}
+                  sx={{ color: 'white', '&.Mui-checked': { color: 'white' }, '&.MuiCheckbox-indeterminate': { color: 'white' } }}
                 />
               </TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>SL.</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Name</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Code</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Phone</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Email</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Role</TableCell>
-              <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Action</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>SL.</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Name</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Code</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Phone</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Email</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Role</TableCell>
+              <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

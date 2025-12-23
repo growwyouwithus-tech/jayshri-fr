@@ -851,17 +851,17 @@ const ColonyManagement = () => {
       </Box>
 
       <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-        <Table stickyHeader>
+        <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Colony</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Land (Gaj)</TableCell>
-              <TableCell sx={{ bgcolor: '#e3f2fd', fontWeight: 'bold', color: '#1976d2' }}>Road Area (Gaj)</TableCell>
-              <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 'bold', color: '#2e7d32' }}>Park/Temple(Gaj)</TableCell>
-              <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 'bold', color: '#f57c00' }}>Used Land (Gaj)</TableCell>
-              <TableCell sx={{ bgcolor: '#f3e5f5', fontWeight: 'bold', color: '#7b1fa2' }}>Total Plots</TableCell>
-              <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Remaining Land(Gaj)</TableCell>
-              <TableCell align="right" sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Action</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Colony</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Land (Gaj)</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Road Area(Gaj)</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Park/Tample(Gaj)</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Used Land (Gaj)</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Plots</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Remaining Land(Gaj)</TableCell>
+              <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -875,7 +875,7 @@ const ColonyManagement = () => {
               colonies.map((colony) => (
                 <TableRow key={colony._id}>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={600}>{colony.name}</Typography>
+                    <Typography variant="body2" fontWeight={600} fontSize={18}>{colony.name}</Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
                       {colony.address || colony.location?.address || '-'}
                     </Typography>

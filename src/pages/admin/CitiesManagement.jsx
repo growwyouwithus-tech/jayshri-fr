@@ -267,21 +267,21 @@ const CitiesManagement = () => {
       </Box>
 
       <TableContainer component={Paper}>
-        <Table>
+        <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
-              <TableCell><strong>SL</strong></TableCell>
-              <TableCell><strong>City Name</strong></TableCell>
-              <TableCell><strong>State</strong></TableCell>
-              <TableCell><strong>Areas</strong></TableCell>
-              <TableCell><strong>Priority</strong></TableCell>
-              <TableCell align="right"><strong>Action</strong></TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>SL</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>City Name</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>State</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Areas</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Priority</TableCell>
+              <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredCities.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={6} align="center">
                   No cities found. Click "Add City" to create one.
                 </TableCell>
               </TableRow>
@@ -413,12 +413,12 @@ const CitiesManagement = () => {
         </DialogTitle>
         <DialogContent>
           <TableContainer component={Paper} sx={{ mt: 2 }}>
-            <Table>
+            <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell><strong>SL</strong></TableCell>
-                  <TableCell><strong>Area Name</strong></TableCell>
-                  <TableCell align="right"><strong>Action</strong></TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>SL</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Area Name</TableCell>
+                  <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

@@ -216,7 +216,7 @@ const PropertyManagement = () => {
   const fetchProperties = async () => {
     try {
       setPropertiesLoading(true)
-      const { data } = await axios.get('/properties')
+      const { data } = await axios.get('/properties?populate=colonyId')
       const list = Array.isArray(data?.data?.properties)
         ? data.data.properties
         : Array.isArray(data?.data)
@@ -623,9 +623,21 @@ const PropertyManagement = () => {
       const totalRoadArea = calculateTotalRoadAreaGaj(property)
       const totalAmenityArea = calculateTotalAmenityAreaGaj(property)
       
-      // Get colony details
-      const colony = property.colonyId
-      const khatoniHolders = colony?.khatoniHolders || []
+      // Fetch full colony details from API
+      let khatoniHolders = []
+      const colonyId = property.colonyId?._id || property.colonyId
+      if (colonyId) {
+        try {
+          const { data } = await axios.get(`/colonies/${colonyId}`)
+          // API returns { success: true, data: { colony: {...} } }
+          const colony = data?.data?.colony || data?.data || data
+          console.log('🔍 Colony Data:', colony)
+          console.log('🔍 Khatoni Holders:', colony?.khatoniHolders)
+          khatoniHolders = colony?.khatoniHolders || []
+        } catch (error) {
+          console.error('Failed to fetch colony details:', error)
+        }
+      }
       
       // Prepare data for dialog display
       const detailData = {
@@ -882,10 +894,13 @@ const PropertyManagement = () => {
               error={!!errors.colonyId}
               helperText={errors.colonyId}
               required
+              InputProps={{
+                sx: { fontSize: 18, fontWeight: 'bold' }
+              }}
             >
-              <MenuItem value="">-- Select Colony --</MenuItem>
+              <MenuItem  value="">-- Select Colony --</MenuItem>
               {colonies.map((colony) => (
-                <MenuItem  key={colony._id} value={colony._id}>
+                <MenuItem key={colony._id} value={colony._id} sx={{ fontSize: 18, fontWeight: 'bold' }}>
                   {colony.name}
                 </MenuItem>
               ))}
@@ -1718,21 +1733,21 @@ const PropertyManagement = () => {
           </Box>
         ) : (
           <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-            <Table stickyHeader>
+            <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Property Name</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Category</TableCell>
-                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Land(Gaj)</TableCell> */}
-                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Roads Areas(Gaj)</TableCell> */}
-                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Amenity Areas(Gaj)</TableCell> */}
-                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Used Land(Gaj)</TableCell> */}
-                  {/* <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Land(Gaj)</TableCell> */}
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Total Plots</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Booked Plots</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Sold Plots</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Available Plots</TableCell>
-                  <TableCell sx={{ bgcolor: '#f5f5f5', fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Property Name</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Category</TableCell>
+                  {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Land(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Roads Areas(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Amenity Areas(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Used Land(Gaj)</TableCell> */}
+                  {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sold Land(Gaj)</TableCell> */}
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Plots</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Booked Plots</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sold Plots</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Available Plots</TableCell>
+                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1775,8 +1790,8 @@ const PropertyManagement = () => {
                         sx={{ cursor: 'pointer' }}
                         onClick={() => handleViewPlots(property)}
                       >
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={600}>{property.name}</Typography>
+                        <TableCell sx={{ border: '1px solid #000' }}>
+                          <Typography variant="body2" fontWeight={700}><strong>{property.name}</strong></Typography>
                           <Typography variant="caption" color="text.secondary">
                             {/* {property.categories && property.categories.length > 0 
                               ? property.categories.join(', ') 
@@ -2059,7 +2074,7 @@ const PropertyManagement = () => {
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
-              <Typography variant="h6">Plots - {selectedPropertyPlots?.property?.name}</Typography>
+              <Typography variant="h6">Plots - <strong>{selectedPropertyPlots?.property?.name}</strong></Typography>
               <Typography variant="caption" color="text.secondary">
                 Total: {selectedPropertyPlots?.plots?.length || 0} plots
               </Typography>
@@ -2126,16 +2141,16 @@ const PropertyManagement = () => {
               </Box>
 
               <TableContainer component={Paper}>
-                <Table size="small">
+                <Table size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                      <TableCell><strong>Plot No</strong></TableCell>
-                      <TableCell><strong>Area (Gaj)</strong></TableCell>
-                      <TableCell><strong>Asking Price/Gaj</strong></TableCell>
-                      <TableCell><strong>Total Price</strong></TableCell>
-                      {/* <TableCell><strong>Paid Amount</strong></TableCell> */}
-                      <TableCell><strong>Status</strong></TableCell>
-                      <TableCell><strong>Actions</strong></TableCell>
+                    <TableRow>
+                      <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot No</TableCell>
+                      <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Area (Gaj)</TableCell>
+                      <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Asking Price/Gaj</TableCell>
+                      <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Price</TableCell>
+                      {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Paid Amount</TableCell> */}
+                      <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Status</TableCell>
+                      <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2162,9 +2177,21 @@ const PropertyManagement = () => {
                             <IconButton 
                               size="small" 
                               color="primary"
-                              onClick={() => {
-                                setViewingPlot(plot)
-                                setPlotDetailDialogOpen(true)
+                              onClick={async () => {
+                                try {
+                                  const { data } = await axios.get(`/plots/${plot._id}`)
+                                  console.log('🔍 Plot API Response:', data)
+                                  const fullPlot = data?.data?.plot || data?.data || data
+                                  console.log('🔍 Full Plot Data:', fullPlot)
+                                  console.log('🔍 Colony:', fullPlot?.colony)
+                                  console.log('🔍 Property:', fullPlot?.propertyId)
+                                  setViewingPlot(fullPlot)
+                                  setPlotDetailDialogOpen(true)
+                                } catch (error) {
+                                  console.error('Failed to fetch plot details:', error)
+                                  setViewingPlot(plot)
+                                  setPlotDetailDialogOpen(true)
+                                }
                               }}
                             >
                               <Visibility />
@@ -2185,7 +2212,7 @@ const PropertyManagement = () => {
       <Dialog open={colonyDetailDialogOpen} onClose={() => setColonyDetailDialogOpen(false)} fullWidth maxWidth="lg">
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Colony Detail - {colonyDetailData?.propertyName}</Typography>
+            <Typography variant="h6">Colony Detail - <strong>{colonyDetailData?.propertyName}</strong></Typography>
             <IconButton onClick={() => setColonyDetailDialogOpen(false)} size="small">
               <Close />
             </IconButton>
@@ -2196,17 +2223,17 @@ const PropertyManagement = () => {
             <Box>
               <Paper sx={{ p: 0, overflow: 'hidden' }}>
                 <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
-                  <Table stickyHeader size="small">
+                  <Table stickyHeader size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 200 }}>Field</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 300 }}>Value</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 200, border: '1px solid #000' }}>Field</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 300, border: '1px solid #000' }}>Value</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {/* Basic Information */}
                       <TableRow>
-                        <TableCell colSpan={2} sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold' }}>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>
                           BASIC INFORMATION
                         </TableCell>
                       </TableRow>
@@ -2348,17 +2375,17 @@ const PropertyManagement = () => {
             <Box>
               <Paper sx={{ p: 0, overflow: 'hidden' }}>
                 <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
-                  <Table stickyHeader size="small">
+                  <Table stickyHeader size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 200 }}>Field</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 300 }}>Value</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 200, border: '1px solid #000' }}>Field</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 300, border: '1px solid #000' }}>Value</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {/* Basic Information */}
                       <TableRow>
-                        <TableCell colSpan={2} sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold' }}>
+                        <TableCell colSpan={2} sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>
                           BASIC INFORMATION
                         </TableCell>
                       </TableRow>
@@ -2544,7 +2571,7 @@ const PropertyManagement = () => {
       <Dialog open={colonyAccountDialogOpen} onClose={() => setColonyAccountDialogOpen(false)} fullWidth maxWidth="xl">
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Colony Account - {colonyAccountData?.propertyName}</Typography>
+            <Typography variant="h6">Colony Account - <strong>{colonyAccountData?.propertyName}</strong></Typography>
             <IconButton onClick={() => setColonyAccountDialogOpen(false)} size="small">
               <Close />
             </IconButton>
@@ -2555,25 +2582,25 @@ const PropertyManagement = () => {
             <Box>
               <Paper sx={{ p: 0, overflow: 'hidden' }}>
                 <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
-                  <Table stickyHeader size="small">
+                  <Table stickyHeader size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 100 }}>Plot No</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Ownership Type</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Khatoni Holder</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 120 }}>Status</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Registry Status</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Customer Name</TableCell>
-                        <TableCell sx={{ bgcolor: '#FF9800', color: 'white', fontWeight: 'bold', minWidth: 140 }}>Asking Price/Gaj</TableCell>
-                        <TableCell sx={{ bgcolor: '#FF9800', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Total Asking Price</TableCell>
-                        <TableCell sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold', minWidth: 140 }}>Final Price/Gaj</TableCell>
-                        <TableCell sx={{ bgcolor: '#2196F3', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Total Final Price</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Paid Amount</TableCell>
-                        <TableCell sx={{ bgcolor: '#F44336', color: 'white', fontWeight: 'bold', minWidth: 150 }}>Remaining Payment</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Transaction Date</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Payment Mode</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Agent Name</TableCell>
-                        <TableCell sx={{ bgcolor: '#4CAF50', color: 'white', fontWeight: 'bold', minWidth: 130 }}>Advocate Name</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 100, border: '1px solid #000' }}>Plot No</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Ownership Type</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Khatoni Holder</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 120, border: '1px solid #000' }}>Status</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Registry Status</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Customer Name</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #FF9800 0%, #f57c00 100%)', color: 'white', fontWeight: 'bold', minWidth: 140, border: '1px solid #000' }}>Asking Price/Gaj</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #FF9800 0%, #f57c00 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Total Asking Price</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)', color: 'white', fontWeight: 'bold', minWidth: 140, border: '1px solid #000' }}>Final Price/Gaj</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Total Final Price</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Paid Amount</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #F44336 0%, #d32f2f 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Remaining Payment</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Transaction Date</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Payment Mode</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Agent Name</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Advocate Name</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
