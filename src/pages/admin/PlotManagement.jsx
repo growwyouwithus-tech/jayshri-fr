@@ -166,10 +166,12 @@ const PlotManagement = () => {
     finalPrice: '',
     agentName: '',
     agentCode: '',
+    agentPhone: '',
     commissionPercentage: '',
     commissionAmount: '',
     advocateName: '',
     advocateCode: '',
+    advocatePhone: '',
     tahsil: '',
     modeOfPayment: '',
     transactionDate: '',
@@ -354,6 +356,9 @@ const PlotManagement = () => {
       if (newPlot.agentCode) {
         payload.agentCode = newPlot.agentCode
       }
+      if (newPlot.agentPhone) {
+        payload.agentPhone = newPlot.agentPhone
+      }
       if (newPlot.commissionPercentage) {
         payload.commissionPercentage = Number(newPlot.commissionPercentage)
       }
@@ -365,6 +370,9 @@ const PlotManagement = () => {
       }
       if (newPlot.advocateCode) {
         payload.advocateCode = newPlot.advocateCode
+      }
+      if (newPlot.advocatePhone) {
+        payload.advocatePhone = newPlot.advocatePhone
       }
       if (newPlot.tahsil) {
         payload.tahsil = newPlot.tahsil
@@ -1294,7 +1302,7 @@ const PlotManagement = () => {
                 </TableRow>
                 <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                   <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Colony</TableCell>
-                  <TableCell>{viewingPlot.colonyId?.name || 'N/A'}</TableCell>
+                  <TableCell >{viewingPlot.colonyId?.name || 'N/A'}</TableCell>
                 </TableRow>
                 <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                   <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Property</TableCell>
@@ -1494,6 +1502,12 @@ const PlotManagement = () => {
                         <TableCell>{viewingPlot.agentCode}</TableCell>
                       </TableRow>
                     )}
+                    {viewingPlot.agentPhone && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Agent Phone</TableCell>
+                        <TableCell>{viewingPlot.agentPhone}</TableCell>
+                      </TableRow>
+                    )}
                     {(viewingPlot.agentName || viewingPlot.agentCode) && (
                       <>
                         <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
@@ -1524,6 +1538,12 @@ const PlotManagement = () => {
                       <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                         <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Advocate Code</TableCell>
                         <TableCell>{viewingPlot.advocateCode}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.advocatePhone && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Advocate Phone</TableCell>
+                        <TableCell>{viewingPlot.advocatePhone}</TableCell>
                       </TableRow>
                     )}
                     {viewingPlot.status === 'sold' && (
@@ -2070,43 +2090,51 @@ const PlotManagement = () => {
                           ))}
                         </TextField>
                       </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Autocomplete
-                          freeSolo
-                          options={agents.map(a => a.name)}
-                          value={newPlot.agentName}
-                          onInputChange={(event, newValue) => {
-                            handleAgentNameChange(newValue || '')
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              size="small"
-                              label="Agent Name (Optional)"
-                              placeholder="Type to search..."
-                            />
-                          )}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Autocomplete
-                          freeSolo
-                          options={agents.map(a => a.userCode).filter(Boolean)}
-                          value={newPlot.agentCode}
-                          onInputChange={(event, newValue) => {
-                            handleAgentCodeChange(newValue || '')
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              size="small"
-                              label="Agent Code (Optional)"
-                              placeholder="Type to search..."
-                            />
-                          )}
-                        />
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <Autocomplete
+                            freeSolo
+                            options={agents.map(a => a.name)}
+                            value={newPlot.agentName}
+                            onInputChange={(event, newValue) => {
+                              handleAgentNameChange(newValue || '')
+                            }}
+                            sx={{ flex: 1 }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                label="Agent Name (Optional)"
+                                placeholder="Type to search..."
+                              />
+                            )}
+                          />
+                          <Autocomplete
+                            freeSolo
+                            options={agents.map(a => a.userCode).filter(Boolean)}
+                            value={newPlot.agentCode}
+                            onInputChange={(event, newValue) => {
+                              handleAgentCodeChange(newValue || '')
+                            }}
+                            sx={{ flex: 1 }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                label="Agent Code (Optional)"
+                                placeholder="Type to search..."
+                              />
+                            )}
+                          />
+                          <TextField
+                            size="small"
+                            label="Agent Phone (Optional)"
+                            value={newPlot.agentPhone}
+                            onChange={(e) => setNewPlot({ ...newPlot, agentPhone: e.target.value })}
+                            placeholder="Enter agent phone number"
+                            sx={{ flex: 1 }}
+                          />
+                        </Box>
                       </Grid>
                       {(newPlot.agentName || newPlot.agentCode) && (
                         <>
@@ -2140,43 +2168,51 @@ const PlotManagement = () => {
                           </Grid>
                         </>
                       )}
-                      <Grid item xs={12} sm={6}>
-                        <Autocomplete
-                          freeSolo
-                          options={advocates.map(a => a.name)}
-                          value={newPlot.advocateName}
-                          onInputChange={(event, newValue) => {
-                            handleAdvocateNameChange(newValue || '')
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              size="small"
-                              label="Advocate Name (Optional)"
-                              placeholder="Type to search..."
-                            />
-                          )}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Autocomplete
-                          freeSolo
-                          options={advocates.map(a => a.userCode).filter(Boolean)}
-                          value={newPlot.advocateCode}
-                          onInputChange={(event, newValue) => {
-                            handleAdvocateCodeChange(newValue || '')
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              size="small"
-                              label="Advocate Code (Optional)"
-                              placeholder="Type to search..."
-                            />
-                          )}
-                        />
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <Autocomplete
+                            freeSolo
+                            options={advocates.map(a => a.name)}
+                            value={newPlot.advocateName}
+                            onInputChange={(event, newValue) => {
+                              handleAdvocateNameChange(newValue || '')
+                            }}
+                            sx={{ flex: 1 }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                label="Advocate Name (Optional)"
+                                placeholder="Type to search..."
+                              />
+                            )}
+                          />
+                          <Autocomplete
+                            freeSolo
+                            options={advocates.map(a => a.userCode).filter(Boolean)}
+                            value={newPlot.advocateCode}
+                            onInputChange={(event, newValue) => {
+                              handleAdvocateCodeChange(newValue || '')
+                            }}
+                            sx={{ flex: 1 }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                label="Advocate Code (Optional)"
+                                placeholder="Type to search..."
+                              />
+                            )}
+                          />
+                          <TextField
+                            size="small"
+                            label="Advocate Phone (Optional)"
+                            value={newPlot.advocatePhone}
+                            onChange={(e) => setNewPlot({ ...newPlot, advocatePhone: e.target.value })}
+                            placeholder="Enter advocate phone number"
+                            sx={{ flex: 1 }}
+                          />
+                        </Box>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField
@@ -2645,6 +2681,14 @@ const PlotManagement = () => {
                             />
                           )}
                         />
+                        <TextField
+                          size="small"
+                          label="Agent Phone (Optional)"
+                          value={newPlot.agentPhone}
+                          onChange={(e) => setNewPlot({ ...newPlot, agentPhone: e.target.value })}
+                          placeholder="Enter agent phone number"
+                          sx={{ flex: 1 }}
+                        />
                       </Box>
                       {(newPlot.agentName || newPlot.agentCode) && (
                         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -2708,6 +2752,14 @@ const PlotManagement = () => {
                               placeholder="Type to search..."
                             />
                           )}
+                        />
+                        <TextField
+                          size="small"
+                          label="Advocate Phone (Optional)"
+                          value={newPlot.advocatePhone}
+                          onChange={(e) => setNewPlot({ ...newPlot, advocatePhone: e.target.value })}
+                          placeholder="Enter advocate phone number"
+                          sx={{ flex: 1 }}
                         />
                       </Box>
                       <TextField

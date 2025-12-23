@@ -186,9 +186,9 @@ const MainLayout = () => {
     }
 
     // Commissions
-    if (hasPermission('commissions_read') || hasPermission('commission_read')) {
-      dynamicItems.push({ text: 'Commissions', icon: <TrendingUp />, path: '/admin/commissions' })
-    }
+    // if (hasPermission('commissions_read') || hasPermission('commission_read')) {
+    //   dynamicItems.push({ text: 'Commissions', icon: <TrendingUp />, path: '/admin/commissions' })
+    // }
 
     // Users (check both user_read and users_read)
     if (hasPermission('user_read') || hasPermission('users_read')) {
