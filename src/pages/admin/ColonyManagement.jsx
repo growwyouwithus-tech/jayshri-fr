@@ -850,7 +850,7 @@ const ColonyManagement = () => {
         </Button>
       </Box>
 
-      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
         <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
@@ -875,7 +875,7 @@ const ColonyManagement = () => {
               colonies.map((colony) => (
                 <TableRow key={colony._id}>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={600} fontSize={18}>{colony.name}</Typography>
+                    <Typography variant="body2" fontWeight={600} fontSize={18}>{colony.name.toUpperCase()}</Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
                       {colony.address || colony.location?.address || '-'}
                     </Typography>

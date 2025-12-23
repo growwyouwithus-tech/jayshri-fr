@@ -43,7 +43,8 @@ import {
   Delete,
   Close,
   Visibility,
-  ArrowBack
+  ArrowBack,
+  Print
 } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
@@ -673,9 +674,23 @@ const PropertyManagement = () => {
     try {
       const property = selectedProperty
       
-      // Fetch full plot details with payment information
+      // Fetch plots for this specific property (which belongs to the selected colony)
       const { data } = await axios.get(`/plots?propertyId=${property._id}&limit=1000`)
-      const plots = Array.isArray(data?.data?.plots) ? data.data.plots : Array.isArray(data?.data) ? data.data : []
+      let allPlots = Array.isArray(data?.data?.plots) ? data.data.plots : Array.isArray(data?.data) ? data.data : []
+      
+      console.log(`✅ API returned ${allPlots.length} plots`)
+      
+      // Client-side filter to ensure only plots for THIS property
+      const plots = allPlots.filter(plot => {
+        const plotPropertyId = plot.propertyId?._id || plot.propertyId
+        const matches = plotPropertyId === property._id
+        if (!matches) {
+          console.log(`⚠️ Filtering out plot ${plot.plotNumber || plot.plotNo} - belongs to different property`)
+        }
+        return matches
+      })
+      
+      console.log(`✅ Filtered to ${plots.length} plots for property: ${property.name}`)
       
       // Get colony details
       const colony = property.colonyId
@@ -684,6 +699,7 @@ const PropertyManagement = () => {
       // Prepare account data with plot details
       const accountData = {
         propertyName: property.name || '-',
+        colonyName: colony?.name || '-',
         plots: plots.map(plot => {
           // Calculate area in Gaj
           const areaGaj = plot.area ? plot.area / 9 : 0
@@ -701,14 +717,14 @@ const PropertyManagement = () => {
           const remainingAmount = totalFinalPrice - paidAmount
           
           return {
-            plotNumber: plot.plotNumber || plot.plotNo,
+            plotNumber: plot.plotNumber || plot.plotNo || '-',
             ownerType: plot.ownerType || 'owner',
             khatoniHolder: plot.ownerType === 'khatoniHolder' ? (plot.khatoniHolderId?.name || plot.khatoniHolderId?.fullName || 'N/A') : 'Owner',
-            status: plot.status,
+            status: plot.status || 'available',
             registryStatus: plot.registryStatus || 'pending',
             customerName: plot.customerName || '-',
             customerNumber: plot.customerNumber || '-',
-            areaGaj: areaGaj,
+            areaGaj: areaGaj.toFixed(2),
             askingPricePerGaj: askingPricePerGaj,
             totalAskingPrice: totalAskingPrice,
             finalPricePerGaj: finalPricePerGaj,
@@ -1735,7 +1751,7 @@ const PropertyManagement = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+          <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
             <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
               <TableHead>
                 <TableRow>
@@ -1766,12 +1782,12 @@ const PropertyManagement = () => {
                   properties
                     .filter(property => {
                       if (!searchTerm) return true
-                      const search = searchTerm.toLowerCase()
+                      const search = searchTerm.toUpperCase()
                       return (
-                        property.name?.toLowerCase().includes(search) ||
-                        property.category?.toLowerCase().includes(search) ||
-                        property.categories?.some(cat => cat.toLowerCase().includes(search)) ||
-                        property.colonyId?.name?.toLowerCase().includes(search)
+                        property.name?.toUpperCase().includes(search) ||
+                        property.category?.toUpperCase().includes(search) ||
+                        property.categories?.some(cat => cat.toUpperCase().includes(search)) ||
+                        property.colonyId?.name?.toUpperCase().includes(search)
                       )
                     })
                     .map((property) => {
@@ -1794,7 +1810,7 @@ const PropertyManagement = () => {
                         onClick={() => handleViewPlots(property)}
                       >
                         <TableCell sx={{ border: '1px solid #000' }}>
-                          <Typography variant="body2" fontWeight={700}><strong>{property.name}</strong></Typography>
+                          <Typography variant="body2" fontWeight={700}><strong>{property.name.toUpperCase()}</strong></Typography>
                           <Typography variant="caption" color="text.secondary">
                             {/* {property.categories && property.categories.length > 0 
                               ? property.categories.join(', ') 
@@ -1805,9 +1821,9 @@ const PropertyManagement = () => {
                           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                             {property.categories && property.categories.length > 0 
                               ? property.categories.map((cat, idx) => (
-                                  <Chip key={idx} label={cat} size="small" />
+                                  <Chip key={idx} label={cat} size="large" />
                                 ))
-                              : <Chip label={property.category || '-'} size="small" />
+                              : <Chip label={property.category || '-'} size="large"/>
                             }
                           </Box>
                         </TableCell>
@@ -2242,7 +2258,7 @@ const PropertyManagement = () => {
                       </TableRow>
                       <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                         <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Property Name</TableCell>
-                        <TableCell>{colonyDetailData.propertyName}</TableCell>
+                        <TableCell>{colonyDetailData.propertyName.toUpperCase()}</TableCell>
                       </TableRow>
                       <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                         <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Category</TableCell>
@@ -2587,9 +2603,20 @@ const PropertyManagement = () => {
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Colony Account - <strong>{colonyAccountData?.propertyName}</strong></Typography>
-            <IconButton onClick={() => setColonyAccountDialogOpen(false)} size="small">
-              <Close />
-            </IconButton>
+            <Box display="flex" gap={1}>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                startIcon={<Print />}
+                onClick={() => window.print()}
+                size="small"
+              >
+                Print
+              </Button>
+              <IconButton onClick={() => setColonyAccountDialogOpen(false)} size="small">
+                <Close />
+              </IconButton>
+            </Box>
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -2607,14 +2634,14 @@ const PropertyManagement = () => {
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Registry Status</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Customer Name</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Customer Mobile</TableCell>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #FF9800 0%, #f57c00 100%)', color: 'white', fontWeight: 'bold', minWidth: 140, border: '1px solid #000' }}>Asking Price/Gaj</TableCell>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #FF9800 0%, #f57c00 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Total Asking Price</TableCell>
+                        {/* <TableCell sx={{ background: 'linear-gradient(135deg, #FF9800 0%, #f57c00 100%)', color: 'white', fontWeight: 'bold', minWidth: 140, border: '1px solid #000' }}>Asking Price/Gaj</TableCell> */}
+                        {/* <TableCell sx={{ background: 'linear-gradient(135deg, #FF9800 0%, #f57c00 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Total Asking Price</TableCell> */}
                         <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)', color: 'white', fontWeight: 'bold', minWidth: 140, border: '1px solid #000' }}>Final Price/Gaj</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Total Final Price</TableCell>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Paid Amount</TableCell>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #F44336 0%, #d32f2f 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Remaining Payment</TableCell>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Transaction Date</TableCell>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Payment Mode</TableCell>
+                        {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Paid Amount</TableCell> */}
+                        {/* <TableCell sx={{ background: 'linear-gradient(135deg, #F44336 0%, #d32f2f 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Remaining Payment</TableCell> */}
+                        {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Transaction Date</TableCell> */}
+                        {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Payment Mode</TableCell> */}
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Agent Name</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Agent Phone</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 130, border: '1px solid #000' }}>Advocate Name</TableCell>
@@ -2668,7 +2695,7 @@ const PropertyManagement = () => {
                             </TableCell>
                             <TableCell>{plot.customerName}</TableCell>
                             <TableCell>{plot.customerNumber || '-'}</TableCell>
-                            <TableCell sx={{ bgcolor: '#fff3e0' }}>
+                            {/* <TableCell sx={{ bgcolor: '#fff3e0' }}>
                               <Typography variant="body2" fontWeight={600}>
                                 ₹{plot.askingPricePerGaj.toLocaleString('en-IN')}
                               </Typography>
@@ -2677,7 +2704,7 @@ const PropertyManagement = () => {
                               <Typography variant="body2" fontWeight={600}>
                                 ₹{plot.totalAskingPrice.toLocaleString('en-IN')}
                               </Typography>
-                            </TableCell>
+                            </TableCell> */}
                             <TableCell sx={{ bgcolor: '#e3f2fd' }}>
                               <Typography variant="body2" fontWeight={600} color="primary.main">
                                 ₹{plot.finalPricePerGaj.toLocaleString('en-IN')}
@@ -2688,12 +2715,12 @@ const PropertyManagement = () => {
                                 ₹{plot.totalFinalPrice.toLocaleString('en-IN')}
                               </Typography>
                             </TableCell>
-                            <TableCell>
+                            {/* <TableCell>
                               <Typography variant="body2" color="success.main" fontWeight={600}>
                                 ₹{plot.paidAmount.toLocaleString('en-IN')}
                               </Typography>
-                            </TableCell>
-                            <TableCell sx={{ bgcolor: '#ffebee' }}>
+                            </TableCell> */}
+                            {/* <TableCell sx={{ bgcolor: '#ffebee' }}>
                               <Typography 
                                 variant="body2" 
                                 color={plot.remainingAmount > 0 ? 'error.main' : 'success.main'}
@@ -2701,14 +2728,14 @@ const PropertyManagement = () => {
                               >
                                 ₹{plot.remainingAmount.toLocaleString('en-IN')}
                               </Typography>
-                            </TableCell>
-                            <TableCell>
+                            </TableCell> */}
+                            {/* <TableCell>
                               {plot.transactionDate !== '-' 
                                 ? new Date(plot.transactionDate).toLocaleDateString('en-IN')
                                 : '-'
                               }
                             </TableCell>
-                            <TableCell>{plot.modeOfPayment}</TableCell>
+                            <TableCell>{plot.modeOfPayment}</TableCell> */}
                             <TableCell>{plot.agentName}</TableCell>
                             <TableCell>{plot.agentPhone || '-'}</TableCell>
                             <TableCell>{plot.advocateName}</TableCell>

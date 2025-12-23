@@ -2946,7 +2946,7 @@ const PlotManagement = () => {
         </Box>
       </Box>
 
-      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
         <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
@@ -2985,7 +2985,7 @@ const PlotManagement = () => {
                 return (
                   <TableRow key={plot._id} hover>
                     <TableCell>{plot.plotNo}</TableCell>
-                    <TableCell>{plot.colonyId?.name}</TableCell>
+                    <TableCell>{plot.colonyId?.name.toUpperCase()}</TableCell>
                     <TableCell>
                       {plot.ownerType === 'khatoniHolder' ? (
                         <Chip label="Khatoni Holder" size="small" color="info" />
