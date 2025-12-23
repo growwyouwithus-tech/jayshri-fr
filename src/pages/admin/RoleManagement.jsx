@@ -23,8 +23,9 @@ const RoleManagement = () => {
   })
   
   const availableModules = [
-    'users', 'roles', 'colonies', 'plots', 'bookings', 
-    'payments', 'receipts', 'reports', 'settings'
+    'users', 'roles', 'colonies', 'properties', 'plots', 'bookings', 
+    'payments', 'receipts', 'reports', 'settings', 'staff', 
+    'accounts', 'expenses', 'calculator', 'kisan_payment', 'commissions'
   ]
   
   const availableActions = ['create', 'read', 'update', 'delete']

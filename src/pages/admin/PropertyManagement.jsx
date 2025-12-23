@@ -2060,9 +2060,9 @@ const PropertyManagement = () => {
                   sx={{ py: 2, justifyContent: 'flex-start', textAlign: 'left' }}
                 >
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
-                    <Typography variant="subtitle1" fontWeight={600}>View Colony Account</Typography>
+                    <Typography variant="subtitle1" fontWeight={600}>View Colony Account/Chart</Typography>
                     <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                      Coming Soon
+                      Chart of Plots
                     </Typography>
                   </Box>
                 </Button>
@@ -2173,7 +2173,7 @@ const PropertyManagement = () => {
                             <Chip 
                               label={plot.status} 
                               size="small" 
-                              color={plot.status === 'sold' ? 'error' : plot.status === 'available' ? 'success' : 'warning'}
+                              color={plot.status === 'sold' ? 'warning' : plot.status === 'available' ? 'error' : 'default'}
                             />
                           </TableCell>
                           <TableCell>
@@ -2409,7 +2409,7 @@ const PropertyManagement = () => {
                         <TableCell>
                           <Chip 
                             label={viewingPlot.status?.toUpperCase()} 
-                            color={viewingPlot.status === 'sold' ? 'error' : viewingPlot.status === 'available' ? 'success' : 'warning'}
+                            color={viewingPlot.status === 'sold' ? 'warning' : viewingPlot.status === 'available' ? 'error' : 'default'}
                             size="small" 
                           />
                         </TableCell>

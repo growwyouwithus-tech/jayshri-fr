@@ -74,13 +74,14 @@ const StaffManagement = () => {
       setLoading(true)
       const { data } = await axios.get('/users')
       const allUsers = (data?.data || []).map(normalizeUser)
+      // Show all users except buyers (staff includes: agent, lawyer, manager, employee, accountant, etc.)
       let staffUsers = allUsers.filter(user => {
         const roleName = user.roleName?.toLowerCase()
-        return ['manager', 'agent', 'lawyer'].includes(roleName)
+        return roleName !== 'buyer'
       })
 
       if (staffUsers.length === 0) {
-        staffUsers = allUsers.filter(user => user.roleName?.toLowerCase() === 'admin')
+        staffUsers = allUsers
       }
       setStaff(staffUsers)
       setLoading(false)

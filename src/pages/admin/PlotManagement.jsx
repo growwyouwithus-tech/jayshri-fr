@@ -1114,9 +1114,9 @@ const PlotManagement = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      available: 'success',
-      booked: 'warning',
-      sold: 'error',
+      available: 'error',
+      booked: 'default',
+      sold: 'warning',
       blocked: 'default',
       reserved: 'info'
     }
