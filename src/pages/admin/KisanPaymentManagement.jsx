@@ -25,7 +25,7 @@ import {
   Alert,
   Autocomplete,
 } from '@mui/material'
-import { Add, Delete, Payment as PaymentIcon, Save, Clear, Edit } from '@mui/icons-material'
+import { Add, Delete, Payment as PaymentIcon, Save, Clear, Edit, AttachFile, Visibility } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -58,6 +58,8 @@ const KisanPaymentManagement = () => {
     remainingLand: '',
     chequeNumber: '',
     transactionId: '',
+    voucherNo: '',
+    photoFile: null,
   })
 
 
@@ -242,25 +244,32 @@ const KisanPaymentManagement = () => {
       const totalGajUsed = calculateTotalGaj() + (parseFloat(newPayment.gaj) || 0)
       const newRemainingLand = currentRemaining - totalGajUsed
       
-      const payload = {
-        property: selectedProperty,
-        colony: colonyId,
-        paymentType: newPayment.paymentType,
-        rupees: parseFloat(newPayment.rupees),
-        rupeesInWords: newPayment.rupeesInWords,
-        regPlotNo: newPayment.regPlotNo,
-        gaj: parseFloat(newPayment.gaj) || 0,
-        remark: newPayment.remark,
-        remainingLand: newRemainingLand,
-        chequeNumber: newPayment.paymentType === 'BY CHEQUE' ? newPayment.chequeNumber : '',
-        transactionId: newPayment.paymentType === 'BY BANK TRANSFER' ? newPayment.transactionId : '',
+      const formData = new FormData()
+      formData.append('property', selectedProperty)
+      formData.append('colony', colonyId)
+      formData.append('paymentType', newPayment.paymentType)
+      formData.append('rupees', parseFloat(newPayment.rupees))
+      formData.append('rupeesInWords', newPayment.rupeesInWords)
+      formData.append('regPlotNo', newPayment.regPlotNo)
+      formData.append('gaj', parseFloat(newPayment.gaj) || 0)
+      formData.append('remark', newPayment.remark)
+      formData.append('remainingLand', newRemainingLand)
+      formData.append('chequeNumber', newPayment.paymentType === 'BY CHEQUE' ? newPayment.chequeNumber : '')
+      formData.append('transactionId', newPayment.paymentType === 'BY BANK TRANSFER' ? newPayment.transactionId : '')
+      formData.append('voucherNo', newPayment.voucherNo || '')
+      if (newPayment.photoFile) {
+        formData.append('photoFile', newPayment.photoFile)
       }
       
       if (editMode && editingPayment) {
-        await axios.put(`/kisan-payments/${editingPayment._id}`, payload)
+        await axios.put(`/kisan-payments/${editingPayment._id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
         toast.success('Payment updated successfully')
       } else {
-        await axios.post('/kisan-payments', payload)
+        await axios.post('/kisan-payments', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
         toast.success('Payment added successfully')
       }
       
@@ -295,6 +304,8 @@ const KisanPaymentManagement = () => {
       remainingLand: payment.remainingLand,
       chequeNumber: payment.chequeNumber || '',
       transactionId: payment.transactionId || '',
+      voucherNo: payment.voucherNo || '',
+      photoFile: null,
     })
     
     setShowAddForm(true)
@@ -330,6 +341,8 @@ const KisanPaymentManagement = () => {
       remainingLand: '',
       chequeNumber: '',
       transactionId: '',
+      voucherNo: '',
+      photoFile: null,
     })
   }
 
@@ -574,6 +587,31 @@ const KisanPaymentManagement = () => {
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
+                  label="Voucher No (Optional)"
+                  value={newPayment.voucherNo}
+                  onChange={(e) => setNewPayment({ ...newPayment, voucherNo: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  component="label"
+                  startIcon={<AttachFile />}
+                  sx={{ height: '56px' }}
+                >
+                  {newPayment.photoFile ? newPayment.photoFile.name : 'Upload Photo (Optional)'}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*,.pdf"
+                    onChange={(e) => setNewPayment({ ...newPayment, photoFile: e.target.files[0] })}
+                  />
+                </Button>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
                   label="Remark"
                   value={newPayment.remark}
                   onChange={(e) => setNewPayment({ ...newPayment, remark: e.target.value })}
@@ -621,6 +659,8 @@ const KisanPaymentManagement = () => {
                 <TableCell sx={{ color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>GAJ</TableCell>
                 <TableCell sx={{ color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>CHEQUE NO</TableCell>
                 <TableCell sx={{ color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>TRANSACTION ID</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>VOUCHER NO</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>PHOTO</TableCell>
                 <TableCell sx={{ color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>REMARK</TableCell>
                 <TableCell sx={{ color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>REMAINING LAND</TableCell>
                 <TableCell sx={{ color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>ACTIONS</TableCell>
@@ -645,6 +685,18 @@ const KisanPaymentManagement = () => {
                     <TableCell sx={{ border: '1px solid #000' }}>{payment.gaj || 0}</TableCell>
                     <TableCell sx={{ border: '1px solid #000' }}>{payment.chequeNumber || '-'}</TableCell>
                     <TableCell sx={{ border: '1px solid #000' }}>{payment.transactionId || '-'}</TableCell>
+                    <TableCell sx={{ border: '1px solid #000' }}>{payment.voucherNo || '-'}</TableCell>
+                    <TableCell sx={{ border: '1px solid #000' }}>
+                      {payment.photoUrl ? (
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => window.open(`${axios.defaults.baseURL}${payment.photoUrl}`, '_blank')}
+                        >
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                      ) : '-'}
+                    </TableCell>
                     <TableCell sx={{ border: '1px solid #000' }}>{payment.remark || '-'}</TableCell>
                     <TableCell sx={{ border: '1px solid #000' }}>
                       <Typography variant="body2" fontWeight="bold" color="success.main">
@@ -666,7 +718,7 @@ const KisanPaymentManagement = () => {
               })}
               {payments.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ border: '1px solid #000' }}>
+                  <TableCell colSpan={13} align="center" sx={{ border: '1px solid #000' }}>
                     <Typography variant="body2" color="text.secondary" py={3}>
                       No payments found. Click "Add Payment" to create one.
                     </Typography>
@@ -691,6 +743,8 @@ const KisanPaymentManagement = () => {
                   <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', border: '1px solid #000' }}>
                     {calculateTotalGaj().toFixed(2)}
                   </TableCell>
+                  <TableCell sx={{ border: '1px solid #000' }}></TableCell>
+                  <TableCell sx={{ border: '1px solid #000' }}></TableCell>
                   <TableCell sx={{ border: '1px solid #000' }}></TableCell>
                   <TableCell sx={{ border: '1px solid #000' }}></TableCell>
                   <TableCell sx={{ border: '1px solid #000' }}></TableCell>
