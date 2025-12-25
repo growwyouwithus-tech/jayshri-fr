@@ -1116,11 +1116,22 @@ const PlotManagement = () => {
     const colors = {
       available: 'error',
       booked: 'default',
-      sold: 'warning',
+      sold: 'warning', // Turmeric yellow
       blocked: 'default',
       reserved: 'info'
     }
     return colors[status] || 'default'
+  }
+
+  const getStatusStyle = (status) => {
+    if (status === 'sold') {
+      return {
+        backgroundColor: '#FFC107',
+        color: '#000',
+        fontWeight: 'bold'
+      }
+    }
+    return {}
   }
 
   const getFacingLabel = (value) => FACING_OPTIONS.find((opt) => opt.value === value)?.label || value
@@ -1311,7 +1322,12 @@ const PlotManagement = () => {
                 <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                   <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Status</TableCell>
                   <TableCell>
-                    <Chip label={viewingPlot.status.toUpperCase()} color={getStatusColor(viewingPlot.status)} size="small" />
+                    <Chip 
+                      label={viewingPlot.status.toUpperCase()} 
+                      color={getStatusColor(viewingPlot.status)} 
+                      size="small"
+                      sx={getStatusStyle(viewingPlot.status)}
+                    />
                   </TableCell>
                 </TableRow>
                 <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
@@ -3041,6 +3057,7 @@ const PlotManagement = () => {
                       label={plot.status.toUpperCase()}
                       color={getStatusColor(plot.status)}
                       size="small"
+                      sx={getStatusStyle(plot.status)}
                     />
                   </TableCell>
                   <TableCell>

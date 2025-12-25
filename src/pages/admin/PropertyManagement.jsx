@@ -716,10 +716,40 @@ const PropertyManagement = () => {
           const paidAmount = plot.paidAmount || 0
           const remainingAmount = totalFinalPrice - paidAmount
           
+          // Handle multiple khatoni holders
+          let khatoniHolderDisplay = 'Owner'
+          if (plot.ownerType === 'khatoniHolder') {
+            if (Array.isArray(plot.khatoniHolderIds) && plot.khatoniHolderIds.length > 0) {
+              // Multiple holders: show first name / All
+              const firstName = plot.khatoniHolderIds[0]?.name || plot.khatoniHolderIds[0]?.fullName || 'Holder'
+              khatoniHolderDisplay = plot.khatoniHolderIds.length > 1 ? `${firstName} / All` : firstName
+            } else if (plot.khatoniHolderId) {
+              // Single holder
+              khatoniHolderDisplay = plot.khatoniHolderId?.name || plot.khatoniHolderId?.fullName || 'Khatoni Holder'
+            } else {
+              khatoniHolderDisplay = 'Khatoni Holder'
+            }
+          }
+          
+          // Format dimensions
+          const dimensions = plot.dimensions || plot.sideMeasurements
+          let dimensionDisplay = '-'
+          if (dimensions) {
+            const length = dimensions.length || dimensions.frontage || dimensions.front || 0
+            const width = dimensions.width || dimensions.left || 0
+            if (length && width) {
+              dimensionDisplay = `${length}' x ${width}'`
+            }
+          }
+          
           return {
             plotNumber: plot.plotNumber || plot.plotNo || '-',
             ownerType: plot.ownerType || 'owner',
-            khatoniHolder: plot.ownerType === 'khatoniHolder' ? (plot.khatoniHolderId?.name || plot.khatoniHolderId?.fullName || 'N/A') : 'Owner',
+            khatoniHolder: khatoniHolderDisplay,
+            khatoniHolderName: khatoniHolderDisplay,
+            ownerName: 'Shrikrishan Singh',
+            dimensions: plot.dimensions || plot.sideMeasurements,
+            dimensionDisplay: dimensionDisplay,
             status: plot.status || 'available',
             registryStatus: plot.registryStatus || 'pending',
             customerName: plot.customerName || '-',
@@ -2190,6 +2220,7 @@ const PropertyManagement = () => {
                               label={plot.status} 
                               size="small" 
                               color={plot.status === 'sold' ? 'warning' : plot.status === 'available' ? 'error' : 'default'}
+                              sx={plot.status === 'sold' ? { backgroundColor: '#FFC107', color: '#000', fontWeight: 'bold' } : {}}
                             />
                           </TableCell>
                           <TableCell>
@@ -2426,7 +2457,8 @@ const PropertyManagement = () => {
                           <Chip 
                             label={viewingPlot.status?.toUpperCase()} 
                             color={viewingPlot.status === 'sold' ? 'warning' : viewingPlot.status === 'available' ? 'error' : 'default'}
-                            size="small" 
+                            size="small"
+                            sx={viewingPlot.status === 'sold' ? { backgroundColor: '#FFC107', color: '#000', fontWeight: 'bold' } : {}}
                           />
                         </TableCell>
                       </TableRow>
@@ -2629,7 +2661,9 @@ const PropertyManagement = () => {
                       <TableRow>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 100, border: '1px solid #000' }}>Plot No</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Ownership Type</TableCell>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Khatoni Holder</TableCell>
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Khatoni Holder/Owner</TableCell>
+                        {/* <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 120, border: '1px solid #000' }}>Dimension</TableCell> */}
+                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 100, border: '1px solid #000' }}>Gaj</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 120, border: '1px solid #000' }}>Status</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Registry Status</TableCell>
                         <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 150, border: '1px solid #000' }}>Customer Name</TableCell>
@@ -2670,7 +2704,21 @@ const PropertyManagement = () => {
                                 color={plot.ownerType === 'khatoniHolder' ? 'warning' : 'default'}
                               />
                             </TableCell>
-                            <TableCell>{plot.khatoniHolder}</TableCell>
+                            <TableCell>
+                              {plot.ownerType === 'khatoniHolder' ? (
+                                plot.khatoniHolderName || plot.khatoniHolder
+                              ) : (
+                                plot.ownerName
+                              )}
+                            </TableCell>
+                            {/* <TableCell>
+                              {plot.dimensionDisplay}
+                            </TableCell> */}
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={600}>
+                                {plot.areaGaj}
+                              </Typography>
+                            </TableCell>
                             <TableCell>
                               <Chip 
                                 label={plot.status?.toUpperCase()} 

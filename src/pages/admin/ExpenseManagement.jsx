@@ -626,7 +626,11 @@ const ExpenseManagement = () => {
                               >
                                 <Visibility fontSize="small" />
                               </IconButton>
-                            ) : '-'}
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                Bill Not Uploaded
+                              </Typography>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Box display="flex" gap={1}>
