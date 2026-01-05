@@ -31,8 +31,9 @@ import {
   TablePagination,
   InputAdornment,
   Autocomplete,
+  Tooltip,
 } from '@mui/material'
-import { Add, Edit, Delete, Visibility, Payment, Search, CloudUpload, ArrowBack } from '@mui/icons-material'
+import { Add, Edit, Delete, Visibility, Payment, Search, CloudUpload, ArrowBack, Close, PictureAsPdf, Image as ImageIcon } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 import {
@@ -113,6 +114,7 @@ const getPropertyPlotTypes = (property) => {
 }
 
 const PlotManagement = () => {
+  console.log('PlotManagement Component Loaded - Version Fix 2.0')
   const [plots, setPlots] = useState([])
   const [colonies, setColonies] = useState([])
   const [properties, setProperties] = useState([])
@@ -139,6 +141,8 @@ const PlotManagement = () => {
     date: new Date().toISOString().split('T')[0],
     notes: ''
   })
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [errors, setErrors] = useState({})
   const [newPlot, setNewPlot] = useState({
     propertyId: '',
@@ -178,6 +182,8 @@ const PlotManagement = () => {
     paidAmount: '',
     paymentSlip: null,
     registryDocument: null,
+    paymentSlip: null,
+    registryDocuments: [],
     registryStatus: 'pending',
   })
 
@@ -277,7 +283,7 @@ const PlotManagement = () => {
   const calculateTotalPriceFromArea = (areaGaj, pricePerGaj) => {
     if (!isNumericInput(areaGaj) || !isNumericInput(pricePerGaj)) return ''
     const total = Number(areaGaj) * Number(pricePerGaj)
-    return Number.isFinite(total) ? total.toString() : ''
+    return Number.isFinite(total) ? total.toFixed(2) : ''
   }
 
   const calculatePricePerGajFromTotal = (totalPrice, areaGaj) => {
@@ -336,7 +342,7 @@ const PlotManagement = () => {
       payload.customerName = newPlot.customerName
       payload.customerNumber = newPlot.customerNumber
       payload.customerShortAddress = newPlot.customerShortAddress
-      
+
       // Only include optional fields if they have values
       if (newPlot.customerFullAddress) {
         payload.customerFullAddress = newPlot.customerFullAddress
@@ -397,26 +403,26 @@ const PlotManagement = () => {
   // Remaining land calculation function
   const calculateRemainingLand = (property) => {
     if (!property) return { remaining: 0, total: 0, used: 0, roads: 0, parks: 0 }
-    
+
     const totalLand = property.totalLandAreaGaj || 0
-    
+
     // Calculate roads area (convert feet to gaj: 1 gaj = 3 feet)
     const roadsArea = (property.roads || []).reduce((sum, road) => {
       const lengthGaj = (road.lengthFt || 0) / 3
       const widthGaj = (road.widthFt || 0) / 3
       return sum + (lengthGaj * widthGaj)
     }, 0)
-    
+
     // Calculate parks area
     const parksArea = (property.parks || []).reduce((sum, park) => {
       const lengthGaj = (park.lengthFt || 0) / 3
       const widthGaj = (park.widthFt || 0) / 3
       return sum + (lengthGaj * widthGaj)
     }, 0)
-    
+
     const usedArea = roadsArea + parksArea
     const remainingLand = totalLand - usedArea
-    
+
     return {
       total: totalLand.toFixed(2),
       used: usedArea.toFixed(2),
@@ -442,7 +448,7 @@ const PlotManagement = () => {
       const propertyId = location.state.preSelectedProperty
       const colonyId = location.state.preSelectedColony
       const selectedProperty = properties.find(p => p._id === propertyId)
-      
+
       if (selectedProperty) {
         const allowedPlotTypes = getPropertyPlotTypes(selectedProperty)
         setNewPlot((prev) => ({
@@ -454,7 +460,7 @@ const PlotManagement = () => {
         }))
         setAddDialogOpen(true)
       }
-      
+
       // Clear the navigation state to prevent reopening on refresh
       window.history.replaceState({}, document.title)
     }
@@ -531,7 +537,7 @@ const PlotManagement = () => {
   // Auto-fill handlers for Agent fields
   const handleAgentNameChange = (value) => {
     setNewPlot((s) => ({ ...s, agentName: value }))
-    
+
     // Find agent by name and auto-fill code
     const agent = agents.find(a => a.name.toLowerCase() === value.toLowerCase())
     if (agent && agent.userCode) {
@@ -541,7 +547,7 @@ const PlotManagement = () => {
 
   const handleAgentCodeChange = (value) => {
     setNewPlot((s) => ({ ...s, agentCode: value }))
-    
+
     // Find agent by code and auto-fill name
     const agent = agents.find(a => a.userCode && a.userCode.toLowerCase() === value.toLowerCase())
     if (agent && agent.name) {
@@ -571,7 +577,7 @@ const PlotManagement = () => {
   // Auto-fill handlers for Advocate fields
   const handleAdvocateNameChange = (value) => {
     setNewPlot((s) => ({ ...s, advocateName: value }))
-    
+
     // Find advocate by name and auto-fill code
     const advocate = advocates.find(a => a.name.toLowerCase() === value.toLowerCase())
     if (advocate && advocate.userCode) {
@@ -581,7 +587,7 @@ const PlotManagement = () => {
 
   const handleAdvocateCodeChange = (value) => {
     setNewPlot((s) => ({ ...s, advocateCode: value }))
-    
+
     // Find advocate by code and auto-fill name
     const advocate = advocates.find(a => a.userCode && a.userCode.toLowerCase() === value.toLowerCase())
     if (advocate && advocate.name) {
@@ -602,21 +608,21 @@ const PlotManagement = () => {
   const closeAddDialog = () => {
     setAddDialogOpen(false)
     setErrors({}) // Clear all errors
-    setNewPlot({ 
-      colonyId: '', 
-      plotNo: '', 
-      frontSide: '', 
-      backSide: '', 
-      leftSide: '', 
-      rightSide: '', 
-      areaGaj: '', 
-      pricePerGaj: '', 
-      totalPrice: '', 
-      facing: '', 
-      status: 'available', 
-      ownerType: 'owner', 
-      customerName: '', 
-      customerNumber: '', 
+    setNewPlot({
+      colonyId: '',
+      plotNo: '',
+      frontSide: '',
+      backSide: '',
+      leftSide: '',
+      rightSide: '',
+      areaGaj: '',
+      pricePerGaj: '',
+      totalPrice: '',
+      facing: '',
+      status: 'available',
+      ownerType: 'owner',
+      customerName: '',
+      customerNumber: '',
       customerShortAddress: '',
       customerFullAddress: '',
       registryDate: '',
@@ -629,11 +635,11 @@ const PlotManagement = () => {
       advocateName: '',
       advocateCode: '',
       tahsil: '',
-      modeOfPayment: '', 
-      transactionDate: '', 
-      paidAmount: '', 
-      paymentSlip: null, 
-      registryDocument: null,
+      modeOfPayment: '',
+      transactionDate: '',
+      paidAmount: '',
+      paymentSlip: null,
+      registryDocuments: [],
       registryStatus: 'pending'
     })
   }
@@ -659,7 +665,7 @@ const PlotManagement = () => {
       ownerType: plot.ownerType || 'owner',
       plotImages: [],
       customerName: plot.customerName || '',
-      customerNumber: plot.customerNumber || '',
+      customerNumber: plot.customerNumber ? plot.customerNumber.replace(/^\+91/, '') : '',
       customerShortAddress: plot.customerShortAddress || '',
       customerFullAddress: plot.customerFullAddress || '',
       registryDate: plot.registryDate || '',
@@ -676,7 +682,7 @@ const PlotManagement = () => {
       transactionDate: plot.transactionDate || '',
       paidAmount: plot.paidAmount?.toString() || '',
       paymentSlip: null,
-      registryDocument: null,
+      registryDocuments: [],
       registryStatus: plot.registryStatus || 'pending',
     })
     setEditDialogOpen(true)
@@ -686,24 +692,24 @@ const PlotManagement = () => {
     setEditDialogOpen(false)
     setEditingPlotId(null)
     setErrors({}) // Clear all errors
-    setNewPlot({ 
+    setNewPlot({
       propertyId: '',
-      colonyId: '', 
-      plotNo: '', 
+      colonyId: '',
+      plotNo: '',
       plotType: 'residential',
-      frontSide: '', 
-      backSide: '', 
-      leftSide: '', 
-      rightSide: '', 
-      areaGaj: '', 
-      pricePerGaj: '', 
-      totalPrice: '', 
-      facing: '', 
-      status: 'available', 
-      ownerType: 'owner', 
+      frontSide: '',
+      backSide: '',
+      leftSide: '',
+      rightSide: '',
+      areaGaj: '',
+      pricePerGaj: '',
+      totalPrice: '',
+      facing: '',
+      status: 'available',
+      ownerType: 'owner',
       plotImages: [],
-      customerName: '', 
-      customerNumber: '', 
+      customerName: '',
+      customerNumber: '',
       customerShortAddress: '',
       customerFullAddress: '',
       registryDate: '',
@@ -716,11 +722,11 @@ const PlotManagement = () => {
       advocateName: '',
       advocateCode: '',
       tahsil: '',
-      modeOfPayment: '', 
-      transactionDate: '', 
-      paidAmount: '', 
-      paymentSlip: null, 
-      registryDocument: null,
+      modeOfPayment: '',
+      transactionDate: '',
+      paidAmount: '',
+      paymentSlip: null,
+      registryDocuments: [],
       registryStatus: 'pending'
     })
   }
@@ -798,53 +804,53 @@ const PlotManagement = () => {
 
     // Plot Number validation with specific requirements
     const plotNoError = validateRequired(newPlot.plotNo, 'Plot number') ||
-                       validateMinLength(newPlot.plotNo, 1, 'Plot number') ||
-                       validateMaxLength(newPlot.plotNo, 20, 'Plot number')
+      validateMinLength(newPlot.plotNo, 1, 'Plot number') ||
+      validateMaxLength(newPlot.plotNo, 20, 'Plot number')
     if (plotNoError) {
       newErrors.plotNo = plotNoError
       isValid = false
     }
 
     // Dimensions Validation with specific messages
-    const frontSideError = validateRequired(newPlot.frontSide, 'Front side dimension') || 
-                          validateNumeric(newPlot.frontSide, 'Front side dimension')
+    const frontSideError = validateRequired(newPlot.frontSide, 'Front side dimension') ||
+      validateNumeric(newPlot.frontSide, 'Front side dimension')
     if (frontSideError) {
       newErrors.frontSide = frontSideError
       isValid = false
     }
 
-    const backSideError = validateRequired(newPlot.backSide, 'Back side dimension') || 
-                         validateNumeric(newPlot.backSide, 'Back side dimension')
+    const backSideError = validateRequired(newPlot.backSide, 'Back side dimension') ||
+      validateNumeric(newPlot.backSide, 'Back side dimension')
     if (backSideError) {
       newErrors.backSide = backSideError
       isValid = false
     }
 
-    const leftSideError = validateRequired(newPlot.leftSide, 'Left side dimension') || 
-                         validateNumeric(newPlot.leftSide, 'Left side dimension')
+    const leftSideError = validateRequired(newPlot.leftSide, 'Left side dimension') ||
+      validateNumeric(newPlot.leftSide, 'Left side dimension')
     if (leftSideError) {
       newErrors.leftSide = leftSideError
       isValid = false
     }
 
-    const rightSideError = validateRequired(newPlot.rightSide, 'Right side dimension') || 
-                          validateNumeric(newPlot.rightSide, 'Right side dimension')
+    const rightSideError = validateRequired(newPlot.rightSide, 'Right side dimension') ||
+      validateNumeric(newPlot.rightSide, 'Right side dimension')
     if (rightSideError) {
       newErrors.rightSide = rightSideError
       isValid = false
     }
 
     // Area validation
-    const areaError = validateRequired(newPlot.areaGaj, 'Area in Gaj') || 
-                     validateNumeric(newPlot.areaGaj, 'Area in Gaj')
+    const areaError = validateRequired(newPlot.areaGaj, 'Area in Gaj') ||
+      validateNumeric(newPlot.areaGaj, 'Area in Gaj')
     if (areaError) {
       newErrors.areaGaj = areaError
       isValid = false
     }
 
     // Pricing Validation with specific requirements
-    const pricePerGajError = validateRequired(newPlot.pricePerGaj, 'Price per Gaj') || 
-                            validateNumeric(newPlot.pricePerGaj, 'Price per Gaj')
+    const pricePerGajError = validateRequired(newPlot.pricePerGaj, 'Price per Gaj') ||
+      validateNumeric(newPlot.pricePerGaj, 'Price per Gaj')
     if (pricePerGajError) {
       newErrors.pricePerGaj = pricePerGajError
       isValid = false
@@ -869,23 +875,23 @@ const PlotManagement = () => {
     // Sale/Booking Details Validation (only if status is booked or sold)
     if (newPlot.status === 'booked' || newPlot.status === 'sold') {
       const customerNameError = validateRequired(newPlot.customerName, 'Customer name') ||
-                               validateMinLength(newPlot.customerName, 2, 'Customer name') ||
-                               validateMaxLength(newPlot.customerName, 100, 'Customer name')
+        validateMinLength(newPlot.customerName, 2, 'Customer name') ||
+        validateMaxLength(newPlot.customerName, 100, 'Customer name')
       if (customerNameError) {
         newErrors.customerName = customerNameError
         isValid = false
       }
 
       const customerNumberError = validateRequired(newPlot.customerNumber, 'Customer phone number') ||
-                                 validatePhone(newPlot.customerNumber)
+        validatePhone(newPlot.customerNumber)
       if (customerNumberError) {
         newErrors.customerNumber = customerNumberError
         isValid = false
       }
 
       const customerAddressError = validateRequired(newPlot.customerShortAddress, 'Customer short address') ||
-                                  validateMinLength(newPlot.customerShortAddress, 5, 'Customer short address') ||
-                                  validateMaxLength(newPlot.customerShortAddress, 200, 'Customer short address')
+        validateMinLength(newPlot.customerShortAddress, 5, 'Customer short address') ||
+        validateMaxLength(newPlot.customerShortAddress, 200, 'Customer short address')
       if (customerAddressError) {
         newErrors.customerShortAddress = customerAddressError
         isValid = false
@@ -923,16 +929,47 @@ const PlotManagement = () => {
     return isValid
   }
 
+  const handleRegistryFileSelect = (event) => {
+    const files = Array.from(event.target.files)
+    const validFiles = []
+
+    files.forEach(file => {
+      // Check file size (1MB = 1024 * 1024 bytes)
+      if (file.size > 1024 * 1024) {
+        toast.error(`File ${file.name} is too large. Max size is 1MB.`)
+      } else {
+        validFiles.push(file)
+      }
+    })
+
+    if (validFiles.length > 0) {
+      setNewPlot(prev => ({
+        ...prev,
+        registryDocuments: [...(prev.registryDocuments || []), ...validFiles]
+      }))
+    }
+
+    // Reset input
+    event.target.value = ''
+  }
+
+  const removeRegistryFile = (index) => {
+    setNewPlot(prev => ({
+      ...prev,
+      registryDocuments: prev.registryDocuments.filter((_, i) => i !== index)
+    }))
+  }
+
   const handleAddPlot = async () => {
     if (!validatePlotForm()) return
 
     try {
       setLoading(true)
       const payload = buildPlotPayload()
-      
+
       // Create FormData if there's a file to upload
       const formData = new FormData()
-      
+
       // Append all payload fields
       Object.keys(payload).forEach(key => {
         if (typeof payload[key] === 'object' && payload[key] !== null) {
@@ -941,21 +978,28 @@ const PlotManagement = () => {
           formData.append(key, payload[key])
         }
       })
-      
+
       // Append files if exist
       if (newPlot.paymentSlip) {
         formData.append('paymentSlip', newPlot.paymentSlip)
       }
-      if (newPlot.registryDocument) {
-        formData.append('registryDocument', newPlot.registryDocument)
+      if (newPlot.registryDocuments && newPlot.registryDocuments.length > 0) {
+        newPlot.registryDocuments.forEach((file) => {
+          formData.append('registryDocument', file)
+        })
       }
-      
+      if (newPlot.plotImages && newPlot.plotImages.length > 0) {
+        newPlot.plotImages.forEach((file) => {
+          formData.append('plotImages', file)
+        })
+      }
+
       const response = await axios.post('/plots', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       })
-      
+
       if (response.data.success) {
         toast.success('Plot added successfully! 🎉', {
           position: 'top-right',
@@ -995,10 +1039,10 @@ const PlotManagement = () => {
         commissionPercentage: payload.commissionPercentage,
         commissionAmount: payload.commissionAmount
       })
-      
+
       // Create FormData if there's a file to upload
       const formData = new FormData()
-      
+
       // Append all payload fields
       Object.keys(payload).forEach(key => {
         if (typeof payload[key] === 'object' && payload[key] !== null) {
@@ -1007,21 +1051,28 @@ const PlotManagement = () => {
           formData.append(key, payload[key])
         }
       })
-      
+
       // Append files if exist
       if (newPlot.paymentSlip) {
         formData.append('paymentSlip', newPlot.paymentSlip)
       }
-      if (newPlot.registryDocument) {
-        formData.append('registryDocument', newPlot.registryDocument)
+      if (newPlot.registryDocuments && newPlot.registryDocuments.length > 0) {
+        newPlot.registryDocuments.forEach((file) => {
+          formData.append('registryDocument', file)
+        })
       }
-      
+      if (newPlot.plotImages && newPlot.plotImages.length > 0) {
+        newPlot.plotImages.forEach((file) => {
+          formData.append('plotImages', file)
+        })
+      }
+
       const response = await axios.put(`/plots/${editingPlotId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       })
-      
+
       if (response.data.success) {
         toast.success('Plot updated successfully! ✅', {
           position: 'top-right',
@@ -1149,7 +1200,7 @@ const PlotManagement = () => {
       )
       if (!matchesSearch) return false
     }
-    
+
     // Status filter
     if (filterStatus) {
       if (filterStatus === 'sold_registered') {
@@ -1162,7 +1213,7 @@ const PlotManagement = () => {
         return plot.status === 'available'
       }
     }
-    
+
     return true
   })
 
@@ -1183,7 +1234,7 @@ const PlotManagement = () => {
   // ============================================
   // VALIDATION FUNCTIONS (Reusable)
   // ============================================
-  
+
   /**
    * Validates if a field is empty
    * @param {string} value - Field value
@@ -1272,16 +1323,16 @@ const PlotManagement = () => {
   // Show view form if viewing plot - Excel-like format
   if (viewDialogOpen && viewingPlot) {
     const holders = getColonyKhatoniHolders(viewingPlot.colonyId)
-    
+
     return (
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" fontWeight="bold">
             Plot Details - {viewingPlot.plotNo}
           </Typography>
-          <Button 
-            variant="outlined" 
-            startIcon={<ArrowBack />} 
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBack />}
             onClick={() => {
               setViewDialogOpen(false)
               setViewingPlot(null)
@@ -1290,7 +1341,7 @@ const PlotManagement = () => {
             Back to Plots
           </Button>
         </Box>
-        
+
         <Paper sx={{ p: 0, overflow: 'hidden' }}>
           <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
             <Table stickyHeader size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
@@ -1322,12 +1373,66 @@ const PlotManagement = () => {
                 <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                   <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Status</TableCell>
                   <TableCell>
-                    <Chip 
-                      label={viewingPlot.status.toUpperCase()} 
-                      color={getStatusColor(viewingPlot.status)} 
+                    <Chip
+                      label={viewingPlot.status.toUpperCase()}
+                      color={getStatusColor(viewingPlot.status)}
                       size="small"
                       sx={getStatusStyle(viewingPlot.status)}
                     />
+                  </TableCell>
+                </TableRow>
+                {/* Plot Images Display Section */}
+                <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Plot Images</TableCell>
+                  <TableCell>
+                    {viewingPlot.plotImages && viewingPlot.plotImages.length > 0 ? (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {viewingPlot.plotImages.map((doc, index) => {
+                          const baseURL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000'
+                          const fileUrl = doc.startsWith('http') ? doc : `${baseURL}${doc}`
+                          const isPdf = doc.toLowerCase().endsWith('.pdf')
+
+                          return (
+                            <Box
+                              key={index}
+                              onClick={() => {
+                                if (isPdf) {
+                                  window.open(fileUrl, '_blank')
+                                } else {
+                                  setSelectedImage(fileUrl)
+                                  setImageDialogOpen(true)
+                                }
+                              }}
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                border: '1px solid #ddd',
+                                borderRadius: 1,
+                                overflow: 'hidden',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                bgcolor: '#f5f5f5',
+                                '&:hover': { opacity: 0.8 }
+                              }}
+                            >
+                              {isPdf ? (
+                                <PictureAsPdf color="error" />
+                              ) : (
+                                <img
+                                  src={fileUrl}
+                                  alt={`Plot Image ${index + 1}`}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              )}
+                            </Box>
+                          )
+                        })}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">No images uploaded</Typography>
+                    )}
                   </TableCell>
                 </TableRow>
                 <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
@@ -1467,7 +1572,7 @@ const PlotManagement = () => {
                     {viewingPlot.customerNumber && (
                       <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                         <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Customer Number</TableCell>
-                        <TableCell>{viewingPlot.customerNumber}</TableCell>
+                        <TableCell>{viewingPlot.customerNumber?.replace(/^\+91/, '')}</TableCell>
                       </TableRow>
                     )}
                     {viewingPlot.customerShortAddress && (
@@ -1485,9 +1590,9 @@ const PlotManagement = () => {
                     <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                       <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>{viewingPlot.status === 'booked' ? 'Booked Date' : 'Sold Date'}</TableCell>
                       <TableCell>
-                        {viewingPlot.createdAt ? new Date(viewingPlot.createdAt).toLocaleDateString('en-IN', { 
-                          year: 'numeric', 
-                          month: 'long', 
+                        {viewingPlot.createdAt ? new Date(viewingPlot.createdAt).toLocaleDateString('en-IN', {
+                          year: 'numeric',
+                          month: 'long',
                           day: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit'
@@ -1498,6 +1603,51 @@ const PlotManagement = () => {
                       <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                         <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Registry Date</TableCell>
                         <TableCell>{new Date(viewingPlot.registryDate).toLocaleDateString('en-IN')}</TableCell>
+                      </TableRow>
+                    )}
+                    {viewingPlot.registryDocument && (
+                      <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
+                        <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Registry Documents</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {(Array.isArray(viewingPlot.registryDocument) ? viewingPlot.registryDocument : [viewingPlot.registryDocument]).map((doc, idx) => (
+                              <Box
+                                key={idx}
+                                sx={{
+                                  cursor: 'pointer',
+                                  border: '1px solid #ddd',
+                                  borderRadius: 1,
+                                  p: 0.5,
+                                  '&:hover': { bgcolor: '#f0f0f0' }
+                                }}
+                                onClick={() => {
+                                  const baseURL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000'
+                                  if (doc.toLowerCase().endsWith('.pdf')) {
+                                    window.open(`${baseURL}${doc}`, '_blank')
+                                  } else {
+                                    setSelectedImage(`${baseURL}${doc}`)
+                                    setImageDialogOpen(true)
+                                  }
+                                }}
+                              >
+                                {doc.toLowerCase().endsWith('.pdf') ? (
+                                  <Box display="flex" flexDirection="column" alignItems="center">
+                                    <PictureAsPdf color="error" fontSize="large" />
+                                    <Typography variant="caption" sx={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      Document {idx + 1}
+                                    </Typography>
+                                  </Box>
+                                ) : (
+                                  <img
+                                    src={`${axios.defaults.baseURL}${doc}`}
+                                    alt={`Registry ${idx + 1}`}
+                                    style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                                  />
+                                )}
+                              </Box>
+                            ))}
+                          </Box>
+                        </TableCell>
                       </TableRow>
                     )}
                     {viewingPlot.moreInformation && (
@@ -1529,16 +1679,16 @@ const PlotManagement = () => {
                         <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                           <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Commission Percentage</TableCell>
                           <TableCell>
-                            {viewingPlot.commissionPercentage != null && viewingPlot.commissionPercentage !== '' 
-                              ? `${viewingPlot.commissionPercentage}%` 
+                            {viewingPlot.commissionPercentage != null && viewingPlot.commissionPercentage !== ''
+                              ? `${viewingPlot.commissionPercentage}%`
                               : 'Not Set'}
                           </TableCell>
                         </TableRow>
                         <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                           <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Commission Amount</TableCell>
                           <TableCell>
-                            {viewingPlot.commissionAmount != null && viewingPlot.commissionAmount !== '' 
-                              ? `₹${Number(viewingPlot.commissionAmount).toLocaleString()}` 
+                            {viewingPlot.commissionAmount != null && viewingPlot.commissionAmount !== ''
+                              ? `₹${Number(viewingPlot.commissionAmount).toLocaleString()}`
                               : 'Not Set'}
                           </TableCell>
                         </TableRow>
@@ -1566,8 +1716,8 @@ const PlotManagement = () => {
                       <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                         <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Registry Status</TableCell>
                         <TableCell>
-                          <Chip 
-                            label={viewingPlot.registryStatus === 'completed' ? 'Registry Completed' : 'Registry Pending'} 
+                          <Chip
+                            label={viewingPlot.registryStatus === 'completed' ? 'Registry Completed' : 'Registry Pending'}
                             color={viewingPlot.registryStatus === 'completed' ? 'success' : 'warning'}
                             size="small"
                           />
@@ -1598,7 +1748,31 @@ const PlotManagement = () => {
             </Table>
           </TableContainer>
         </Paper>
-      </Box>
+
+        {/* Image Preview Dialog */}
+        <Dialog
+          open={imageDialogOpen}
+          onClose={() => setImageDialogOpen(false)}
+          maxWidth="lg"
+          sx={{ zIndex: '9999 !important' }}
+        >
+          <Box sx={{ position: 'relative', bgcolor: 'black', minWidth: 300, minHeight: 300, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <IconButton
+              onClick={() => setImageDialogOpen(false)}
+              sx={{ position: 'absolute', right: 8, top: 8, color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
+            >
+              <Close />
+            </IconButton>
+            {selectedImage && (
+              <img
+                src={selectedImage}
+                alt="Preview"
+                style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain' }}
+              />
+            )}
+          </Box>
+        </Dialog>
+      </Box >
     )
   }
 
@@ -1610,15 +1784,15 @@ const PlotManagement = () => {
           <Typography variant="h4" fontWeight="bold">
             {addDialogOpen ? 'Add New Plot' : 'Edit Plot'}
           </Typography>
-          <Button 
-            variant="outlined" 
-            startIcon={<ArrowBack />} 
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBack />}
             onClick={addDialogOpen ? closeAddDialog : closeEditDialog}
           >
             Back to Plots
           </Button>
         </Box>
-        
+
         <Paper sx={{ p: 3 }}>
           {addDialogOpen ? (
             <>
@@ -1634,8 +1808,8 @@ const PlotManagement = () => {
                     onChange={(e) => {
                       const selectedProperty = properties.find(p => p._id === e.target.value)
                       const allowedPlotTypes = getPropertyPlotTypes(selectedProperty)
-                      setNewPlot((s) => ({ 
-                        ...s, 
+                      setNewPlot((s) => ({
+                        ...s,
                         propertyId: e.target.value,
                         colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
                         pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj,
@@ -1669,9 +1843,9 @@ const PlotManagement = () => {
                 {newPlot.propertyId && (() => {
                   const selectedProperty = properties.find(p => p._id === newPlot.propertyId)
                   if (!selectedProperty) return null
-                  
+
                   const landCalc = calculateRemainingLand(selectedProperty)
-                  
+
                   return (
                     <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #2196f3' }}>
                       <Typography variant="subtitle2" fontWeight={600} gutterBottom color="primary">
@@ -1704,7 +1878,7 @@ const PlotManagement = () => {
                           </Typography>
                         </Grid>
                       </Grid>
-                      
+
                       {selectedProperty.basePricePerGaj && (
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                           💰 Base Price: ₹{selectedProperty.basePricePerGaj.toLocaleString()}/Gaj
@@ -1742,11 +1916,11 @@ const PlotManagement = () => {
 
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <TextField 
+                    <TextField
                       fullWidth
-                      size="small" 
-                      label="Plot Number *" 
-                      value={newPlot.plotNo} 
+                      size="small"
+                      label="Plot Number *"
+                      value={newPlot.plotNo}
                       onChange={(e) => {
                         setNewPlot((s) => ({ ...s, plotNo: e.target.value }))
                         clearError('plotNo')
@@ -1783,7 +1957,7 @@ const PlotManagement = () => {
                     </FormControl>
                   </Grid>
                 </Grid>
-                
+
                 {/* Side Measurements */}
                 <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
                   <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
@@ -1791,12 +1965,12 @@ const PlotManagement = () => {
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
-                      <TextField 
+                      <TextField
                         fullWidth
-                        size="small" 
-                        label="Front Side (ft) *" 
+                        size="small"
+                        label="Front Side (ft) *"
                         type="number"
-                        value={newPlot.frontSide} 
+                        value={newPlot.frontSide}
                         onChange={(e) => {
                           handleSideMeasurementChange('frontSide', e.target.value)
                           clearError('frontSide')
@@ -1807,12 +1981,12 @@ const PlotManagement = () => {
                       />
                     </Grid>
                     <Grid item xs={6}>
-                      <TextField 
+                      <TextField
                         fullWidth
-                        size="small" 
-                        label="Back Side (ft) *" 
+                        size="small"
+                        label="Back Side (ft) *"
                         type="number"
-                        value={newPlot.backSide} 
+                        value={newPlot.backSide}
                         onChange={(e) => {
                           handleSideMeasurementChange('backSide', e.target.value)
                           clearError('backSide')
@@ -1823,12 +1997,12 @@ const PlotManagement = () => {
                       />
                     </Grid>
                     <Grid item xs={6}>
-                      <TextField 
+                      <TextField
                         fullWidth
-                        size="small" 
-                        label="Left Side (ft) *" 
+                        size="small"
+                        label="Left Side (ft) *"
                         type="number"
-                        value={newPlot.leftSide} 
+                        value={newPlot.leftSide}
                         onChange={(e) => {
                           handleSideMeasurementChange('leftSide', e.target.value)
                           clearError('leftSide')
@@ -1839,12 +2013,12 @@ const PlotManagement = () => {
                       />
                     </Grid>
                     <Grid item xs={6}>
-                      <TextField 
+                      <TextField
                         fullWidth
-                        size="small" 
-                        label="Right Side (ft) *" 
+                        size="small"
+                        label="Right Side (ft) *"
                         type="number"
-                        value={newPlot.rightSide} 
+                        value={newPlot.rightSide}
                         onChange={(e) => {
                           handleSideMeasurementChange('rightSide', e.target.value)
                           clearError('rightSide')
@@ -1865,12 +2039,12 @@ const PlotManagement = () => {
 
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
-                    <TextField 
+                    <TextField
                       fullWidth
-                      size="small" 
-                      label="Asking Price per Gaj *" 
-                      type="number" 
-                      value={newPlot.pricePerGaj} 
+                      size="small"
+                      label="Asking Price per Gaj *"
+                      type="number"
+                      value={newPlot.pricePerGaj}
                       onChange={(e) => {
                         updatePricingFromPricePerGaj(e.target.value)
                         clearError('pricePerGaj')
@@ -1884,10 +2058,9 @@ const PlotManagement = () => {
                     <TextField
                       fullWidth
                       size="small"
-                      label="Total Price (Auto-calculated)"
-                      type="number"
-                      value={newPlot.totalPrice}
-                      onChange={(e) => updatePricingFromTotal(e.target.value)}
+                      label="Total Price (Verified)"
+                      type="text"
+                      value={newPlot.totalPrice ? `₹${Number(newPlot.totalPrice).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''}
                       InputProps={{ readOnly: true }}
                     />
                   </Grid>
@@ -1895,12 +2068,12 @@ const PlotManagement = () => {
 
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
-                    <TextField 
+                    <TextField
                       fullWidth
-                      size="small" 
-                      select 
-                      label="Plot Type *" 
-                      value={newPlot.plotType} 
+                      size="small"
+                      select
+                      label="Plot Type *"
+                      value={newPlot.plotType}
                       onChange={(e) => setNewPlot((s) => ({ ...s, plotType: e.target.value }))}
                     >
                       {getPropertyPlotTypes(properties.find(p => p._id === newPlot.propertyId)).map((type) => (
@@ -1909,12 +2082,12 @@ const PlotManagement = () => {
                     </TextField>
                   </Grid>
                   <Grid item xs={6}>
-                    <TextField 
+                    <TextField
                       fullWidth
-                      size="small" 
-                      select 
-                      label="Status" 
-                      value={newPlot.status} 
+                      size="small"
+                      select
+                      label="Status"
+                      value={newPlot.status}
                       onChange={(e) => setNewPlot((s) => ({ ...s, status: e.target.value }))}
                     >
                       {STATUS_OPTIONS.map((option) => (
@@ -1937,18 +2110,32 @@ const PlotManagement = () => {
                     startIcon={<CloudUpload />}
                     fullWidth
                   >
-                    Upload Plot Photos
+                    Upload Plot Photos (JPG, PNG, PDF)
                     <input
                       type="file"
                       hidden
                       multiple
-                      accept="image/*"
+                      accept="image/*,.pdf"
                       onChange={(e) => {
                         const files = Array.from(e.target.files)
-                        setNewPlot((s) => ({ ...s, plotImages: files }))
+                        const validFiles = []
+                        files.forEach(file => {
+                          if (file.size > 1024 * 1024) {
+                            toast.error(`File ${file.name} is too large. Max size is 1MB.`)
+                          } else {
+                            validFiles.push(file)
+                          }
+                        })
+                        if (validFiles.length > 0) {
+                          setNewPlot((s) => ({ ...s, plotImages: [...(s.plotImages || []), ...validFiles] }))
+                        }
+                        e.target.value = '' // Reset input
                       }}
                     />
                   </Button>
+                  <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+                    Supported formats: JPG, PNG, PDF. Max size: 1MB per file.
+                  </Typography>
                   {newPlot.plotImages && newPlot.plotImages.length > 0 && (
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="body2" color="success.main">
@@ -1956,10 +2143,10 @@ const PlotManagement = () => {
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                         {newPlot.plotImages.map((file, idx) => (
-                          <Chip 
-                            key={idx} 
-                            label={file.name} 
-                            size="small" 
+                          <Chip
+                            key={idx}
+                            label={file.name}
+                            size="small"
                             onDelete={() => {
                               setNewPlot((s) => ({
                                 ...s,
@@ -2003,7 +2190,8 @@ const PlotManagement = () => {
                           type="tel"
                           value={newPlot.customerNumber}
                           onChange={(e) => {
-                            setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))
+                            const value = e.target.value.replace(/^\+91/, '').replace(/\D/g, '').slice(0, 10)
+                            setNewPlot((s) => ({ ...s, customerNumber: value }))
                             clearError('customerNumber')
                           }}
                           error={!!errors.customerNumber}
@@ -2082,7 +2270,7 @@ const PlotManagement = () => {
                           label="Total Sold Amount"
                           type="number"
                           value={newPlot.finalPrice && newPlot.areaGaj ? (Number(newPlot.finalPrice) * Number(newPlot.areaGaj)).toFixed(2) : ''}
-                          InputProps={{ 
+                          InputProps={{
                             readOnly: true,
                             startAdornment: <InputAdornment position="start">₹</InputAdornment>
                           }}
@@ -2296,41 +2484,70 @@ const PlotManagement = () => {
                       </Grid>
                       {newPlot.status === 'sold' && (
                         <>
-                          <Grid item xs={12}>
-                            <FormControl component="fieldset">
-                              <FormLabel component="legend">Registry Status</FormLabel>
-                              <RadioGroup
-                                row
-                                value={newPlot.registryStatus}
-                                onChange={(e) => setNewPlot((s) => ({ ...s, registryStatus: e.target.value }))}
-                              >
-                                <FormControlLabel value="pending" control={<Radio />} label="Registry Pending" />
-                                <FormControlLabel value="completed" control={<Radio />} label="Registry Completed" />
-                              </RadioGroup>
-                            </FormControl>
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <Button
-                              variant="outlined"
-                              component="label"
-                              fullWidth
-                              size="small"
-                              color="secondary"
-                            >
-                              Upload Registry Document (Optional)
-                              <input
-                                type="file"
-                                hidden
-                                accept="image/*,.pdf"
-                                onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
-                              />
-                            </Button>
-                            {newPlot.registryDocument && (
-                              <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
-                                ✓ {newPlot.registryDocument.name}
-                              </Typography>
-                            )}
-                          </Grid>
+                          <>
+                            <Grid item xs={12}>
+                              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                                <FormControl component="fieldset">
+                                  <FormLabel component="legend">Registry Status</FormLabel>
+                                  <RadioGroup
+                                    row
+                                    value={newPlot.registryStatus}
+                                    onChange={(e) => setNewPlot((s) => ({ ...s, registryStatus: e.target.value }))}
+                                  >
+                                    <FormControlLabel value="pending" control={<Radio />} label="Registry Pending" />
+                                    <FormControlLabel value="completed" control={<Radio />} label="Registry Completed" />
+                                  </RadioGroup>
+                                </FormControl>
+
+                                <TextField
+                                  size="small"
+                                  label="Registry Date"
+                                  type="date"
+                                  value={newPlot.registryDate || ''}
+                                  onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
+                                  InputLabelProps={{ shrink: true }}
+                                  sx={{ width: 200 }}
+                                />
+                              </Box>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Box sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 1 }}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                  Registry Documents (Max 1MB per file, Images/PDFs)
+                                </Typography>
+                                <Button
+                                  variant="outlined"
+                                  component="label"
+                                  startIcon={<CloudUpload />}
+                                  size="small"
+                                  sx={{ mb: 2 }}
+                                >
+                                  Upload Documents
+                                  <input
+                                    type="file"
+                                    hidden
+                                    multiple
+                                    accept="image/*,.pdf"
+                                    onChange={handleRegistryFileSelect}
+                                  />
+                                </Button>
+
+                                {/* Selected Files List */}
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                  {newPlot.registryDocuments && newPlot.registryDocuments.map((file, index) => (
+                                    <Chip
+                                      key={index}
+                                      label={file.name}
+                                      icon={file.type && file.type.includes('pdf') ? <PictureAsPdf /> : <ImageIcon />}
+                                      onDelete={() => removeRegistryFile(index)}
+                                      color="primary"
+                                      variant="outlined"
+                                    />
+                                  ))}
+                                </Box>
+                              </Box>
+                            </Grid>
+                          </>
                         </>
                       )}
                     </Grid>
@@ -2358,8 +2575,8 @@ const PlotManagement = () => {
                     onChange={(e) => {
                       const selectedProperty = properties.find(p => p._id === e.target.value)
                       const allowedPlotTypes = getPropertyPlotTypes(selectedProperty)
-                      setNewPlot((s) => ({ 
-                        ...s, 
+                      setNewPlot((s) => ({
+                        ...s,
                         propertyId: e.target.value,
                         colonyId: selectedProperty?.colony?._id || selectedProperty?.colony || '',
                         pricePerGaj: selectedProperty?.basePricePerGaj || s.pricePerGaj,
@@ -2410,14 +2627,14 @@ const PlotManagement = () => {
                   </RadioGroup>
                 </FormControl>
 
-                <TextField 
-                  size="small" 
-                  label="Plot Number *" 
-                  value={newPlot.plotNo} 
-                  onChange={(e) => setNewPlot((s) => ({ ...s, plotNo: e.target.value }))} 
+                <TextField
+                  size="small"
+                  label="Plot Number *"
+                  value={newPlot.plotNo}
+                  onChange={(e) => setNewPlot((s) => ({ ...s, plotNo: e.target.value }))}
                   required
                 />
-                
+
                 {/* Side Measurements */}
                 <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
                   <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
@@ -2425,45 +2642,45 @@ const PlotManagement = () => {
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
-                      <TextField 
+                      <TextField
                         fullWidth
-                        size="small" 
-                        label="Front Side (ft) *" 
+                        size="small"
+                        label="Front Side (ft) *"
                         type="number"
-                        value={newPlot.frontSide} 
+                        value={newPlot.frontSide}
                         onChange={(e) => handleSideMeasurementChange('frontSide', e.target.value)}
                         required
                       />
                     </Grid>
                     <Grid item xs={6}>
-                      <TextField 
+                      <TextField
                         fullWidth
-                        size="small" 
-                        label="Back Side (ft) *" 
+                        size="small"
+                        label="Back Side (ft) *"
                         type="number"
-                        value={newPlot.backSide} 
+                        value={newPlot.backSide}
                         onChange={(e) => handleSideMeasurementChange('backSide', e.target.value)}
                         required
                       />
                     </Grid>
                     <Grid item xs={6}>
-                      <TextField 
+                      <TextField
                         fullWidth
-                        size="small" 
-                        label="Left Side (ft) *" 
+                        size="small"
+                        label="Left Side (ft) *"
                         type="number"
-                        value={newPlot.leftSide} 
+                        value={newPlot.leftSide}
                         onChange={(e) => handleSideMeasurementChange('leftSide', e.target.value)}
                         required
                       />
                     </Grid>
                     <Grid item xs={6}>
-                      <TextField 
+                      <TextField
                         fullWidth
-                        size="small" 
-                        label="Right Side (ft) *" 
+                        size="small"
+                        label="Right Side (ft) *"
                         type="number"
-                        value={newPlot.rightSide} 
+                        value={newPlot.rightSide}
                         onChange={(e) => handleSideMeasurementChange('rightSide', e.target.value)}
                         required
                       />
@@ -2477,23 +2694,22 @@ const PlotManagement = () => {
                   </Box>
                 </Box>
 
-                <TextField 
-                  size="small" 
-                  label="Price per Gaj *" 
-                  type="number" 
-                  value={newPlot.pricePerGaj} 
+                <TextField
+                  size="small"
+                  label="Price per Gaj *"
+                  type="number"
+                  value={newPlot.pricePerGaj}
                   onChange={(e) => updatePricingFromPricePerGaj(e.target.value)}
                   required
                 />
                 <TextField
                   size="small"
-                  label="Total Price (Auto-calculated)"
-                  type="number"
-                  value={newPlot.totalPrice}
-                  onChange={(e) => updatePricingFromTotal(e.target.value)}
+                  label="Total Price (Verified)"
+                  type="text"
+                  value={newPlot.totalPrice ? `₹${Number(newPlot.totalPrice).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''}
                   InputProps={{ readOnly: true }}
                 />
-                
+
                 <FormControl size="small" required>
                   <InputLabel>Facing *</InputLabel>
                   <Select
@@ -2512,12 +2728,12 @@ const PlotManagement = () => {
 
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
-                    <TextField 
+                    <TextField
                       fullWidth
-                      size="small" 
-                      select 
-                      label="Plot Type *" 
-                      value={newPlot.plotType} 
+                      size="small"
+                      select
+                      label="Plot Type *"
+                      value={newPlot.plotType}
                       onChange={(e) => setNewPlot((s) => ({ ...s, plotType: e.target.value }))}
                     >
                       <MenuItem value="residential">Residential</MenuItem>
@@ -2526,12 +2742,12 @@ const PlotManagement = () => {
                     </TextField>
                   </Grid>
                   <Grid item xs={6}>
-                    <TextField 
+                    <TextField
                       fullWidth
-                      size="small" 
-                      select 
-                      label="Status" 
-                      value={newPlot.status} 
+                      size="small"
+                      select
+                      label="Status"
+                      value={newPlot.status}
                       onChange={(e) => setNewPlot((s) => ({ ...s, status: e.target.value }))}
                     >
                       {STATUS_OPTIONS.map((option) => (
@@ -2554,18 +2770,32 @@ const PlotManagement = () => {
                     startIcon={<CloudUpload />}
                     fullWidth
                   >
-                    Upload Plot Photos
+                    Upload Plot Photos (JPG, PNG, PDF)
                     <input
                       type="file"
                       hidden
                       multiple
-                      accept="image/*"
+                      accept="image/*,.pdf"
                       onChange={(e) => {
                         const files = Array.from(e.target.files)
-                        setNewPlot((s) => ({ ...s, plotImages: files }))
+                        const validFiles = []
+                        files.forEach(file => {
+                          if (file.size > 1024 * 1024) {
+                            toast.error(`File ${file.name} is too large. Max size is 1MB.`)
+                          } else {
+                            validFiles.push(file)
+                          }
+                        })
+                        if (validFiles.length > 0) {
+                          setNewPlot((s) => ({ ...s, plotImages: [...(s.plotImages || []), ...validFiles] }))
+                        }
+                        e.target.value = '' // Reset input
                       }}
                     />
                   </Button>
+                  <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+                    Supported formats: JPG, PNG, PDF. Max size: 1MB per file.
+                  </Typography>
                   {newPlot.plotImages && newPlot.plotImages.length > 0 && (
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="body2" color="success.main">
@@ -2573,10 +2803,10 @@ const PlotManagement = () => {
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                         {newPlot.plotImages.map((file, idx) => (
-                          <Chip 
-                            key={idx} 
-                            label={file.name} 
-                            size="small" 
+                          <Chip
+                            key={idx}
+                            label={file.name}
+                            size="small"
                             onDelete={() => {
                               setNewPlot((s) => ({
                                 ...s,
@@ -2609,7 +2839,10 @@ const PlotManagement = () => {
                         label="Customer Number *"
                         type="tel"
                         value={newPlot.customerNumber}
-                        onChange={(e) => setNewPlot((s) => ({ ...s, customerNumber: e.target.value }))}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/^\+91/, '').replace(/\D/g, '').slice(0, 10)
+                          setNewPlot((s) => ({ ...s, customerNumber: value }))
+                        }}
                         placeholder="10 digit mobile number"
                         required
                       />
@@ -2624,9 +2857,10 @@ const PlotManagement = () => {
                         size="small"
                         label="Registry Date (Optional)"
                         type="date"
-                        value={newPlot.registryDate}
+                        value={newPlot.registryDate || new Date().toISOString().split('T')[0]}
                         onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
                         InputLabelProps={{ shrink: true }}
+                        inputProps={{ max: new Date().toISOString().split('T')[0] }}
                       />
                       <TextField
                         size="small"
@@ -2656,7 +2890,7 @@ const PlotManagement = () => {
                         label="Total Sold Amount"
                         type="number"
                         value={newPlot.finalPrice && newPlot.areaGaj ? (Number(newPlot.finalPrice) * Number(newPlot.areaGaj)).toFixed(2) : ''}
-                        InputProps={{ 
+                        InputProps={{
                           readOnly: true,
                           startAdornment: <InputAdornment position="start">₹</InputAdornment>
                         }}
@@ -2845,39 +3079,66 @@ const PlotManagement = () => {
                       {newPlot.status === 'sold' && (
                         <>
                           <Box sx={{ mb: 2 }}>
-                            <FormControl component="fieldset">
-                              <FormLabel component="legend">Registry Status</FormLabel>
-                              <RadioGroup
-                                row
-                                value={newPlot.registryStatus}
-                                onChange={(e) => setNewPlot((s) => ({ ...s, registryStatus: e.target.value }))}
-                              >
-                                <FormControlLabel value="pending" control={<Radio />} label="Registry Pending" />
-                                <FormControlLabel value="completed" control={<Radio />} label="Registry Completed" />
-                              </RadioGroup>
-                            </FormControl>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                              <FormControl component="fieldset">
+                                <FormLabel component="legend">Registry Status</FormLabel>
+                                <RadioGroup
+                                  row
+                                  value={newPlot.registryStatus}
+                                  onChange={(e) => setNewPlot((s) => ({ ...s, registryStatus: e.target.value }))}
+                                >
+                                  <FormControlLabel value="pending" control={<Radio />} label="Registry Pending" />
+                                  <FormControlLabel value="completed" control={<Radio />} label="Registry Completed" />
+                                </RadioGroup>
+                              </FormControl>
+
+                              <TextField
+                                size="small"
+                                label="Registry Date"
+                                type="date"
+                                value={newPlot.registryDate || new Date().toISOString().split('T')[0]}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{ width: 200 }}
+                                inputProps={{ max: new Date().toISOString().split('T')[0] }}
+                              />
+                            </Box>
                           </Box>
-                          <Box>
+
+                          <Box sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 1 }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                              Registry Documents (Max 1MB per file, Images/PDFs)
+                            </Typography>
                             <Button
                               variant="outlined"
                               component="label"
-                              fullWidth
+                              startIcon={<CloudUpload />}
                               size="small"
-                              color="secondary"
+                              sx={{ mb: 2 }}
                             >
-                              Upload Registry Document (Optional)
+                              Upload Documents
                               <input
                                 type="file"
                                 hidden
+                                multiple
                                 accept="image/*,.pdf"
-                                onChange={(e) => setNewPlot((s) => ({ ...s, registryDocument: e.target.files[0] }))}
+                                onChange={handleRegistryFileSelect}
                               />
                             </Button>
-                            {newPlot.registryDocument && (
-                              <Typography variant="caption" display="block" sx={{ mt: 1, color: 'success.main' }}>
-                                ✓ {newPlot.registryDocument.name}
-                              </Typography>
-                            )}
+
+                            {/* Selected Files List */}
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {newPlot.registryDocuments && newPlot.registryDocuments.map((file, index) => (
+                                <Chip
+                                  key={index}
+                                  label={file.name}
+                                  icon={file.type && file.type.includes('pdf') ? <PictureAsPdf /> : <ImageIcon />}
+                                  onDelete={() => removeRegistryFile(index)}
+                                  color="primary"
+                                  variant="outlined"
+                                />
+                              ))}
+                            </Box>
                           </Box>
                         </>
                       )}
@@ -2894,6 +3155,29 @@ const PlotManagement = () => {
             </>
           )}
         </Paper>
+        {/* Image Preview Dialog */}
+        <Dialog
+          open={imageDialogOpen}
+          onClose={() => setImageDialogOpen(false)}
+          maxWidth="lg"
+          sx={{ zIndex: '9999 !important' }}
+        >
+          <Box sx={{ position: 'relative', bgcolor: 'black', minWidth: 300, minHeight: 300, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <IconButton
+              onClick={() => setImageDialogOpen(false)}
+              sx={{ position: 'absolute', right: 8, top: 8, color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
+            >
+              <Close />
+            </IconButton>
+            {selectedImage && (
+              <img
+                src={selectedImage}
+                alt="Preview"
+                style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain' }}
+              />
+            )}
+          </Box>
+        </Dialog>
       </Box>
     )
   }
@@ -2993,11 +3277,11 @@ const PlotManagement = () => {
                 // finalPrice is stored as per Gaj rate
                 const finalPricePerGaj = plot.finalPrice || null;
                 // Calculate total from finalPrice per Gaj
-                const finalTotalPrice = plot.finalPrice && plot.areaGaj 
-                  ? plot.finalPrice * plot.areaGaj 
+                const finalTotalPrice = plot.finalPrice && plot.areaGaj
+                  ? plot.finalPrice * plot.areaGaj
                   : null;
                 const displayTotalPrice = finalTotalPrice || plot.totalPrice;
-                
+
                 return (
                   <TableRow key={plot._id} hover>
                     <TableCell>{plot.plotNo}</TableCell>
@@ -3013,7 +3297,7 @@ const PlotManagement = () => {
                     <TableCell>₹{Number(plot.pricePerGaj).toLocaleString()}</TableCell>
                     <TableCell>
                       {finalPricePerGaj ? (
-                        <Chip 
+                        <Chip
                           label={`₹${Number(finalPricePerGaj).toLocaleString()}`}
                           size="small"
                           color="success"
@@ -3052,69 +3336,69 @@ const PlotManagement = () => {
                       })()}
                     </TableCell>
                     <TableCell>{getFacingLabel(plot.facing)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={plot.status.toUpperCase()}
-                      color={getStatusColor(plot.status)}
-                      size="small"
-                      sx={getStatusStyle(plot.status)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <IconButton
+                    <TableCell>
+                      <Chip
+                        label={plot.status.toUpperCase()}
+                        color={getStatusColor(plot.status)}
                         size="small"
-                        color="info"
-                        onClick={() => {
-                          console.log('=== VIEWING PLOT DATA ===')
-                          console.log('Full Plot:', plot)
-                          console.log('Dimensions:', plot.dimensions)
-                          console.log('Side Measurements:', plot.sideMeasurements)
-                          console.log('Commission Percentage:', plot.commissionPercentage)
-                          console.log('Commission Amount:', plot.commissionAmount)
-                          setViewingPlot(plot)
-                          setViewDialogOpen(true)
-                        }}
-                        title="View Details"
-                      >
-                        <Visibility fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => openEditDialog(plot)}
-                        title="Edit Plot"
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="success"
-                        onClick={() => {
-                          setPaymentPlot(plot)
-                          setPaymentData({
-                            amount: '',
-                            mode: '',
-                            date: new Date().toISOString().split('T')[0],
-                            notes: ''
-                          })
-                          setPaymentDialogOpen(true)
-                        }}
-                        title="Add Payment"
-                      >
-                        <Payment fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDeletePlot(plot._id)}
-                        title="Delete Plot"
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                </TableRow>
+                        sx={getStatusStyle(plot.status)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <IconButton
+                          size="small"
+                          color="info"
+                          onClick={() => {
+                            console.log('=== VIEWING PLOT DATA ===')
+                            console.log('Full Plot:', plot)
+                            console.log('Dimensions:', plot.dimensions)
+                            console.log('Side Measurements:', plot.sideMeasurements)
+                            console.log('Commission Percentage:', plot.commissionPercentage)
+                            console.log('Commission Amount:', plot.commissionAmount)
+                            setViewingPlot(plot)
+                            setViewDialogOpen(true)
+                          }}
+                          title="View Details"
+                        >
+                          <Visibility fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => openEditDialog(plot)}
+                          title="Edit Plot"
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => {
+                            setPaymentPlot(plot)
+                            setPaymentData({
+                              amount: '',
+                              mode: '',
+                              date: new Date().toISOString().split('T')[0],
+                              notes: ''
+                            })
+                            setPaymentDialogOpen(true)
+                          }}
+                          title="Add Payment"
+                        >
+                          <Payment fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeletePlot(plot._id)}
+                          title="Delete Plot"
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
                 );
               })
             )}
@@ -3130,6 +3414,30 @@ const PlotManagement = () => {
           rowsPerPageOptions={[20, 50, 100]}
         />
       </TableContainer>
+
+      {/* Image Preview Dialog */}
+      <Dialog
+        open={imageDialogOpen}
+        onClose={() => setImageDialogOpen(false)}
+        maxWidth="lg"
+        sx={{ zIndex: '9999 !important' }}
+      >
+        <Box sx={{ position: 'relative', bgcolor: 'black', minWidth: 300, minHeight: 300, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <IconButton
+            onClick={() => setImageDialogOpen(false)}
+            sx={{ position: 'absolute', right: 8, top: 8, color: 'white', bgcolor: 'rgba(0,0,0,0.5)' }}
+          >
+            <Close />
+          </IconButton>
+          {selectedImage && (
+            <img
+              src={selectedImage}
+              alt="Preview"
+              style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain' }}
+            />
+          )}
+        </Box>
+      </Dialog>
     </Box>
   )
 }
