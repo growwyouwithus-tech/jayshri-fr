@@ -41,6 +41,8 @@ import {
   ExpandMore,
   LocationCity,
   AccountBalance,
+  PersonPin,
+  Work,
 } from '@mui/icons-material'
 import { logout } from '@/store/slices/authSlice'
 import toast from 'react-hot-toast'
@@ -95,31 +97,31 @@ const MainLayout = () => {
   const hasPermission = (permission) => {
     if (!user?.role) return false
     const permissions = user.role.permissions || []
-    
+
     // Admin has all permissions
     if (permissions.includes('all')) return true
-    
+
     // Handle string format: ["plots_create", "plots_read"]
     if (permissions.includes(permission)) return true
-    
+
     // Handle object format: [{"module":"plots","actions":["create","read"]}]
     const [module, action] = permission.split('_')
     if (module && action) {
-      const modulePermission = permissions.find(p => 
+      const modulePermission = permissions.find(p =>
         typeof p === 'object' && p.module === module
       )
       if (modulePermission && modulePermission.actions?.includes(action)) {
         return true
       }
     }
-    
+
     return false
   }
 
   // Navigation items based on role and permissions
   const getNavigationItems = () => {
     const roleName = user?.role?.name
-    
+
     // Debug logging
     console.log('🔍 Navigation Debug:')
     console.log('User:', user?.name)
@@ -164,11 +166,11 @@ const MainLayout = () => {
       if (hasPermission('colony_read') || hasPermission('colonies_read')) propertiesSubmenu.push({ text: 'Mansion Properties', path: '/admin/properties' })
       if (hasPermission('city_read') || hasPermission('cities_read')) propertiesSubmenu.push({ text: 'Create Cities', path: '/admin/cities' })
       // if (hasPermission('city_read') || hasPermission('cities_read')) propertiesSubmenu.push({ text: 'All Areas', path: '/admin/areas' })
-      
+
       if (propertiesSubmenu.length > 0) {
-        dynamicItems.push({ 
-          text: 'Properties', 
-          icon: <Home />, 
+        dynamicItems.push({
+          text: 'Properties',
+          icon: <Home />,
           path: '/admin/properties',
           submenu: propertiesSubmenu
         })
@@ -218,6 +220,16 @@ const MainLayout = () => {
     // Accounts & Expenses
     if (roleName === 'Admin' || roleName === 'Manager') {
       dynamicItems.push({ text: 'Accounts & Expenses', icon: <AccountBalance />, path: '/admin/expenses' })
+    }
+
+    // Agents
+    if (roleName === 'Admin' || roleName === 'Manager') {
+      dynamicItems.push({ text: 'Agents', icon: <PersonPin />, path: '/admin/agents' })
+    }
+
+    // Advocates
+    if (roleName === 'Admin' || roleName === 'Manager') {
+      dynamicItems.push({ text: 'Advocates', icon: <Work />, path: '/admin/advocates' })
     }
 
     // Settings
@@ -270,7 +282,7 @@ const MainLayout = () => {
             const isActive = location.pathname.startsWith(item.path)
             const hasSubmenu = item.submenu && item.submenu.length > 0
             const isExpanded = expandedMenus[item.text]
-            
+
             return (
               <Box key={item.text}>
                 <ListItem disablePadding sx={{ mb: 0.5 }}>
@@ -317,7 +329,7 @@ const MainLayout = () => {
                     )}
                   </ListItemButton>
                 </ListItem>
-                
+
                 {hasSubmenu && (
                   <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding>
@@ -342,7 +354,7 @@ const MainLayout = () => {
                             >
                               <ListItemText
                                 primary={subItem.text}
-                                primaryTypographyProps={{ 
+                                primaryTypographyProps={{
                                   fontWeight: isSubActive ? 600 : 400,
                                   fontSize: '0.875rem'
                                 }}
@@ -402,7 +414,7 @@ const MainLayout = () => {
           >
             <MenuIcon />
           </IconButton>
-          
+
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h5" fontWeight={700} gutterBottom>
               {user?.role?.name} Dashboard
@@ -479,8 +491,8 @@ const MainLayout = () => {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
               width: DRAWER_WIDTH,
               borderRadius: 0,
               bgcolor: 'primary.main',
@@ -493,8 +505,8 @@ const MainLayout = () => {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
               width: DRAWER_WIDTH,
               borderRadius: 0,
               bgcolor: 'primary.main',

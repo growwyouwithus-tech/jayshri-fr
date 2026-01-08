@@ -182,7 +182,6 @@ const PlotManagement = () => {
     paidAmount: '',
     paymentSlip: null,
     registryDocument: null,
-    paymentSlip: null,
     registryDocuments: [],
     registryStatus: 'pending',
   })

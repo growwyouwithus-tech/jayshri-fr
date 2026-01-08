@@ -44,7 +44,8 @@ import {
   Close,
   Visibility,
   ArrowBack,
-  Print
+  Print,
+  Search
 } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
@@ -57,7 +58,7 @@ import {
 
 const PropertyManagement = () => {
   const navigate = useNavigate()
-  
+
   // Main list view state
   const [properties, setProperties] = useState([])
   const [propertiesLoading, setPropertiesLoading] = useState(true)
@@ -75,7 +76,8 @@ const PropertyManagement = () => {
   const [plotDetailDialogOpen, setPlotDetailDialogOpen] = useState(false)
   const [colonyAccountDialogOpen, setColonyAccountDialogOpen] = useState(false)
   const [colonyAccountData, setColonyAccountData] = useState(null)
-  
+  const [colonyAccountSearchTerm, setColonyAccountSearchTerm] = useState('')
+
   // Form stepper state
   const [activeStep, setActiveStep] = useState(0)
   const [colonies, setColonies] = useState([])
@@ -84,7 +86,7 @@ const PropertyManagement = () => {
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [errors, setErrors] = useState({})
-  
+
   const [formData, setFormData] = useState({
     categories: [],
     colonyId: '',
@@ -110,7 +112,7 @@ const PropertyManagement = () => {
       longitude: ''
     }
   })
-  
+
   const predefinedFacilities = [
     'Nearby Schools and Colleges',
     'Nearby metro station',
@@ -134,7 +136,7 @@ const PropertyManagement = () => {
 
   const steps = [
     'Select Type',
-    'Property Details', 
+    'Property Details',
     'Description & Pricing',
     'Photos',
     'Preview',
@@ -174,13 +176,13 @@ const PropertyManagement = () => {
     try {
       const { data } = await axios.get('/plots?limit=1000')
       const plots = data?.data?.plots || []
-      
+
       // Group plots by property
       const statsByProperty = {}
       plots.forEach(plot => {
         const propId = plot.propertyId?._id || plot.propertyId
         if (!propId) return
-        
+
         if (!statsByProperty[propId]) {
           statsByProperty[propId] = {
             totalSold: 0,
@@ -188,14 +190,14 @@ const PropertyManagement = () => {
             plots: []
           }
         }
-        
+
         statsByProperty[propId].plots.push(plot)
         if (plot.status === 'sold' || plot.status === 'booked') {
           statsByProperty[propId].totalSold += plot.area || 0
           statsByProperty[propId].totalRevenue += plot.paidAmount || 0
         }
       })
-      
+
       setPropertyStats(statsByProperty)
     } catch (error) {
       console.error('Failed to fetch property stats:', error)
@@ -257,10 +259,10 @@ const PropertyManagement = () => {
         setAreas([])
         return
       }
-      
+
       const targetCityId = cityId || formData.cityId
       const selectedCity = cities.find(city => city._id === targetCityId)
-      
+
       if (selectedCity && selectedCity.areas) {
         setAreas(selectedCity.areas.map(area => ({
           _id: area._id || area.name,
@@ -396,55 +398,55 @@ const PropertyManagement = () => {
           newErrors.colonyId = colonyError
           isValid = false
         }
-        
+
         // Categories validation
         if (formData.categories.length === 0) {
           newErrors.categories = 'Please select at least one category'
           isValid = false
         }
         break
-        
+
       case 1:
         // Property name validation
         const nameError = validateRequired(formData.name, 'Property name') ||
-                         validateMinLength(formData.name, 3, 'Property name') ||
-                         validateMaxLength(formData.name, 100, 'Property name')
+          validateMinLength(formData.name, 3, 'Property name') ||
+          validateMaxLength(formData.name, 100, 'Property name')
         if (nameError) {
           newErrors.name = nameError
           isValid = false
         }
         break
-        
+
       case 2:
         // Tagline validation
         const taglineError = validateRequired(formData.tagline, 'Tagline') ||
-                            validateMinLength(formData.tagline, 5, 'Tagline') ||
-                            validateMaxLength(formData.tagline, 200, 'Tagline')
+          validateMinLength(formData.tagline, 5, 'Tagline') ||
+          validateMaxLength(formData.tagline, 200, 'Tagline')
         if (taglineError) {
           newErrors.tagline = taglineError
           isValid = false
         }
-        
+
         // Description validation
         const descriptionError = validateRequired(formData.description, 'Description') ||
-                                validateMinLength(formData.description, 10, 'Description') ||
-                                validateMaxLength(formData.description, 2000, 'Description')
+          validateMinLength(formData.description, 10, 'Description') ||
+          validateMaxLength(formData.description, 2000, 'Description')
         if (descriptionError) {
           newErrors.description = descriptionError
           isValid = false
         }
-        
+
         // Address validation (optional but if provided should be valid)
         if (formData.address) {
           const addressError = validateMinLength(formData.address, 5, 'Address') ||
-                              validateMaxLength(formData.address, 500, 'Address')
+            validateMaxLength(formData.address, 500, 'Address')
           if (addressError) {
             newErrors.address = addressError
             isValid = false
           }
         }
         break
-        
+
       case 3:
         // Terms agreement validation
         if (!formData.agreeTerms) {
@@ -452,7 +454,7 @@ const PropertyManagement = () => {
           isValid = false
         }
         break
-        
+
       default:
         break
     }
@@ -480,12 +482,12 @@ const PropertyManagement = () => {
       mapImage: formData.mapImage instanceof File,
       moreImages: Array.isArray(formData.moreImages) && formData.moreImages.length
     })
-    
+
     setLoading(true)
     try {
       const payload = new FormData()
       console.log('📦 Preparing payload...')
-      
+
       Object.keys(formData).forEach(key => {
         if (['facilities', 'roads', 'parks', 'categories'].includes(key)) {
           payload.append(key, JSON.stringify(formData[key]))
@@ -521,14 +523,14 @@ const PropertyManagement = () => {
         console.log('✅ Create Response:', response.data)
         toast.success('Property created successfully!')
       }
-      
+
       // Refresh property list
       console.log('🔄 Refreshing property list...')
       await fetchProperties()
       console.log('✅ Property list refreshed')
-      
+
       setActiveStep(5)
-      
+
       // Auto-close dialog after 2 seconds to show updated list
       setTimeout(() => {
         resetFormAndCloseDialog()
@@ -537,12 +539,12 @@ const PropertyManagement = () => {
       console.error('❌ Property Submit Error:', error)
       console.error('❌ Error Response:', error.response?.data)
       console.error('❌ Error Status:', error.response?.status)
-      
-      const errorMessage = error.response?.data?.message 
+
+      const errorMessage = error.response?.data?.message
         || error.response?.data?.errors?.[0]?.message
         || error.message
         || `Failed to ${editMode ? 'update' : 'create'} property`
-      
+
       toast.error(errorMessage)
     } finally {
       setLoading(false)
@@ -615,15 +617,15 @@ const PropertyManagement = () => {
       const bookedPlots = stats.plots.filter(plot => plot.status === 'booked').length
       const soldPlots = stats.plots.filter(plot => plot.status === 'sold').length
       const availablePlots = stats.plots.filter(plot => plot.status === 'available').length
-      
+
       const totalArea = property.totalLandAreaGaj || 0
       const usedLand = calculateUsedLand(property)
       const soldLandGaj = stats.totalSold / 9 || 0
       const remainingArea = totalArea - usedLand - soldLandGaj
-      
+
       const totalRoadArea = calculateTotalRoadAreaGaj(property)
       const totalAmenityArea = calculateTotalAmenityAreaGaj(property)
-      
+
       // Fetch full colony details from API
       let khatoniHolders = []
       const colonyId = property.colonyId?._id || property.colonyId
@@ -639,7 +641,7 @@ const PropertyManagement = () => {
           console.error('Failed to fetch colony details:', error)
         }
       }
-      
+
       // Prepare data for dialog display
       const detailData = {
         propertyName: property.name || '-',
@@ -660,7 +662,7 @@ const PropertyManagement = () => {
           contact: holder.mobile || holder.phone || holder.contact || holder.email || '-'
         }))
       }
-      
+
       setColonyDetailData(detailData)
       setPropertyActionModalOpen(false)
       setColonyDetailDialogOpen(true)
@@ -673,13 +675,13 @@ const PropertyManagement = () => {
   const handleViewColonyAccount = async () => {
     try {
       const property = selectedProperty
-      
+
       // Fetch plots for this specific property (which belongs to the selected colony)
       const { data } = await axios.get(`/plots?propertyId=${property._id}&limit=1000`)
       let allPlots = Array.isArray(data?.data?.plots) ? data.data.plots : Array.isArray(data?.data) ? data.data : []
-      
+
       console.log(`✅ API returned ${allPlots.length} plots`)
-      
+
       // Client-side filter to ensure only plots for THIS property
       const plots = allPlots.filter(plot => {
         const plotPropertyId = plot.propertyId?._id || plot.propertyId
@@ -689,13 +691,13 @@ const PropertyManagement = () => {
         }
         return matches
       })
-      
+
       console.log(`✅ Filtered to ${plots.length} plots for property: ${property.name}`)
-      
+
       // Get colony details
       const colony = property.colonyId
       const khatoniHolders = colony?.khatoniHolders || []
-      
+
       // Prepare account data with plot details
       const accountData = {
         propertyName: property.name || '-',
@@ -703,19 +705,19 @@ const PropertyManagement = () => {
         plots: plots.map(plot => {
           // Calculate area in Gaj
           const areaGaj = plot.area ? plot.area / 9 : 0
-          
+
           // Asking Price (original price)
           const askingPricePerGaj = plot.pricePerSqFt ? plot.pricePerSqFt * 9 : 0
           const totalAskingPrice = plot.totalPrice || (plot.area && plot.pricePerSqFt ? plot.area * plot.pricePerSqFt : 0)
-          
+
           // Final Price (sold price - can be different from asking price)
           const finalPricePerGaj = plot.finalPrice ? plot.finalPrice : askingPricePerGaj
           const totalFinalPrice = plot.finalPrice ? plot.finalPrice * areaGaj : totalAskingPrice
-          
+
           // Payment calculations based on Final Price
           const paidAmount = plot.paidAmount || 0
           const remainingAmount = totalFinalPrice - paidAmount
-          
+
           // Handle multiple khatoni holders
           let khatoniHolderDisplay = 'Owner'
           if (plot.ownerType === 'khatoniHolder') {
@@ -730,7 +732,7 @@ const PropertyManagement = () => {
               khatoniHolderDisplay = 'Khatoni Holder'
             }
           }
-          
+
           // Format dimensions
           const dimensions = plot.dimensions || plot.sideMeasurements
           let dimensionDisplay = '-'
@@ -741,7 +743,7 @@ const PropertyManagement = () => {
               dimensionDisplay = `${length}' x ${width}'`
             }
           }
-          
+
           return {
             plotNumber: plot.plotNumber || plot.plotNo || '-',
             ownerType: plot.ownerType || 'owner',
@@ -774,7 +776,7 @@ const PropertyManagement = () => {
           contact: holder.mobile || holder.phone || holder.contact || holder.email || '-'
         }))
       }
-      
+
       setColonyAccountData(accountData)
       setPropertyActionModalOpen(false)
       setColonyAccountDialogOpen(true)
@@ -786,12 +788,12 @@ const PropertyManagement = () => {
 
   const handleAddPlotForProperty = (property) => {
     // Navigate to plot management with pre-selected property
-    navigate('/admin/plots', { 
-      state: { 
+    navigate('/admin/plots', {
+      state: {
         preSelectedProperty: property._id,
         preSelectedColony: property.colonyId?._id || property.colonyId,
-        openAddDialog: true 
-      } 
+        openAddDialog: true
+      }
     })
   }
 
@@ -811,7 +813,7 @@ const PropertyManagement = () => {
 
   const calculateUsedLand = (property) => {
     let usedLand = 0
-    
+
     // Calculate land used by roads
     if (property.roads && Array.isArray(property.roads)) {
       property.roads.forEach(road => {
@@ -820,14 +822,14 @@ const PropertyManagement = () => {
         usedLand += (lengthFt * widthFt) / 9 // Convert sq ft to Gaj
       })
     }
-    
+
     // Calculate land used by parks/amenities
     if (property.parks && Array.isArray(property.parks)) {
       property.parks.forEach(park => {
         usedLand += parseFloat(park.areaGaj) || 0
       })
     }
-    
+
     return usedLand
   }
 
@@ -927,8 +929,8 @@ const PropertyManagement = () => {
             <Typography variant="h5" fontWeight="bold" mb={2}>
               What Would you like to Post?
             </Typography>
-    
-             <Typography variant="body1" fontWeight="bold" mb={2}>
+
+            <Typography variant="body1" fontWeight="bold" mb={2}>
               Select Colony (Land)
             </Typography>
             <TextField
@@ -947,7 +949,7 @@ const PropertyManagement = () => {
                 sx: { fontSize: 18, fontWeight: 'bold' }
               }}
             >
-              <MenuItem  value="">-- Select Colony --</MenuItem>
+              <MenuItem value="">-- Select Colony --</MenuItem>
               {colonies.map((colony) => (
                 <MenuItem key={colony._id} value={colony._id} sx={{ fontSize: 18, fontWeight: 'bold' }}>
                   {colony.name}
@@ -955,7 +957,7 @@ const PropertyManagement = () => {
               ))}
             </TextField>
 
-             <Typography variant="body2" color="text.secondary"  mb={3} mt={3}>
+            <Typography variant="body2" color="text.secondary" mb={3} mt={3}>
               Select A Category
             </Typography>
 
@@ -997,7 +999,7 @@ const PropertyManagement = () => {
               You can select multiple categories (e.g., Residential + Commercial)
             </Alert>
 
-           
+
           </Box>
         )
 
@@ -1007,7 +1009,7 @@ const PropertyManagement = () => {
             <Typography variant="h5" fontWeight="bold" mb={3}>
               Property Details
             </Typography>
-            
+
             {/* Property Name Field */}
             <TextField
               fullWidth
@@ -1018,7 +1020,7 @@ const PropertyManagement = () => {
                 clearError('name')
               }}
               placeholder="Enter property name"
-              sx={{ 
+              sx={{
                 mb: 3,
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
@@ -1039,11 +1041,11 @@ const PropertyManagement = () => {
               error={!!errors.name}
               helperText={errors.name}
             />
-            
+
             <Typography variant="h6" fontWeight="bold" mb={2}>
               What are the facilities?
             </Typography>
-            
+
             {/* Dynamic Facility Dropdown - Test Version */}
             <Box sx={{ mb: 3, p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
               <Grid container spacing={2} alignItems="center">
@@ -1077,14 +1079,14 @@ const PropertyManagement = () => {
                     variant="contained"
                     onClick={addFacility}
                     startIcon={<Add />}
-                    // disabled={!selectedFacility}
+                  // disabled={!selectedFacility}
                   >
                     Add
                   </Button>
                 </Grid>
               </Grid>
             </Box>
-            
+
             {/* Display Added Facilities */}
             {formData.facilities.length > 0 && (
               <Box display="flex" flexWrap="wrap" gap={1} mb={4}>
@@ -1236,7 +1238,7 @@ const PropertyManagement = () => {
             <Typography variant="h5" fontWeight="bold" mb={3}>
               Describe the Property
             </Typography>
-            
+
             <TextField
               fullWidth
               label="Property Tagline *"
@@ -1329,7 +1331,7 @@ const PropertyManagement = () => {
             <Typography variant="h5" fontWeight="bold" mb={3}>
               Upload Photos & Documents
             </Typography>
-            
+
             <Grid container spacing={3}>
               {[
                 { key: 'mainPicture', label: 'Main Picture', icon: '🏢' },
@@ -1362,7 +1364,7 @@ const PropertyManagement = () => {
                       accept={upload.key === 'videoUpload' ? 'video/*' : upload.key === 'mapImage' || upload.key === 'noc' || upload.key === 'registry' || upload.key === 'legalDoc' ? 'image/*,application/pdf' : 'image/*'}
                       multiple={upload.key === 'moreImages'}
                       onChange={(e) => {
-                        const files = upload.key === 'moreImages' 
+                        const files = upload.key === 'moreImages'
                           ? Array.from(e.target.files)
                           : e.target.files[0]
                         handleFileUpload(upload.key, files)
@@ -1370,7 +1372,7 @@ const PropertyManagement = () => {
                     />
                     {formData[upload.key] && (
                       <Typography variant="body2" color="success.main" mt={1}>
-                        ✓ {upload.key === 'moreImages' 
+                        ✓ {upload.key === 'moreImages'
                           ? `${formData[upload.key].length} files selected`
                           : 'File selected'
                         }
@@ -1387,7 +1389,7 @@ const PropertyManagement = () => {
                 <Box sx={{ fontSize: 24 }}>📍</Box>
                 Property Current Location
               </Typography>
-              
+
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                   <TextField
@@ -1438,10 +1440,10 @@ const PropertyManagement = () => {
                   <strong>How to get coordinates:</strong>
                 </Typography>
                 <Typography variant="body2" component="div">
-                  1. Open Google Maps<br/>
-                  2. Search for your property location<br/>
-                  3. Right-click on the exact location<br/>
-                  4. Click on the coordinates to copy<br/>
+                  1. Open Google Maps<br />
+                  2. Search for your property location<br />
+                  3. Right-click on the exact location<br />
+                  4. Click on the coordinates to copy<br />
                   5. Paste latitude and longitude above
                 </Typography>
               </Box>
@@ -1492,7 +1494,7 @@ const PropertyManagement = () => {
             <Typography variant="h5" fontWeight="bold" mb={3}>
               Preview - Review Your Property Details
             </Typography>
-            
+
             <Grid container spacing={3}>
               {/* Basic Info */}
               <Grid item xs={12}>
@@ -1568,7 +1570,7 @@ const PropertyManagement = () => {
               {formData.roads.length > 0 && (
                 <Grid item xs={12}>
                   <Paper sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight="bold" mb={2}>Roads ({formData.roads.length})</Typography>
+                    <Typography variant="h6" fontWeight="bold" mb={2}>Roads ({formData.roads.length})</Typography>
                     {formData.roads.map((road, idx) => (
                       <Typography key={idx} variant="body2" mb={1}>
                         • {road.name}: {road.lengthFt}ft × {road.widthFt}ft = {((road.lengthFt * road.widthFt) / 9).toFixed(3)} Gaj
@@ -1663,7 +1665,7 @@ const PropertyManagement = () => {
             <Alert severity="success" sx={{ mb: 4 }}>
               Property "{formData.name}" has been {editMode ? 'updated' : 'created'} successfully
             </Alert>
-            
+
             <Card sx={{ maxWidth: 300, mx: 'auto', mb: 4 }}>
               <CardContent>
                 <Box sx={{ fontSize: 48, mb: 2 }}>📷</Box>
@@ -1671,8 +1673,8 @@ const PropertyManagement = () => {
                   {formData.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {formData.categories && formData.categories.length > 0 
-                    ? formData.categories.join(', ') 
+                  {formData.categories && formData.categories.length > 0
+                    ? formData.categories.join(', ')
                     : '-'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -1682,8 +1684,8 @@ const PropertyManagement = () => {
               </CardContent>
             </Card>
 
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               size="large"
               onClick={resetFormAndCloseDialog}
             >
@@ -1821,73 +1823,73 @@ const PropertyManagement = () => {
                       )
                     })
                     .map((property) => {
-                    const stats = propertyStats[property._id] || { totalSold: 0, totalRevenue: 0, plots: [] }
-                    const totalLand = property.totalLandAreaGaj || 0
-                    const usedLand = calculateUsedLand(property)
-                    const totalRoadAreaGaj = calculateTotalRoadAreaGaj(property)
-                    const totalAmenityAreaGaj = calculateTotalAmenityAreaGaj(property)
-                    const soldLandGaj = stats.totalSold / 9
-                    const remainingLand = calculateRemainingLand(property)
-                    const bookedplots = stats.plots.filter(plot => plot.status === 'booked')
-                    const soldplots = stats.plots.filter(plot => plot.status === 'sold')
-                    const availableplots = stats.plots.filter(plot => plot.status === 'available')
-                    
-                    return (
-                      <TableRow 
-                        key={property._id} 
-                        hover 
-                        sx={{ cursor: 'pointer' }}
-                        onClick={() => handleViewPlots(property)}
-                      >
-                        <TableCell sx={{ border: '1px solid #000' }}>
-                          <Typography variant="body2" fontWeight={700}><strong>{property.name.toUpperCase()}</strong></Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {/* {property.categories && property.categories.length > 0 
+                      const stats = propertyStats[property._id] || { totalSold: 0, totalRevenue: 0, plots: [] }
+                      const totalLand = property.totalLandAreaGaj || 0
+                      const usedLand = calculateUsedLand(property)
+                      const totalRoadAreaGaj = calculateTotalRoadAreaGaj(property)
+                      const totalAmenityAreaGaj = calculateTotalAmenityAreaGaj(property)
+                      const soldLandGaj = stats.totalSold / 9
+                      const remainingLand = calculateRemainingLand(property)
+                      const bookedplots = stats.plots.filter(plot => plot.status === 'booked')
+                      const soldplots = stats.plots.filter(plot => plot.status === 'sold')
+                      const availableplots = stats.plots.filter(plot => plot.status === 'available')
+
+                      return (
+                        <TableRow
+                          key={property._id}
+                          hover
+                          sx={{ cursor: 'pointer' }}
+                          onClick={() => handleViewPlots(property)}
+                        >
+                          <TableCell sx={{ border: '1px solid #000' }}>
+                            <Typography variant="body2" fontWeight={700}><strong>{property.name.toUpperCase()}</strong></Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {/* {property.categories && property.categories.length > 0 
                               ? property.categories.join(', ') 
                               : property.category || '-'} */}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                            {property.categories && property.categories.length > 0 
-                              ? property.categories.map((cat, idx) => (
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                              {property.categories && property.categories.length > 0
+                                ? property.categories.map((cat, idx) => (
                                   <Chip key={idx} label={cat} size="large" />
                                 ))
-                              : <Chip label={property.category || '-'} size="large"/>
-                            }
-                          </Box>
-                        </TableCell>
-                        {/* <TableCell>{property.colonyId?.name || '-'}</TableCell> */}
-                        {/* <TableCell>
+                                : <Chip label={property.category || '-'} size="large" />
+                              }
+                            </Box>
+                          </TableCell>
+                          {/* <TableCell>{property.colonyId?.name || '-'}</TableCell> */}
+                          {/* <TableCell>
                           <Typography variant="body2" fontWeight={600}>
                             {totalLand > 0 ? totalLand.toFixed(2) : '-'}
                           </Typography>
                         </TableCell> */}
-                        {/* <TableCell>
+                          {/* <TableCell>
                           <Box> */}
-                            {/* <Chip 
+                          {/* <Chip 
                               label={`${property.roads?.length || 0} road${(property.roads?.length || 0) === 1 ? '' : 's'}`} 
                               size="small"
                               color="info"
                             /> */}
-                            {/* <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {/* <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
                               {totalRoadAreaGaj.toFixed(2)}
                             </Typography>
                           </Box>
                         </TableCell> */}
-                        {/* <TableCell>
+                          {/* <TableCell>
                           <Box> */}
-                            {/* <Chip 
+                          {/* <Chip 
                               label={`${property.parks?.length || 0} amenit${(property.parks?.length || 0) === 1 ? 'y' : 'ies'}`} 
                               size="small"
                               color="secondary"
                             /> */}
-                            {/* <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {/* <Typography variant="body2" fontWeight={600} display="block" color="text.secondary" sx={{ mt: 0.5 }}>
                               {totalAmenityAreaGaj.toFixed(2)}
                             </Typography>
                           </Box>
                         </TableCell> */}
-                        {/* <TableCell>
+                          {/* <TableCell>
                           <Chip 
                             label={usedLand.toFixed(2)} 
                             size="small" 
@@ -1895,96 +1897,96 @@ const PropertyManagement = () => {
                             title="Land used by roads, parks, and amenities"
                           />
                         </TableCell> */}
-                        {/* <TableCell>
+                          {/* <TableCell>
                           <Typography variant="body2" color="error.main">
                             {soldLandGaj > 0 ? soldLandGaj.toFixed(2) : '0.00'}
                           </Typography>
                         </TableCell> */}
-                        {/* <TableCell>
+                          {/* <TableCell>
                           <Chip 
                             label={remainingLand.toFixed(2)} 
                             size="small" 
                             color={remainingLand > 0 ? 'success' : 'error'}
                           />
                         </TableCell> */}
-                        {/* <TableCell>
+                          {/* <TableCell>
                           <Typography variant="body2" fontWeight={600} color="success.main">
                             ₹{stats.totalRevenue.toLocaleString('en-IN')}
                           </Typography>
                         </TableCell> */}
-                        <TableCell>
-                          <Chip 
-                            label={`${stats.plots.length} plots`} 
-                            size="small" 
-                            color="primary"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleViewPlots(property)
-                            }}
-                          />
-                        </TableCell>
                           <TableCell>
-                          <Chip 
-                            label={`${bookedplots.length} plots`} 
-                            size="small" 
-                            color="primary"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleViewPlots(property)
-                            }}
-                          />
-                        </TableCell>
+                            <Chip
+                              label={`${stats.plots.length} plots`}
+                              size="small"
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewPlots(property)
+                              }}
+                            />
+                          </TableCell>
                           <TableCell>
-                          <Chip 
-                            label={`${soldplots.length} plots`} 
-                            size="small" 
-                            color="primary"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleViewPlots(property)
-                            }}
-                          />
-                        </TableCell>
+                            <Chip
+                              label={`${bookedplots.length} plots`}
+                              size="small"
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewPlots(property)
+                              }}
+                            />
+                          </TableCell>
                           <TableCell>
-                          <Chip 
-                            label={`${availableplots.length} plots`} 
-                            size="small" 
-                            color="primary"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleViewPlots(property)
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <IconButton 
-                            size="small" 
-                            color="info"
-                            onClick={() => handleViewPlots(property)}
-                            title="View Details"
-                          >
-                            <Visibility />
-                          </IconButton>
-                          <IconButton 
-                            size="small" 
-                            color="primary"
-                            onClick={() => openEditDialog(property)}
-                            title="Edit Property"
-                          >
-                            <Edit />
-                          </IconButton>
-                          <IconButton 
-                            size="small" 
-                            color="error"
-                            onClick={() => handleDeleteProperty(property._id)}
-                            title="Delete Property"
-                          >
-                            <Delete />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
+                            <Chip
+                              label={`${soldplots.length} plots`}
+                              size="small"
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewPlots(property)
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={`${availableplots.length} plots`}
+                              size="small"
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewPlots(property)
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <IconButton
+                              size="small"
+                              color="info"
+                              onClick={() => handleViewPlots(property)}
+                              title="View Details"
+                            >
+                              <Visibility />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => openEditDialog(property)}
+                              title="Edit Property"
+                            >
+                              <Edit />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteProperty(property._id)}
+                              title="Delete Property"
+                            >
+                              <Delete />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
                 )}
               </TableBody>
             </Table>
@@ -2001,51 +2003,51 @@ const PropertyManagement = () => {
               </Typography>
               <Button variant="outlined" onClick={closeAddDialog} startIcon={<Close />}>Cancel</Button>
             </Box>
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label, index) => (
-            <Step key={label}>
-              <StepLabel>
-                <Typography variant="body2">{label}</Typography>
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+            <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+              {steps.map((label, index) => (
+                <Step key={label}>
+                  <StepLabel>
+                    <Typography variant="body2">{label}</Typography>
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
 
-        <Box sx={{ minHeight: 400 }}>
-          {renderStepContent()}
-        </Box>
+            <Box sx={{ minHeight: 400 }}>
+              {renderStepContent()}
+            </Box>
 
-        {activeStep < 5 && (
-          <Box display="flex" justifyContent="space-between" mt={4}>
-            <Button
-              onClick={handleBack}
-              disabled={activeStep === 0}
-              startIcon={<NavigateBefore />}
-              color="inherit"
-              size="large"
-            >
-              Previous
-            </Button>
-            
-            <Button
-              onClick={activeStep === 4 ? handleSubmit : handleNext}
-              endIcon={activeStep === 4 ? <CheckCircle /> : <NavigateNext />}
-              variant="contained"
-              disabled={loading}
-              size="large"
-            >
-              {loading ? 'Submitting...' : activeStep === 4 ? 'Submit Property' : 'Continue'}
-            </Button>
+            {activeStep < 5 && (
+              <Box display="flex" justifyContent="space-between" mt={4}>
+                <Button
+                  onClick={handleBack}
+                  disabled={activeStep === 0}
+                  startIcon={<NavigateBefore />}
+                  color="inherit"
+                  size="large"
+                >
+                  Previous
+                </Button>
+
+                <Button
+                  onClick={activeStep === 4 ? handleSubmit : handleNext}
+                  endIcon={activeStep === 4 ? <CheckCircle /> : <NavigateNext />}
+                  variant="contained"
+                  disabled={loading}
+                  size="large"
+                >
+                  {loading ? 'Submitting...' : activeStep === 4 ? 'Submit Property' : 'Continue'}
+                </Button>
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
-    </Box>
+        </Box>
       )}
 
       {/* Property Action Modal */}
-      <Dialog 
-        open={propertyActionModalOpen} 
-        onClose={() => setPropertyActionModalOpen(false)} 
+      <Dialog
+        open={propertyActionModalOpen}
+        onClose={() => setPropertyActionModalOpen(false)}
         maxWidth="sm"
         fullWidth
       >
@@ -2129,9 +2131,9 @@ const PropertyManagement = () => {
               </Typography>
             </Box>
             <Box display="flex" gap={1}>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 size="small"
                 startIcon={<Add />}
                 onClick={() => handleAddPlotForProperty(selectedPropertyPlots?.property)}
@@ -2216,16 +2218,16 @@ const PropertyManagement = () => {
                           <TableCell>₹{(plot.totalPrice || 0).toLocaleString('en-IN')}</TableCell>
                           {/* <TableCell>₹{(plot.paidAmount || 0).toLocaleString('en-IN')}</TableCell> */}
                           <TableCell>
-                            <Chip 
-                              label={plot.status} 
-                              size="small" 
+                            <Chip
+                              label={plot.status}
+                              size="small"
                               color={plot.status === 'sold' ? 'warning' : plot.status === 'available' ? 'error' : 'default'}
                               sx={plot.status === 'sold' ? { backgroundColor: '#FFC107', color: '#000', fontWeight: 'bold' } : {}}
                             />
                           </TableCell>
                           <TableCell>
-                            <IconButton 
-                              size="small" 
+                            <IconButton
+                              size="small"
                               color="primary"
                               onClick={async () => {
                                 try {
@@ -2276,8 +2278,8 @@ const PropertyManagement = () => {
                   <Table stickyHeader size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 200, border: '1px solid #000' }}>Field</TableCell>
-                        <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 300, border: '1px solid #000' }}>Value</TableCell>
+                        <TableCell colSpan={2} sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 200, border: '1px solid #000' }}>Field</TableCell>
+                        <TableCell colSpan={2} sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', minWidth: 300, border: '1px solid #000' }}>Value</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -2454,8 +2456,8 @@ const PropertyManagement = () => {
                       <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                         <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600 }}>Status</TableCell>
                         <TableCell>
-                          <Chip 
-                            label={viewingPlot.status?.toUpperCase()} 
+                          <Chip
+                            label={viewingPlot.status?.toUpperCase()}
                             color={viewingPlot.status === 'sold' ? 'warning' : viewingPlot.status === 'available' ? 'error' : 'default'}
                             size="small"
                             sx={viewingPlot.status === 'sold' ? { backgroundColor: '#FFC107', color: '#000', fontWeight: 'bold' } : {}}
@@ -2574,16 +2576,16 @@ const PropertyManagement = () => {
                               <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                                 <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Commission Percentage</TableCell>
                                 <TableCell>
-                                  {viewingPlot.commissionPercentage != null && viewingPlot.commissionPercentage !== '' 
-                                    ? `${viewingPlot.commissionPercentage}%` 
+                                  {viewingPlot.commissionPercentage != null && viewingPlot.commissionPercentage !== ''
+                                    ? `${viewingPlot.commissionPercentage}%`
                                     : 'Not Set'}
                                 </TableCell>
                               </TableRow>
                               <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                                 <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Commission Amount</TableCell>
                                 <TableCell>
-                                  {viewingPlot.commissionAmount != null && viewingPlot.commissionAmount !== '' 
-                                    ? `₹${Number(viewingPlot.commissionAmount).toLocaleString('en-IN')}` 
+                                  {viewingPlot.commissionAmount != null && viewingPlot.commissionAmount !== ''
+                                    ? `₹${Number(viewingPlot.commissionAmount).toLocaleString('en-IN')}`
                                     : 'Not Set'}
                                 </TableCell>
                               </TableRow>
@@ -2611,8 +2613,8 @@ const PropertyManagement = () => {
                             <TableRow sx={{ '&:hover': { bgcolor: '#f5f5f5' } }}>
                               <TableCell sx={{ bgcolor: '#ffebee', fontWeight: 600 }}>Registry Status</TableCell>
                               <TableCell>
-                                <Chip 
-                                  label={viewingPlot.registryStatus === 'completed' ? 'Registry Completed' : 'Registry Pending'} 
+                                <Chip
+                                  label={viewingPlot.registryStatus === 'completed' ? 'Registry Completed' : 'Registry Pending'}
                                   color={viewingPlot.registryStatus === 'completed' ? 'success' : 'warning'}
                                   size="small"
                                 />
@@ -2636,9 +2638,9 @@ const PropertyManagement = () => {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Colony Account - <strong>{colonyAccountData?.propertyName}</strong></Typography>
             <Box display="flex" gap={1}>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 startIcon={<Print />}
                 onClick={() => window.print()}
                 size="small"
@@ -2654,6 +2656,20 @@ const PropertyManagement = () => {
         <DialogContent>
           {colonyAccountData && (
             <Box>
+              {/* Search Bar */}
+              <Box sx={{ mb: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search by plot no, customer name, mobile, agent, or advocate..."
+                  value={colonyAccountSearchTerm}
+                  onChange={(e) => setColonyAccountSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
+                  }}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Box>
               <Paper sx={{ p: 0, overflow: 'hidden' }}>
                 <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
                   <Table stickyHeader size="small" sx={{ '& td, & th': { border: '1px solid #000' } }}>
@@ -2683,67 +2699,81 @@ const PropertyManagement = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {colonyAccountData.plots.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={19} align="center">No plots found</TableCell>
-                        </TableRow>
-                      ) : (
-                        colonyAccountData.plots.map((plot, index) => (
-                          <TableRow 
-                            key={index} 
-                            sx={{ 
-                              '&:hover': { bgcolor: '#f5f5f5' },
-                              bgcolor: plot.ownerType === 'khatoniHolder' ? '#fff3e0' : 'inherit'
-                            }}
-                          >
-                            <TableCell sx={{ fontWeight: 600 }}>{plot.plotNumber}</TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={plot.ownerType === 'khatoniHolder' ? 'Khatoni Holder' : 'Owner'} 
-                                size="small"
-                                color={plot.ownerType === 'khatoniHolder' ? 'warning' : 'default'}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              {plot.ownerType === 'khatoniHolder' ? (
-                                plot.khatoniHolderName || plot.khatoniHolder
-                              ) : (
-                                plot.ownerName
-                              )}
-                            </TableCell>
-                            {/* <TableCell>
+                      {(() => {
+                        // Filter plots based on search term
+                        const filteredPlots = colonyAccountData.plots.filter(plot => {
+                          if (!colonyAccountSearchTerm) return true
+                          const searchLower = colonyAccountSearchTerm.toLowerCase()
+                          return (
+                            plot.plotNumber?.toLowerCase().includes(searchLower) ||
+                            plot.customerName?.toLowerCase().includes(searchLower) ||
+                            plot.customerNumber?.includes(searchLower) ||
+                            plot.agentName?.toLowerCase().includes(searchLower) ||
+                            plot.agentPhone?.includes(searchLower) ||
+                            plot.advocateName?.toLowerCase().includes(searchLower) ||
+                            plot.advocatePhone?.includes(searchLower) ||
+                            plot.khatoniHolderName?.toLowerCase().includes(searchLower) ||
+                            plot.ownerName?.toLowerCase().includes(searchLower)
+                          )
+                        })
+
+                        return filteredPlots && filteredPlots.length > 0 ? (
+                          filteredPlots.map((plot, index) => (
+                            <TableRow
+                              key={index}
+                              sx={{
+                                '&:hover': { bgcolor: '#f5f5f5' },
+                                bgcolor: plot.ownerType === 'khatoniHolder' ? '#fff3e0' : 'inherit'
+                              }}
+                            >
+                              <TableCell sx={{ fontWeight: 600 }}>{plot.plotNumber}</TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={plot.ownerType === 'khatoniHolder' ? 'Khatoni Holder' : 'Owner'}
+                                  size="small"
+                                  color={plot.ownerType === 'khatoniHolder' ? 'warning' : 'default'}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {plot.ownerType === 'khatoniHolder' ? (
+                                  plot.khatoniHolderName || plot.khatoniHolder
+                                ) : (
+                                  plot.ownerName
+                                )}
+                              </TableCell>
+                              {/* <TableCell>
                               {plot.dimensionDisplay}
                             </TableCell> */}
-                            <TableCell>
-                              <Typography variant="body2" fontWeight={600}>
-                                {plot.areaGaj}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                label={plot.status?.toUpperCase()} 
-                                size="small"
-                                color={
-                                  plot.status === 'sold' ? 'error' : 
-                                  plot.status === 'booked' ? 'warning' : 
-                                  'success'
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              {plot.status === 'sold' ? (
-                                <Chip 
-                                  label={plot.registryStatus === 'completed' ? 'Completed' : 'Pending'} 
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {plot.areaGaj}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={plot.status?.toUpperCase()}
                                   size="small"
-                                  color={plot.registryStatus === 'completed' ? 'success' : 'warning'}
+                                  color={
+                                    plot.status === 'sold' ? 'error' :
+                                      plot.status === 'booked' ? 'warning' :
+                                        'success'
+                                  }
                                 />
-                              ) : (
-                                '-'
-                              )}
-                            </TableCell>
-                            <TableCell>{plot.customerName}</TableCell>
-                            <TableCell>{plot.customerNumber || '-'}</TableCell>
-                            {/* <TableCell sx={{ bgcolor: '#fff3e0' }}>
+                              </TableCell>
+                              <TableCell>
+                                {plot.status === 'sold' ? (
+                                  <Chip
+                                    label={plot.registryStatus === 'completed' ? 'Completed' : 'Pending'}
+                                    size="small"
+                                    color={plot.registryStatus === 'completed' ? 'success' : 'warning'}
+                                  />
+                                ) : (
+                                  '-'
+                                )}
+                              </TableCell>
+                              <TableCell>{plot.customerName}</TableCell>
+                              <TableCell>{plot.customerNumber || '-'}</TableCell>
+                              {/* <TableCell sx={{ bgcolor: '#fff3e0' }}>
                               <Typography variant="body2" fontWeight={600}>
                                 ₹{plot.askingPricePerGaj.toLocaleString('en-IN')}
                               </Typography>
@@ -2753,22 +2783,22 @@ const PropertyManagement = () => {
                                 ₹{plot.totalAskingPrice.toLocaleString('en-IN')}
                               </Typography>
                             </TableCell> */}
-                            <TableCell sx={{ bgcolor: '#e3f2fd' }}>
-                              <Typography variant="body2" fontWeight={600} color="primary.main">
-                                ₹{plot.finalPricePerGaj.toLocaleString('en-IN')}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={{ bgcolor: '#e3f2fd' }}>
-                              <Typography variant="body2" fontWeight={700} color="primary.main">
-                                ₹{plot.totalFinalPrice.toLocaleString('en-IN')}
-                              </Typography>
-                            </TableCell>
-                            {/* <TableCell>
+                              <TableCell sx={{ bgcolor: '#e3f2fd' }}>
+                                <Typography variant="body2" fontWeight={600} color="primary.main">
+                                  ₹{plot.finalPricePerGaj.toLocaleString('en-IN')}
+                                </Typography>
+                              </TableCell>
+                              <TableCell sx={{ bgcolor: '#e3f2fd' }}>
+                                <Typography variant="body2" fontWeight={700} color="primary.main">
+                                  ₹{plot.totalFinalPrice.toLocaleString('en-IN')}
+                                </Typography>
+                              </TableCell>
+                              {/* <TableCell>
                               <Typography variant="body2" color="success.main" fontWeight={600}>
                                 ₹{plot.paidAmount.toLocaleString('en-IN')}
                               </Typography>
                             </TableCell> */}
-                            {/* <TableCell sx={{ bgcolor: '#ffebee' }}>
+                              {/* <TableCell sx={{ bgcolor: '#ffebee' }}>
                               <Typography 
                                 variant="body2" 
                                 color={plot.remainingAmount > 0 ? 'error.main' : 'success.main'}
@@ -2777,20 +2807,25 @@ const PropertyManagement = () => {
                                 ₹{plot.remainingAmount.toLocaleString('en-IN')}
                               </Typography>
                             </TableCell> */}
-                            {/* <TableCell>
+                              {/* <TableCell>
                               {plot.transactionDate !== '-' 
                                 ? new Date(plot.transactionDate).toLocaleDateString('en-IN')
                                 : '-'
                               }
                             </TableCell>
                             <TableCell>{plot.modeOfPayment}</TableCell> */}
-                            <TableCell>{plot.agentName}</TableCell>
-                            <TableCell>{plot.agentPhone || '-'}</TableCell>
-                            <TableCell>{plot.advocateName}</TableCell>
-                            <TableCell>{plot.advocatePhone || '-'}</TableCell>
+                              <TableCell>{plot.agentName}</TableCell>
+                              <TableCell>{plot.agentPhone || '-'}</TableCell>
+                              <TableCell>{plot.advocateName}</TableCell>
+                              <TableCell>{plot.advocatePhone || '-'}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={13} align="center">No plots found</TableCell>
                           </TableRow>
-                        ))
-                      )}
+                        )
+                      })()}
                     </TableBody>
                   </Table>
                 </TableContainer>
