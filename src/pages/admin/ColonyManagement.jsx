@@ -132,10 +132,10 @@ const ColonyManagement = () => {
           axios.get('/plots', { params: { limit: 1000 } }),
           axios.get('/properties', { params: { limit: 1000 } })
         ]);
-        
+
         const allPlots = plotsResponse.data?.data?.plots || [];
         const allProperties = propertiesResponse.data?.data?.properties || [];
-        
+
         // Group plots by colony
         const plotCountsByColony = {};
         allPlots.forEach(plot => {
@@ -157,7 +157,7 @@ const ColonyManagement = () => {
                 usedLandGaj: 0
               };
             }
-            
+
             // Calculate road area from roads array
             if (property.roads && Array.isArray(property.roads)) {
               property.roads.forEach(road => {
@@ -167,7 +167,7 @@ const ColonyManagement = () => {
                 }
               });
             }
-            
+
             // Calculate amenity area from parks array
             if (property.parks && Array.isArray(property.parks)) {
               property.parks.forEach(park => {
@@ -198,13 +198,13 @@ const ColonyManagement = () => {
             amenityAreaGaj: 0,
             usedLandGaj: 0
           };
-          
+
           const totalLandAreaGaj = colony.totalLandAreaGaj ?? (typeof colony.totalArea === 'number' ? Math.round(colony.totalArea / SQFT_PER_GAJ) : 0);
           const usedLandGaj = Math.round(propertyStats.usedLandGaj * 100) / 100;
           const remainingLandGaj = totalLandAreaGaj > 0 ? Math.round((totalLandAreaGaj - usedLandGaj) * 100) / 100 : 0;
-          
-          return normalizeColony({ 
-            ...colony, 
+
+          return normalizeColony({
+            ...colony,
             totalPlots,
             roadAreaGaj: Math.round(propertyStats.roadAreaGaj * 100) / 100,
             amenityAreaGaj: Math.round(propertyStats.amenityAreaGaj * 100) / 100,
@@ -235,7 +235,7 @@ const ColonyManagement = () => {
     if (colony) {
       setEditMode(true)
       setCurrentColony(colony)
-      
+
       // Ensure all khatoni holders have unique IDs
       const khatoniHoldersWithIds = (colony.khatoniHolders || (colony.sellerName ? [{
         name: colony.sellerName,
@@ -245,7 +245,7 @@ const ColonyManagement = () => {
         ...holder,
         id: holder.id || holder._id || `existing-${index}-${Date.now()}`
       }));
-      
+
       setFormData({
         name: colony.name || '',
         address: colony.address || colony.location?.address || '',
@@ -312,9 +312,9 @@ const ColonyManagement = () => {
   }
 
   const removeKhatoniHolder = (id) => {
-    setFormData({ 
-      ...formData, 
-      khatoniHolders: formData.khatoniHolders.filter(holder => holder.id !== id) 
+    setFormData({
+      ...formData,
+      khatoniHolders: formData.khatoniHolders.filter(holder => holder.id !== id)
     })
   }
 
@@ -540,7 +540,7 @@ const ColonyManagement = () => {
             Back to colony List
           </Button>
         </Box>
-        
+
         <Paper sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
@@ -600,8 +600,8 @@ const ColonyManagement = () => {
                     const selectedCity = cities.find(city => city.name === e.target.value)
                     setFormData({
                       ...formData,
-                      location: { 
-                        ...formData.location, 
+                      location: {
+                        ...formData.location,
                         city: e.target.value,
                         state: selectedCity?.state || formData.location.state
                       }
@@ -717,6 +717,91 @@ const ColonyManagement = () => {
                     />
                   </Grid>
                   <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mt: 1 }}>
+                      Upload Documents
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
+                    <Button variant="outlined" component="label" fullWidth size="small">
+                      Aadhar Front
+                      <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          setNewKhatoniHolder({ ...newKhatoniHolder, aadharFront: file })
+                        }
+                      }} />
+                    </Button>
+                    {newKhatoniHolder.aadharFront && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.aadharFront.name}</Typography>}
+                    <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
+                    <Button variant="outlined" component="label" fullWidth size="small">
+                      Aadhar Back
+                      <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          setNewKhatoniHolder({ ...newKhatoniHolder, aadharBack: file })
+                        }
+                      }} />
+                    </Button>
+                    {newKhatoniHolder.aadharBack && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.aadharBack.name}</Typography>}
+                    <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
+                    <Button variant="outlined" component="label" fullWidth size="small">
+                      PAN Card
+                      <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          setNewKhatoniHolder({ ...newKhatoniHolder, panCard: file })
+                        }
+                      }} />
+                    </Button>
+                    {newKhatoniHolder.panCard && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.panCard.name}</Typography>}
+                    <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
+                    <Button variant="outlined" component="label" fullWidth size="small">
+                      Passport Photo
+                      <input type="file" hidden accept="image/*" onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          setNewKhatoniHolder({ ...newKhatoniHolder, passportPhoto: file })
+                        }
+                      }} />
+                    </Button>
+                    {newKhatoniHolder.passportPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.passportPhoto.name}</Typography>}
+                    <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                  </Grid>
+                  <Grid item xs={6} md={4}>
+                    <Button variant="outlined" component="label" fullWidth size="small">
+                      Full Photo
+                      <input type="file" hidden accept="image/*" onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          setNewKhatoniHolder({ ...newKhatoniHolder, fullPhoto: file })
+                        }
+                      }} />
+                    </Button>
+                    {newKhatoniHolder.fullPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.fullPhoto.name}</Typography>}
+                    <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
                     <Button
                       variant="contained"
                       onClick={addKhatoniHolder}
@@ -766,7 +851,7 @@ const ColonyManagement = () => {
                 Colony Side Measurements (in Feet)
               </Typography>
             </Grid>
-              {calculateColonyArea() && (
+            {calculateColonyArea() && (
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, bgcolor: 'success.light', color: 'white' }}>
                   <Typography variant="body2">Total Area: <strong>{calculateColonyArea().areaFeet} sq ft = {calculateColonyArea().areaGaj} Gaj</strong></Typography>
@@ -821,9 +906,9 @@ const ColonyManagement = () => {
                 })}
               />
             </Grid>
-          
+
           </Grid>
-          
+
           <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
             <Button onClick={handleCloseForm} size="large">Cancel</Button>
             <Button onClick={handleSubmit} variant="contained" size="large">
@@ -901,8 +986,8 @@ const ColonyManagement = () => {
                   {/* <TableCell>
                     {colony.khatoniHolderDetails && colony.khatoniHolderDetails.length > 0 ? (
                       <Box> */}
-                        {/* Show first Khatoni Holder */}
-                        {/* <Box mb={0.5}>
+                  {/* Show first Khatoni Holder */}
+                  {/* <Box mb={0.5}>
                           <Typography variant="body2">
                             {colony.khatoniHolderDetails[0].name || '-'}
                           </Typography>
@@ -912,8 +997,8 @@ const ColonyManagement = () => {
                             </Typography>
                           )}
                         </Box> */}
-                        {/* Show "See More" if there are multiple holders */}
-                        {/* {colony.khatoniHolderDetails.length > 1 && (
+                  {/* Show "See More" if there are multiple holders */}
+                  {/* {colony.khatoniHolderDetails.length > 1 && (
                           <Button
                             size="small"
                             variant="text"
@@ -1002,39 +1087,39 @@ const ColonyManagement = () => {
               </Typography>
               <Button variant="outlined" onClick={handleCloseForm}>Cancel</Button>
             </Box>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Colony Name *"
-                value={formData.name}
-                onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value })
-                  clearError('name')
-                }}
-                error={!!errors.name}
-                helperText={errors.name}
-                required
-              />
-            </Grid>
-               <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Purchase Price (₹)"
-                type="number"
-                value={formData.purchasePrice}
-                onChange={(e) => {
-                  setFormData({ ...formData, purchasePrice: e.target.value })
-                  clearError('purchasePrice')
-                }}
-                error={!!errors.purchasePrice}
-                helperText={errors.purchasePrice}
-                placeholder="Total purchase amount"
-              />
-            </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Colony Name *"
+                  value={formData.name}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value })
+                    clearError('name')
+                  }}
+                  error={!!errors.name}
+                  helperText={errors.name}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Purchase Price (₹)"
+                  type="number"
+                  value={formData.purchasePrice}
+                  onChange={(e) => {
+                    setFormData({ ...formData, purchasePrice: e.target.value })
+                    clearError('purchasePrice')
+                  }}
+                  error={!!errors.purchasePrice}
+                  helperText={errors.purchasePrice}
+                  placeholder="Total purchase amount"
+                />
+              </Grid>
 
-            {/* <Grid item xs={12}>
+              {/* <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Address *"
@@ -1048,94 +1133,94 @@ const ColonyManagement = () => {
                 required
               />
             </Grid> */}
-             {/* land Location */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Colony Location
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address*"
-                value={formData.location.address}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  location: { ...formData.location, address: e.target.value }
-                })}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                select
-                label="City"
-                value={formData.location.city}
-                onChange={(e) => {
-                  const selectedCity = cities.find(city => city.name === e.target.value)
-                  console.log('Selected city:', selectedCity)
-                  setFormData({
+              {/* land Location */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
+                  Colony Location
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Address*"
+                  value={formData.location.address}
+                  onChange={(e) => setFormData({
                     ...formData,
-                    location: { 
-                      ...formData.location, 
-                      city: e.target.value,
-                      state: selectedCity?.state || formData.location.state
-                    }
-                  })
-                }}
-                SelectProps={{
-                  native: false,
-                }}
-                helperText={`${cities.length} cities available`}
-              >
-                <MenuItem value="">Select City</MenuItem>
-                {cities.length === 0 ? (
-                  <MenuItem disabled>No cities found. Please create cities first.</MenuItem>
-                ) : (
-                  cities.map((city) => (
-                    <MenuItem key={city._id} value={city.name}>
-                      {city.name}
-                    </MenuItem>
-                  ))
-                )}
-              </TextField>
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                fullWidth
-                label="State"
-                value={formData.location.state}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  location: { ...formData.location, state: e.target.value }
-                })}
-                InputProps={{
-                  readOnly: !!formData.location.city
-                }}
-                helperText={formData.location.city ? "Auto-filled from city" : ""}
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                fullWidth
-                label="Pincode"
-                value={formData.location.pincode}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  location: { ...formData.location, pincode: e.target.value }
-                })}
-              />
-            </Grid>
-         
+                    location: { ...formData.location, address: e.target.value }
+                  })}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="City"
+                  value={formData.location.city}
+                  onChange={(e) => {
+                    const selectedCity = cities.find(city => city.name === e.target.value)
+                    console.log('Selected city:', selectedCity)
+                    setFormData({
+                      ...formData,
+                      location: {
+                        ...formData.location,
+                        city: e.target.value,
+                        state: selectedCity?.state || formData.location.state
+                      }
+                    })
+                  }}
+                  SelectProps={{
+                    native: false,
+                  }}
+                  helperText={`${cities.length} cities available`}
+                >
+                  <MenuItem value="">Select City</MenuItem>
+                  {cities.length === 0 ? (
+                    <MenuItem disabled>No cities found. Please create cities first.</MenuItem>
+                  ) : (
+                    cities.map((city) => (
+                      <MenuItem key={city._id} value={city.name}>
+                        {city.name}
+                      </MenuItem>
+                    ))
+                  )}
+                </TextField>
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  label="State"
+                  value={formData.location.state}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    location: { ...formData.location, state: e.target.value }
+                  })}
+                  InputProps={{
+                    readOnly: !!formData.location.city
+                  }}
+                  helperText={formData.location.city ? "Auto-filled from city" : ""}
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  label="Pincode"
+                  value={formData.location.pincode}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    location: { ...formData.location, pincode: e.target.value }
+                  })}
+                />
+              </Grid>
 
-            {/* Seller & Purchase Details */}
-            {/* <Grid item xs={12}>
+
+              {/* Seller & Purchase Details */}
+              {/* <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
                 Seller & Purchase Details
               </Typography>
             </Grid> */}
 
-            {/* <Grid item xs={6}>
+              {/* <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Calculated Total Area (Gaj)"
@@ -1144,89 +1229,89 @@ const ColonyManagement = () => {
                 helperText="Area auto-calculated from the side measurements"
               />
             </Grid> */}
-            {/* Multiple Khatoni Holders Section */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Khatoni Holders Information
-              </Typography>
+              {/* Multiple Khatoni Holders Section */}
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Khatoni Holders Information
+                </Typography>
 
-              {/* Existing Khatoni Holders */}
-              {formData.khatoniHolders.map((holder, index) => (
-                <Box key={holder.id || index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      Khatoni Holder {index + 1}
-                    </Typography>
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={() => removeKhatoniHolder(holder.id)}
-                    >
-                      Remove
-                    </Button>
-                  </Box>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <Typography variant="body2"><strong>Name:</strong> {holder.name}</Typography>
+                {/* Existing Khatoni Holders */}
+                {formData.khatoniHolders.map((holder, index) => (
+                  <Box key={holder.id || index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                      <Typography variant="subtitle2" fontWeight="bold">
+                        Khatoni Holder {index + 1}
+                      </Typography>
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={() => removeKhatoniHolder(holder.id)}
+                      >
+                        Remove
+                      </Button>
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <Typography variant="body2"><strong>Name:</strong> {holder.name}</Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2"><strong>Mobile:</strong> {holder.mobile}</Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="body2"><strong>Address:</strong> {holder.address}</Typography>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="body2"><strong>Mobile:</strong> {holder.mobile}</Typography>
+                  </Box>
+                ))}
+
+                {/* Add New Khatoni Holder */}
+                <Box sx={{ p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Add New Khatoni Holder
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={5}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Khatoni Holder Name"
+                        value={newKhatoniHolder.name}
+                        onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, name: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={3}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Mobile"
+                        value={newKhatoniHolder.mobile}
+                        onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, mobile: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={4}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Address"
+                        value={newKhatoniHolder.address}
+                        onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, address: e.target.value })}
+                      />
                     </Grid>
                     <Grid item xs={12}>
-                      <Typography variant="body2"><strong>Address:</strong> {holder.address}</Typography>
+                      <Button
+                        variant="contained"
+                        onClick={addKhatoniHolder}
+                        sx={{ width: 'auto', px: 3 }}
+                      >
+                        Add Khatoni Holder
+                      </Button>
                     </Grid>
                   </Grid>
                 </Box>
-              ))}
+              </Grid>
 
-              {/* Add New Khatoni Holder */}
-              <Box sx={{ p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Add New Khatoni Holder
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={5}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Khatoni Holder Name"
-                      value={newKhatoniHolder.name}
-                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, name: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={3}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Mobile"
-                      value={newKhatoniHolder.mobile}
-                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, mobile: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={4}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Address"
-                      value={newKhatoniHolder.address}
-                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, address: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      variant="contained"
-                      onClick={addKhatoniHolder}
-                      sx={{ width: 'auto', px: 3 }}
-                    >
-                      Add Khatoni Holder
-                    </Button>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Grid>
-           
 
-            {/* <Grid item xs={6}>
+              {/* <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Latitude"
@@ -1262,104 +1347,104 @@ const ColonyManagement = () => {
                 placeholder="https://example.com/layout-image.jpg"
               />
             </Grid> */}
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Asking
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Asking
                  Price per Gaj (Optional)"
-                type="number"
-                value={formData.basePricePerGaj}
-                onChange={(e) => {
-                  setFormData({ ...formData, basePricePerGaj: e.target.value })
-                  clearError('basePricePerGaj')
-                }}
-                error={!!errors.basePricePerGaj}
-                helperText={errors.basePricePerGaj}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Status"
-                select
-                SelectProps={{ native: true }}
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                <option value="planning">Planning</option>
-                <option value="under_construction">Under Construction</option>
-                <option value="ready_to_sell">Ready to Sell</option>
-                <option value="sold_out">Sold Out</option>
-                <option value="on_hold">On Hold</option>
-              </TextField>
+                  type="number"
+                  value={formData.basePricePerGaj}
+                  onChange={(e) => {
+                    setFormData({ ...formData, basePricePerGaj: e.target.value })
+                    clearError('basePricePerGaj')
+                  }}
+                  error={!!errors.basePricePerGaj}
+                  helperText={errors.basePricePerGaj}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Status"
+                  select
+                  SelectProps={{ native: true }}
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                >
+                  <option value="planning">Planning</option>
+                  <option value="under_construction">Under Construction</option>
+                  <option value="ready_to_sell">Ready to Sell</option>
+                  <option value="sold_out">Sold Out</option>
+                  <option value="on_hold">On Hold</option>
+                </TextField>
+              </Grid>
+
+              {/* Side Measurements */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
+                  Colony Side Measurements (in Feet)
+                </Typography>
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  label="Front (ft)"
+                  type="number"
+                  value={formData.sideMeasurements.front}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    sideMeasurements: { ...formData.sideMeasurements, front: e.target.value }
+                  })}
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  label="Back (ft)"
+                  type="number"
+                  value={formData.sideMeasurements.back}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    sideMeasurements: { ...formData.sideMeasurements, back: e.target.value }
+                  })}
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  label="Left (ft)"
+                  type="number"
+                  value={formData.sideMeasurements.left}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    sideMeasurements: { ...formData.sideMeasurements, left: e.target.value }
+                  })}
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  fullWidth
+                  label="Right (ft)"
+                  type="number"
+                  value={formData.sideMeasurements.right}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    sideMeasurements: { ...formData.sideMeasurements, right: e.target.value }
+                  })}
+                />
+              </Grid>
+
+
             </Grid>
 
-            {/* Side Measurements */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Colony Side Measurements (in Feet)
-              </Typography>
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                fullWidth
-                label="Front (ft)"
-                type="number"
-                value={formData.sideMeasurements.front}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  sideMeasurements: { ...formData.sideMeasurements, front: e.target.value }
-                })}
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                fullWidth
-                label="Back (ft)"
-                type="number"
-                value={formData.sideMeasurements.back}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  sideMeasurements: { ...formData.sideMeasurements, back: e.target.value }
-                })}
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                fullWidth
-                label="Left (ft)"
-                type="number"
-                value={formData.sideMeasurements.left}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  sideMeasurements: { ...formData.sideMeasurements, left: e.target.value }
-                })}
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                fullWidth
-                label="Right (ft)"
-                type="number"
-                value={formData.sideMeasurements.right}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  sideMeasurements: { ...formData.sideMeasurements, right: e.target.value }
-                })}
-              />
-            </Grid>
-     
-
-          </Grid>
-          
-          <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
-            <Button onClick={handleCloseForm} size="large">Cancel</Button>
-            <Button onClick={handleSubmit} variant="contained" size="large">
-              {editMode ? 'Update Colony' : 'Create Colony'}
-            </Button>
+            <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
+              <Button onClick={handleCloseForm} size="large">Cancel</Button>
+              <Button onClick={handleSubmit} variant="contained" size="large">
+                {editMode ? 'Update Colony' : 'Create Colony'}
+              </Button>
+            </Box>
           </Box>
         </Box>
-      </Box>
       )}
     </Box>
   )

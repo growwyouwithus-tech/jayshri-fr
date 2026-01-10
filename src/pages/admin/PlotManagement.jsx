@@ -184,6 +184,12 @@ const PlotManagement = () => {
     registryDocument: null,
     registryDocuments: [],
     registryStatus: 'pending',
+    // Customer documents
+    customerAadharFront: null,
+    customerAadharBack: null,
+    customerPanCard: null,
+    customerPassportPhoto: null,
+    customerFullPhoto: null,
   })
 
   const toNumber = (value) => {
@@ -2214,6 +2220,94 @@ const PlotManagement = () => {
                           required
                         />
                       </Grid>
+
+                      {/* Customer Documents Section */}
+                      <Grid item xs={12}>
+                        <Typography variant="body2" fontWeight={600} sx={{ mt: 2, mb: 1, color: '#e65100' }}>
+                          Customer Documents
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6} md={4}>
+                        <Button variant="outlined" component="label" fullWidth size="small">
+                          Aadhar Front
+                          <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                            const file = e.target.files[0]
+                            if (file && file.size > 1024 * 1024) {
+                              toast.error('File size must be less than 1MB')
+                              e.target.value = ''
+                            } else {
+                              setNewPlot((s) => ({ ...s, customerAadharFront: file }))
+                            }
+                          }} />
+                        </Button>
+                        {newPlot.customerAadharFront && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerAadharFront.name}</Typography>}
+                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                      </Grid>
+                      <Grid item xs={6} md={4}>
+                        <Button variant="outlined" component="label" fullWidth size="small">
+                          Aadhar Back
+                          <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                            const file = e.target.files[0]
+                            if (file && file.size > 1024 * 1024) {
+                              toast.error('File size must be less than 1MB')
+                              e.target.value = ''
+                            } else {
+                              setNewPlot((s) => ({ ...s, customerAadharBack: file }))
+                            }
+                          }} />
+                        </Button>
+                        {newPlot.customerAadharBack && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerAadharBack.name}</Typography>}
+                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                      </Grid>
+                      <Grid item xs={6} md={4}>
+                        <Button variant="outlined" component="label" fullWidth size="small">
+                          PAN Card
+                          <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                            const file = e.target.files[0]
+                            if (file && file.size > 1024 * 1024) {
+                              toast.error('File size must be less than 1MB')
+                              e.target.value = ''
+                            } else {
+                              setNewPlot((s) => ({ ...s, customerPanCard: file }))
+                            }
+                          }} />
+                        </Button>
+                        {newPlot.customerPanCard && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerPanCard.name}</Typography>}
+                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                      </Grid>
+                      <Grid item xs={6} md={4}>
+                        <Button variant="outlined" component="label" fullWidth size="small">
+                          Passport Photo
+                          <input type="file" hidden accept="image/*" onChange={(e) => {
+                            const file = e.target.files[0]
+                            if (file && file.size > 1024 * 1024) {
+                              toast.error('File size must be less than 1MB')
+                              e.target.value = ''
+                            } else {
+                              setNewPlot((s) => ({ ...s, customerPassportPhoto: file }))
+                            }
+                          }} />
+                        </Button>
+                        {newPlot.customerPassportPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerPassportPhoto.name}</Typography>}
+                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                      </Grid>
+                      <Grid item xs={6} md={4}>
+                        <Button variant="outlined" component="label" fullWidth size="small">
+                          Full Photo
+                          <input type="file" hidden accept="image/*" onChange={(e) => {
+                            const file = e.target.files[0]
+                            if (file && file.size > 1024 * 1024) {
+                              toast.error('File size must be less than 1MB')
+                              e.target.value = ''
+                            } else {
+                              setNewPlot((s) => ({ ...s, customerFullPhoto: file }))
+                            }
+                          }} />
+                        </Button>
+                        {newPlot.customerFullPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerFullPhoto.name}</Typography>}
+                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                      </Grid>
+
                       <Grid item xs={12} sm={6}>
                         <TextField
                           fullWidth

@@ -34,7 +34,7 @@ const Settings = () => {
     gstNumber: '07AABCJ1234F1Z5',
     panNumber: 'AABCJ1234F'
   })
-  
+
   const [systemSettings, setSystemSettings] = useState({
     emailNotifications: true,
     smsNotifications: true,
@@ -112,7 +112,7 @@ const Settings = () => {
           throw apiError
         }
       }
-      
+
       toast.success(`${settingsType.charAt(0).toUpperCase() + settingsType.slice(1)} settings updated successfully`)
     } catch (error) {
       console.error(`Failed to update ${settingsType} settings:`, error)
@@ -128,7 +128,7 @@ const Settings = () => {
       <Typography variant="h6" fontWeight="bold" mb={3}>
         Company Information
       </Typography>
-      
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <TextField
@@ -214,6 +214,103 @@ const Settings = () => {
               onChange={(e) => handleCompanySettingsChange('logo', e.target.files[0])}
             />
           </Box>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+            Owner Documents
+          </Typography>
+        </Grid>
+
+        <Grid item xs={6} md={4}>
+          <Typography variant="body2" mb={1}>Aadhar Front</Typography>
+          <Button variant="outlined" component="label" fullWidth>
+            Upload Aadhar Front
+            <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+              const file = e.target.files[0]
+              if (file && file.size > 1024 * 1024) {
+                toast.error('File size must be less than 1MB')
+                e.target.value = ''
+              } else {
+                handleCompanySettingsChange('aadharFront', file)
+              }
+            }} />
+          </Button>
+          {companySettings.aadharFront && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
+          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+        </Grid>
+
+        <Grid item xs={6} md={4}>
+          <Typography variant="body2" mb={1}>Aadhar Back</Typography>
+          <Button variant="outlined" component="label" fullWidth>
+            Upload Aadhar Back
+            <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+              const file = e.target.files[0]
+              if (file && file.size > 1024 * 1024) {
+                toast.error('File size must be less than 1MB')
+                e.target.value = ''
+              } else {
+                handleCompanySettingsChange('aadharBack', file)
+              }
+            }} />
+          </Button>
+          {companySettings.aadharBack && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
+          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+        </Grid>
+
+        <Grid item xs={6} md={4}>
+          <Typography variant="body2" mb={1}>PAN Card</Typography>
+          <Button variant="outlined" component="label" fullWidth>
+            Upload PAN Card
+            <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+              const file = e.target.files[0]
+              if (file && file.size > 1024 * 1024) {
+                toast.error('File size must be less than 1MB')
+                e.target.value = ''
+              } else {
+                handleCompanySettingsChange('panCard', file)
+              }
+            }} />
+          </Button>
+          {companySettings.panCard && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
+          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+        </Grid>
+
+        <Grid item xs={6} md={4}>
+          <Typography variant="body2" mb={1}>Passport Photo</Typography>
+          <Button variant="outlined" component="label" fullWidth>
+            Upload Passport Photo
+            <input type="file" hidden accept="image/*" onChange={(e) => {
+              const file = e.target.files[0]
+              if (file && file.size > 1024 * 1024) {
+                toast.error('File size must be less than 1MB')
+                e.target.value = ''
+              } else {
+                handleCompanySettingsChange('passportPhoto', file)
+              }
+            }} />
+          </Button>
+          {companySettings.passportPhoto && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
+          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+        </Grid>
+
+        <Grid item xs={6} md={4}>
+          <Typography variant="body2" mb={1}>Full Photo</Typography>
+          <Button variant="outlined" component="label" fullWidth>
+            Upload Full Photo
+            <input type="file" hidden accept="image/*" onChange={(e) => {
+              const file = e.target.files[0]
+              if (file && file.size > 1024 * 1024) {
+                toast.error('File size must be less than 1MB')
+                e.target.value = ''
+              } else {
+                handleCompanySettingsChange('fullPhoto', file)
+              }
+            }} />
+          </Button>
+          {companySettings.fullPhoto && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
+          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
         </Grid>
       </Grid>
 
@@ -353,7 +450,7 @@ const Settings = () => {
           <Typography variant="subtitle1" fontWeight="bold" mb={2}>
             Payment Gateways
           </Typography>
-          
+
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center">
