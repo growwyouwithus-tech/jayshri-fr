@@ -153,6 +153,11 @@ const PlotManagement = () => {
     backSide: '',
     leftSide: '',
     rightSide: '',
+    // Adjacent features
+    adjacentFront: '',
+    adjacentBack: '',
+    adjacentLeft: '',
+    adjacentRight: '',
     areaGaj: '',
     pricePerGaj: '',
     totalPrice: '',
@@ -164,6 +169,8 @@ const PlotManagement = () => {
     customerName: '',
     customerNumber: '',
     customerShortAddress: '',
+    customerAadharNumber: '',
+    customerPanNumber: '',
     customerFullAddress: '',
     registryDate: '',
     moreInformation: '',
@@ -334,6 +341,10 @@ const PlotManagement = () => {
         length: toNumber(newPlot.frontSide),
         width: toNumber(newPlot.leftSide),
         frontage: toNumber(newPlot.frontSide),
+        front: newPlot.adjacentFront,
+        back: newPlot.adjacentBack,
+        left: newPlot.adjacentLeft,
+        right: newPlot.adjacentRight,
       },
       sideMeasurements: {
         front: toNumber(newPlot.frontSide),
@@ -351,6 +362,12 @@ const PlotManagement = () => {
       // Only include optional fields if they have values
       if (newPlot.customerFullAddress) {
         payload.customerFullAddress = newPlot.customerFullAddress
+      }
+      if (newPlot.customerAadharNumber) {
+        payload.customerAadharNumber = newPlot.customerAadharNumber
+      }
+      if (newPlot.customerPanNumber) {
+        payload.customerPanNumber = newPlot.customerPanNumber
       }
       if (newPlot.registryDate) {
         payload.registryDate = newPlot.registryDate
@@ -662,6 +679,11 @@ const PlotManagement = () => {
       backSide: plot.sideMeasurements?.back?.toString() || plot.dimensions?.length?.toString() || '',
       leftSide: plot.sideMeasurements?.left?.toString() || plot.dimensions?.width?.toString() || '',
       rightSide: plot.sideMeasurements?.right?.toString() || plot.dimensions?.width?.toString() || '',
+      // Adjacent features
+      adjacentFront: plot.dimensions?.front || '',
+      adjacentBack: plot.dimensions?.back || '',
+      adjacentLeft: plot.dimensions?.left || '',
+      adjacentRight: plot.dimensions?.right || '',
       areaGaj: plot.areaGaj?.toString() || (plot.area ? sqFtToGaj(plot.area).toString() : ''),
       pricePerGaj: plot.pricePerGaj?.toString() || (plot.pricePerSqFt ? pricePerSqFtToGaj(plot.pricePerSqFt).toString() : ''),
       totalPrice: plot.totalPrice?.toString() || '',
@@ -672,6 +694,8 @@ const PlotManagement = () => {
       customerName: plot.customerName || '',
       customerNumber: plot.customerNumber ? plot.customerNumber.replace(/^\+91/, '') : '',
       customerShortAddress: plot.customerShortAddress || '',
+      customerAadharNumber: plot.customerAadharNumber || '',
+      customerPanNumber: plot.customerPanNumber || '',
       customerFullAddress: plot.customerFullAddress || '',
       registryDate: plot.registryDate || '',
       moreInformation: plot.moreInformation || '',
@@ -998,6 +1022,22 @@ const PlotManagement = () => {
           formData.append('plotImages', file)
         })
       }
+      // Append customer documents if exist
+      if (newPlot.customerAadharFront) {
+        formData.append('customerAadharFront', newPlot.customerAadharFront)
+      }
+      if (newPlot.customerAadharBack) {
+        formData.append('customerAadharBack', newPlot.customerAadharBack)
+      }
+      if (newPlot.customerPanCard) {
+        formData.append('customerPanCard', newPlot.customerPanCard)
+      }
+      if (newPlot.customerPassportPhoto) {
+        formData.append('customerPassportPhoto', newPlot.customerPassportPhoto)
+      }
+      if (newPlot.customerFullPhoto) {
+        formData.append('customerFullPhoto', newPlot.customerFullPhoto)
+      }
 
       const response = await axios.post('/plots', formData, {
         headers: {
@@ -1070,6 +1110,22 @@ const PlotManagement = () => {
         newPlot.plotImages.forEach((file) => {
           formData.append('plotImages', file)
         })
+      }
+      // Append customer documents if exist
+      if (newPlot.customerAadharFront) {
+        formData.append('customerAadharFront', newPlot.customerAadharFront)
+      }
+      if (newPlot.customerAadharBack) {
+        formData.append('customerAadharBack', newPlot.customerAadharBack)
+      }
+      if (newPlot.customerPanCard) {
+        formData.append('customerPanCard', newPlot.customerPanCard)
+      }
+      if (newPlot.customerPassportPhoto) {
+        formData.append('customerPassportPhoto', newPlot.customerPassportPhoto)
+      }
+      if (newPlot.customerFullPhoto) {
+        formData.append('customerFullPhoto', newPlot.customerFullPhoto)
       }
 
       const response = await axios.put(`/plots/${editingPlotId}`, formData, {
@@ -2042,6 +2098,55 @@ const PlotManagement = () => {
                   </Box>
                 </Box>
 
+                {/* Adjacent Features */}
+                <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Adjacent Features (Optional)
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Front Side Adjacent"
+                        value={newPlot.adjacentFront}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, adjacentFront: e.target.value }))}
+                        placeholder="e.g., Road, Park, Plot #123"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Back Side Adjacent"
+                        value={newPlot.adjacentBack}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, adjacentBack: e.target.value }))}
+                        placeholder="e.g., Road, Park, Plot #123"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Left Side Adjacent"
+                        value={newPlot.adjacentLeft}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, adjacentLeft: e.target.value }))}
+                        placeholder="e.g., Road, Park, Plot #123"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Right Side Adjacent"
+                        value={newPlot.adjacentRight}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, adjacentRight: e.target.value }))}
+                        placeholder="e.g., Road, Park, Plot #123"
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
@@ -2221,91 +2326,130 @@ const PlotManagement = () => {
                         />
                       </Grid>
 
+                      {/* Manual Aadhar/PAN Entry Section */}
+                      <Grid item xs={12} >
+
+
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Customer Aadhar Number (Optional)"
+                              value={newPlot.customerAadharNumber}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, customerAadharNumber: e.target.value }))}
+                              placeholder="Enter 12-digit Aadhar number"
+                              inputProps={{ maxLength: 12 }}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Customer PAN Number (Optional)"
+                              value={newPlot.customerPanNumber}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, customerPanNumber: e.target.value.toUpperCase() }))}
+                              placeholder="Enter 10-character PAN"
+                              inputProps={{ maxLength: 10 }}
+                            />
+                          </Grid>
+                        </Grid>
+                        {/* <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+                            💡 You can manually enter Aadhar and PAN numbers here, and optionally upload document images below.
+                          </Typography> */}
+
+                      </Grid>
+
                       {/* Customer Documents Section */}
                       <Grid item xs={12}>
-                        <Typography variant="body2" fontWeight={600} sx={{ mt: 2, mb: 1, color: '#e65100' }}>
-                          Customer Documents
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} md={4}>
-                        <Button variant="outlined" component="label" fullWidth size="small">
-                          Aadhar Front
-                          <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
-                            const file = e.target.files[0]
-                            if (file && file.size > 1024 * 1024) {
-                              toast.error('File size must be less than 1MB')
-                              e.target.value = ''
-                            } else {
-                              setNewPlot((s) => ({ ...s, customerAadharFront: file }))
-                            }
-                          }} />
-                        </Button>
-                        {newPlot.customerAadharFront && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerAadharFront.name}</Typography>}
-                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-                      </Grid>
-                      <Grid item xs={6} md={4}>
-                        <Button variant="outlined" component="label" fullWidth size="small">
-                          Aadhar Back
-                          <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
-                            const file = e.target.files[0]
-                            if (file && file.size > 1024 * 1024) {
-                              toast.error('File size must be less than 1MB')
-                              e.target.value = ''
-                            } else {
-                              setNewPlot((s) => ({ ...s, customerAadharBack: file }))
-                            }
-                          }} />
-                        </Button>
-                        {newPlot.customerAadharBack && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerAadharBack.name}</Typography>}
-                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-                      </Grid>
-                      <Grid item xs={6} md={4}>
-                        <Button variant="outlined" component="label" fullWidth size="small">
-                          PAN Card
-                          <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
-                            const file = e.target.files[0]
-                            if (file && file.size > 1024 * 1024) {
-                              toast.error('File size must be less than 1MB')
-                              e.target.value = ''
-                            } else {
-                              setNewPlot((s) => ({ ...s, customerPanCard: file }))
-                            }
-                          }} />
-                        </Button>
-                        {newPlot.customerPanCard && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerPanCard.name}</Typography>}
-                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-                      </Grid>
-                      <Grid item xs={6} md={4}>
-                        <Button variant="outlined" component="label" fullWidth size="small">
-                          Passport Photo
-                          <input type="file" hidden accept="image/*" onChange={(e) => {
-                            const file = e.target.files[0]
-                            if (file && file.size > 1024 * 1024) {
-                              toast.error('File size must be less than 1MB')
-                              e.target.value = ''
-                            } else {
-                              setNewPlot((s) => ({ ...s, customerPassportPhoto: file }))
-                            }
-                          }} />
-                        </Button>
-                        {newPlot.customerPassportPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerPassportPhoto.name}</Typography>}
-                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-                      </Grid>
-                      <Grid item xs={6} md={4}>
-                        <Button variant="outlined" component="label" fullWidth size="small">
-                          Full Photo
-                          <input type="file" hidden accept="image/*" onChange={(e) => {
-                            const file = e.target.files[0]
-                            if (file && file.size > 1024 * 1024) {
-                              toast.error('File size must be less than 1MB')
-                              e.target.value = ''
-                            } else {
-                              setNewPlot((s) => ({ ...s, customerFullPhoto: file }))
-                            }
-                          }} />
-                        </Button>
-                        {newPlot.customerFullPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerFullPhoto.name}</Typography>}
-                        <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                        <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #90caf9' }}>
+                          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#1976d2' }}>
+                            Customer Documents (Optional)
+                          </Typography>
+                          <Grid container spacing={2}>
+                            <Grid item xs={6} md={4}>
+                              <Button variant="outlined" component="label" fullWidth size="small">
+                                Aadhar Front
+                                <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                    e.target.value = ''
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerAadharFront: file }))
+                                  }
+                                }} />
+                              </Button>
+                              {newPlot.customerAadharFront && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerAadharFront.name}</Typography>}
+                              <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                            </Grid>
+                            <Grid item xs={6} md={4}>
+                              <Button variant="outlined" component="label" fullWidth size="small">
+                                Aadhar Back
+                                <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                    e.target.value = ''
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerAadharBack: file }))
+                                  }
+                                }} />
+                              </Button>
+                              {newPlot.customerAadharBack && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerAadharBack.name}</Typography>}
+                              <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                            </Grid>
+                            <Grid item xs={6} md={4}>
+                              <Button variant="outlined" component="label" fullWidth size="small">
+                                PAN Card
+                                <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                    e.target.value = ''
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerPanCard: file }))
+                                  }
+                                }} />
+                              </Button>
+                              {newPlot.customerPanCard && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerPanCard.name}</Typography>}
+                              <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                            </Grid>
+                            <Grid item xs={6} md={4}>
+                              <Button variant="outlined" component="label" fullWidth size="small">
+                                Passport Photo
+                                <input type="file" hidden accept="image/*" onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                    e.target.value = ''
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerPassportPhoto: file }))
+                                  }
+                                }} />
+                              </Button>
+                              {newPlot.customerPassportPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerPassportPhoto.name}</Typography>}
+                              <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                            </Grid>
+                            <Grid item xs={6} md={4}>
+                              <Button variant="outlined" component="label" fullWidth size="small">
+                                Full Photo
+                                <input type="file" hidden accept="image/*" onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                    e.target.value = ''
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerFullPhoto: file }))
+                                  }
+                                }} />
+                              </Button>
+                              {newPlot.customerFullPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newPlot.customerFullPhoto.name}</Typography>}
+                              <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
+                            </Grid>
+                          </Grid>
+
+                        </Box>
                       </Grid>
 
                       <Grid item xs={12} sm={6}>
@@ -2787,6 +2931,55 @@ const PlotManagement = () => {
                   </Box>
                 </Box>
 
+                {/* Adjacent Features */}
+                <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Adjacent Features (Optional)
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Front Side Adjacent"
+                        value={newPlot.adjacentFront}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, adjacentFront: e.target.value }))}
+                        placeholder="e.g., Road, Park, Plot #123"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Back Side Adjacent"
+                        value={newPlot.adjacentBack}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, adjacentBack: e.target.value }))}
+                        placeholder="e.g., Road, Park, Plot #123"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Left Side Adjacent"
+                        value={newPlot.adjacentLeft}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, adjacentLeft: e.target.value }))}
+                        placeholder="e.g., Road, Park, Plot #123"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Right Side Adjacent"
+                        value={newPlot.adjacentRight}
+                        onChange={(e) => setNewPlot((s) => ({ ...s, adjacentRight: e.target.value }))}
+                        placeholder="e.g., Road, Park, Plot #123"
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+
                 <TextField
                   size="small"
                   label="Price per Gaj *"
@@ -2946,6 +3139,196 @@ const PlotManagement = () => {
                         onChange={(e) => setNewPlot((s) => ({ ...s, customerShortAddress: e.target.value }))}
                         required
                       />
+
+                      {/* Manual Aadhar/PAN Entry Section */}
+                      {/* <Box sx={{ p: 2, bgcolor: '#fff9e6', borderRadius: 1, border: '1px solid #ffd54f' }}> */}
+
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Customer Aadhar Number (Optional)"
+                            value={newPlot.customerAadharNumber}
+                            onChange={(e) => setNewPlot((s) => ({ ...s, customerAadharNumber: e.target.value }))}
+                            placeholder="Enter 12-digit Aadhar number"
+                            inputProps={{ maxLength: 12 }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Customer PAN Number (Optional)"
+                            value={newPlot.customerPanNumber}
+                            onChange={(e) => setNewPlot((s) => ({ ...s, customerPanNumber: e.target.value.toUpperCase() }))}
+                            placeholder="Enter 10-character PAN"
+                            inputProps={{ maxLength: 10 }}
+                          />
+                        </Grid>
+                      </Grid>
+                      {/* <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+                          💡 You can manually enter Aadhar and PAN numbers here, and optionally upload document images below.
+                        </Typography>
+                      </Box> */}
+
+                      {/* Customer Documents Upload */}
+                      <Box sx={{ p: 2, bgcolor: '#f0f4ff', borderRadius: 1, border: '1px solid #c5cae9' }}>
+                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#3f51b5' }}>
+                          Customer Documents (Optional)
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              fullWidth
+                              size="small"
+                              startIcon={<CloudUpload />}
+                            >
+                              Aadhar Front
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*,.pdf"
+                                onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerAadharFront: file }))
+                                  }
+                                }}
+                              />
+                            </Button>
+                            {newPlot.customerAadharFront && (
+                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
+                                ✓ {newPlot.customerAadharFront.name}
+                              </Typography>
+                            )}
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              fullWidth
+                              size="small"
+                              startIcon={<CloudUpload />}
+                            >
+                              Aadhar Back
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*,.pdf"
+                                onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerAadharBack: file }))
+                                  }
+                                }}
+                              />
+                            </Button>
+                            {newPlot.customerAadharBack && (
+                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
+                                ✓ {newPlot.customerAadharBack.name}
+                              </Typography>
+                            )}
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              fullWidth
+                              size="small"
+                              startIcon={<CloudUpload />}
+                            >
+                              PAN Card
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*,.pdf"
+                                onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerPanCard: file }))
+                                  }
+                                }}
+                              />
+                            </Button>
+                            {newPlot.customerPanCard && (
+                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
+                                ✓ {newPlot.customerPanCard.name}
+                              </Typography>
+                            )}
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              fullWidth
+                              size="small"
+                              startIcon={<CloudUpload />}
+                            >
+                              Passport Photo
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerPassportPhoto: file }))
+                                  }
+                                }}
+                              />
+                            </Button>
+                            {newPlot.customerPassportPhoto && (
+                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
+                                ✓ {newPlot.customerPassportPhoto.name}
+                              </Typography>
+                            )}
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              fullWidth
+                              size="small"
+                              startIcon={<CloudUpload />}
+                            >
+                              Full Photo
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files[0]
+                                  if (file && file.size > 1024 * 1024) {
+                                    toast.error('File size must be less than 1MB')
+                                  } else {
+                                    setNewPlot((s) => ({ ...s, customerFullPhoto: file }))
+                                  }
+                                }}
+                              />
+                            </Button>
+                            {newPlot.customerFullPhoto && (
+                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
+                                ✓ {newPlot.customerFullPhoto.name}
+                              </Typography>
+                            )}
+                          </Grid>
+                        </Grid>
+                        <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
+                          Supported formats: JPG, PNG, PDF. Max size: 1MB per file.
+                        </Typography>
+                      </Box>
+
                       <TextField
                         size="small"
                         label="Registry Date (Optional)"

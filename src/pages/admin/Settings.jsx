@@ -32,7 +32,9 @@ const Settings = () => {
     website: 'www.jayshreeproperties.com',
     logo: null,
     gstNumber: '07AABCJ1234F1Z5',
-    panNumber: 'AABCJ1234F'
+    panNumber: 'AABCJ1234F',
+    ownerAadharNumber: '',
+    ownerPanNumber: ''
   })
 
   const [systemSettings, setSystemSettings] = useState({
@@ -221,6 +223,23 @@ const Settings = () => {
           <Typography variant="subtitle1" fontWeight="bold" mb={2}>
             Owner Documents
           </Typography>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label="Owner Aadhar Number"
+            value={companySettings.ownerAadharNumber}
+            onChange={(e) => handleCompanySettingsChange('ownerAadharNumber', e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label="Owner PAN Number"
+            value={companySettings.ownerPanNumber}
+            onChange={(e) => handleCompanySettingsChange('ownerPanNumber', e.target.value)}
+          />
         </Grid>
 
         <Grid item xs={6} md={4}>

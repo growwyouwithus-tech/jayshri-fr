@@ -68,7 +68,7 @@ const ColonyManagement = () => {
     status: 'planning'
   })
 
-  const [newKhatoniHolder, setNewKhatoniHolder] = useState({ name: '', address: '', mobile: '' })
+  const [newKhatoniHolder, setNewKhatoniHolder] = useState({ name: '', address: '', mobile: '', aadharNumber: '', panNumber: '' })
   const [errors, setErrors] = useState({})
   const [khatoniPopoverAnchor, setKhatoniPopoverAnchor] = useState(null)
   const [selectedKhatoniHolders, setSelectedKhatoniHolders] = useState([])
@@ -102,7 +102,7 @@ const ColonyManagement = () => {
 
   const normalizeColony = (colony) => {
     const totalLandAreaGaj = colony.totalLandAreaGaj ?? (typeof colony.totalArea === 'number' ? Math.round(colony.totalArea / SQFT_PER_GAJ) : null)
-    const totalPlots = colony.totalPlots ?? colony.plotStats?.total ?? 0
+    const totalPlots = colony.totalPlots ?? colony.availablePlots ?? colony.plotStats?.total ?? 0
     const saleablePlots = colony.saleablePlots ?? colony.availablePlots ?? colony.plotStats?.saleable ?? 0
     const ratePerGaj = colony.basePricePerGaj ?? (typeof colony.pricePerSqFt === 'number' ? Math.round(colony.pricePerSqFt * SQFT_PER_GAJ) : null)
     return {
@@ -298,14 +298,14 @@ const ColonyManagement = () => {
     setCurrentColony(null)
     setErrors({}) // Clear all errors
     // Reset new khatoni holder form
-    setNewKhatoniHolder({ name: '', address: '', mobile: '' })
+    setNewKhatoniHolder({ name: '', address: '', mobile: '', aadharNumber: '', panNumber: '' })
   }
 
   // Khatoni Holder management functions
   const addKhatoniHolder = () => {
     if (newKhatoniHolder.name && newKhatoniHolder.address && newKhatoniHolder.mobile) {
       setFormData({ ...formData, khatoniHolders: [...formData.khatoniHolders, { ...newKhatoniHolder, id: Date.now() }] })
-      setNewKhatoniHolder({ name: '', address: '', mobile: '' })
+      setNewKhatoniHolder({ name: '', address: '', mobile: '', aadharNumber: '', panNumber: '' })
     } else {
       toast.error('Please fill all Khatoni Holder fields')
     }
@@ -714,6 +714,24 @@ const ColonyManagement = () => {
                       label="Address"
                       value={newKhatoniHolder.address}
                       onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, address: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Aadhar Number"
+                      value={newKhatoniHolder.aadharNumber}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, aadharNumber: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="PAN Number"
+                      value={newKhatoniHolder.panNumber}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, panNumber: e.target.value })}
                     />
                   </Grid>
                   <Grid item xs={12}>

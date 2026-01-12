@@ -108,7 +108,7 @@ const BookingDetail = () => {
       await axios.post(`/bookings/${id}/receipts`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
-      
+
       toast.success('Receipt added successfully')
       setReceiptData({
         amount: '',
@@ -166,37 +166,107 @@ const BookingDetail = () => {
 
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} mb={3}>
+          {/* Client Details */}
           <Grid item xs={12} md={6}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>User:</strong> {booking.userId?.name} ({booking.userId?.phone})
-            </Typography>
+            <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                Client / Customer Details
+              </Typography>
+              <Box>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Name:</strong> {booking.userId?.name || booking.customerDetails?.name || '-'}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Phone:</strong> {booking.userId?.phone || booking.customerDetails?.phone || '-'}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Address:</strong> {booking.customerDetails?.address || booking.userId?.address || '-'}
+                </Typography>
+                {booking.customerDetails?.aadharNumber && (
+                  <Typography variant="body2" gutterBottom>
+                    <strong>Aadhar:</strong> {booking.customerDetails.aadharNumber}
+                  </Typography>
+                )}
+                {booking.customerDetails?.panNumber && (
+                  <Typography variant="body2" gutterBottom>
+                    <strong>PAN:</strong> {booking.customerDetails.panNumber}
+                  </Typography>
+                )}
+              </Box>
+            </Paper>
           </Grid>
+
+          {/* Plot Details */}
           <Grid item xs={12} md={6}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Property:</strong> {booking.plotId?.colonyId?.name}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Plot:</strong> {booking.plotId?.plotNo}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Total Amount:</strong> ₹{booking.totalAmount?.toLocaleString()}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Booking Amount:</strong> ₹{booking.bookingAmount?.toLocaleString()}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Status:</strong> {booking.status}
-            </Typography>
+            <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                Plot Details
+              </Typography>
+              <Box>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Colony:</strong> {booking.plotId?.colonyId?.name || booking.plotId?.colony?.name || '-'}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Plot No:</strong> {booking.plotId?.plotNo || booking.plotId?.plotNumber || '-'}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Area:</strong> {booking.plotId?.area || booking.plotId?.areaGaj} Gaj
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Total Price:</strong> ₹{booking.totalAmount?.toLocaleString()}
+                </Typography>
+              </Box>
+            </Paper>
           </Grid>
         </Grid>
+
+        {/* Khatoni / Owner Details */}
+        <Box mb={4}>
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            Khatoni Holders / Owners
+          </Typography>
+          {booking.plotId?.colony?.khatoniHolders?.length > 0 || booking.plotId?.colonyId?.khatoniHolders?.length > 0 ? (
+            <Grid container spacing={2}>
+              {(booking.plotId?.colony?.khatoniHolders || booking.plotId?.colonyId?.khatoniHolders || []).map((holder, idx) => (
+                <Grid item xs={12} sm={6} md={4} key={idx}>
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="subtitle2" fontWeight="bold">{holder.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">Mobile: {holder.mobile}</Typography>
+                    <Typography variant="body2" color="text.secondary">Address: {holder.address}</Typography>
+                    {holder.aadharNumber && <Typography variant="caption" display="block">Aadhar: {holder.aadharNumber}</Typography>}
+                    {holder.panNumber && <Typography variant="caption" display="block">PAN: {holder.panNumber}</Typography>}
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Typography color="text.secondary">No Khatoni details available.</Typography>
+          )}
+        </Box>
+
+        {/* Documents Section */}
+        <Box mb={4}>
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            Documents & Photos
+          </Typography>
+          <Grid container spacing={2}>
+            {/* Plot Images */}
+            {booking.plotId?.images?.length > 0 ? (
+              booking.plotId.images.map((img, idx) => (
+                <Grid item xs={6} sm={4} md={3} key={idx}>
+                  <Paper variant="outlined" sx={{ p: 1 }}>
+                    <Box component="img" src={img} alt={`Plot ${idx}`} sx={{ width: '100%', height: 150, objectFit: 'cover' }} />
+                    <Typography variant="caption" align="center" display="block">Plot Image {idx + 1}</Typography>
+                  </Paper>
+                </Grid>
+              ))
+            ) : (
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary">No images uploaded for this plot.</Typography>
+              </Grid>
+            )}
+          </Grid>
+        </Box>
 
         <Divider sx={{ my: 3 }} />
 

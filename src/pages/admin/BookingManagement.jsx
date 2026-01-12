@@ -9,6 +9,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Paper,
   Chip,
   Button,
@@ -45,6 +46,17 @@ const BookingManagement = () => {
   const [actionType, setActionType] = useState('')
   const [remarks, setRemarks] = useState('')
   const [exportAnchor, setExportAnchor] = useState(null)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(20)
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage)
+  }
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0)
+  }
 
   useEffect(() => {
     fetchBookings()
@@ -224,10 +236,11 @@ const BookingManagement = () => {
   }
 
   const filteredBookings = bookings.filter(booking => {
+    const plot = booking.plot || booking.plotId || {}
     const matchesUser = filterUser === 'All Users' || booking.userId?.name === filterUser
-    const matchesProperty = filterProperty === 'All Properties' || booking.plotId?.colonyId?.name === filterProperty
+    const matchesProperty = filterProperty === 'All Properties' || plot.colonyId?.name === filterProperty || plot.colony?.name === filterProperty
     const matchesStatus = filterStatus === 'All Status' || booking.status === filterStatus.toLowerCase()
-    
+
     let matchesDate = true
     if (fromDate && toDate) {
       const bookingDate = new Date(booking.createdAt)
@@ -235,7 +248,7 @@ const BookingManagement = () => {
       const to = new Date(toDate)
       matchesDate = bookingDate >= from && bookingDate <= to
     }
-    
+
     return matchesUser && matchesProperty && matchesStatus && matchesDate
   })
 
@@ -261,7 +274,10 @@ const BookingManagement = () => {
           select
           size="small"
           value={filterUser}
-          onChange={(e) => setFilterUser(e.target.value)}
+          onChange={(e) => {
+            setFilterUser(e.target.value)
+            setPage(0)
+          }}
           sx={{ minWidth: 150 }}
         >
           <MenuItem value="All Users">All Users</MenuItem>
@@ -276,7 +292,10 @@ const BookingManagement = () => {
           select
           size="small"
           value={filterProperty}
-          onChange={(e) => setFilterProperty(e.target.value)}
+          onChange={(e) => {
+            setFilterProperty(e.target.value)
+            setPage(0)
+          }}
           sx={{ minWidth: 150 }}
         >
           <MenuItem value="All Properties">All Properties</MenuItem>
@@ -291,7 +310,10 @@ const BookingManagement = () => {
           select
           size="small"
           value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
+          onChange={(e) => {
+            handleFilterChange(e.target.value)
+            setPage(0)
+          }}
           sx={{ minWidth: 120 }}
         >
           <MenuItem value="All Status">All Status</MenuItem>
@@ -353,71 +375,161 @@ const BookingManagement = () => {
         <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>ID</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>User</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Property</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total (₹)</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Discount (₹)</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot No</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Customer</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Colony</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Owner Type</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Area (Gaj)</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Asking Rate</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sold Rate</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Price</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Remaining</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Facing</TableCell>
               <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Status</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Payment</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Date</TableCell>
               <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredBookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center">
+                <TableCell colSpan={12} align="center">
                   No bookings found.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredBookings.map((booking, index) => (
-                <TableRow key={booking._id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{booking.userId?.name || '-'}</TableCell>
-                  <TableCell>{booking.plotId?.colonyId?.name || '-'}</TableCell>
-                  <TableCell>{booking.plotId?.plotNo || '-'}</TableCell>
-                  <TableCell>{booking.totalAmount?.toLocaleString() || '0.00'}</TableCell>
-                  <TableCell>{booking.discount?.toLocaleString() || '0.00'}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={booking.status === 'pending' ? 'Pending' : booking.status}
-                      color={booking.status === 'pending' ? 'info' : 'default'}
-                      size="small"
-                      sx={{ 
-                        bgcolor: booking.status === 'pending' ? '#00bcd4' : undefined,
-                        color: booking.status === 'pending' ? 'white' : undefined
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={booking.paymentStatus === 'pending' ? 'Unpaid' : booking.paymentStatus}
-                      color={booking.paymentStatus === 'pending' ? 'default' : 'success'}
-                      size="small"
-                      sx={{ 
-                        bgcolor: booking.paymentStatus === 'pending' ? '#9e9e9e' : undefined,
-                        color: booking.paymentStatus === 'pending' ? 'white' : undefined
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>{format(new Date(booking.createdAt), 'dd-MM-yyyy')}</TableCell>
-                  <TableCell align="right">
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => navigate(`/admin/bookings/${booking._id}`)}
-                    >
-                      View
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              filteredBookings
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((booking) => {
+                  // Determine plot object (handle populate variations)
+                  const rawPlot = booking.plot || booking.plotId || {};
+
+                  // Helper functions
+                  const toNumber = (val) => {
+                    const num = Number(val);
+                    return Number.isFinite(num) ? num : 0;
+                  };
+
+                  // Conversions (assuming backend uses sqft, frontend expects gaj)
+                  // 1 Gaj = 9 SqFt
+                  const areaGaj = rawPlot.areaGaj || (rawPlot.area ? (toNumber(rawPlot.area) / 9).toFixed(3) : null);
+                  const pricePerGaj = rawPlot.pricePerGaj || (rawPlot.pricePerSqFt ? (toNumber(rawPlot.pricePerSqFt) * 9).toFixed(2) : null);
+
+                  // Derived values
+                  const plotNo = rawPlot.plotNo || rawPlot.plotNumber || '-';
+                  const customerName = booking.userId?.name || booking.customerDetails?.name || rawPlot.customerName || 'Unknown';
+                  const colonyName = rawPlot.colonyId?.name || rawPlot.colony?.name || '-';
+                  const ownerType = rawPlot.ownerType || 'owner';
+                  const finalPricePerGaj = rawPlot.finalPrice || null;
+
+                  // Total Price and Paid Amount
+                  const displayTotalPrice = booking.totalAmount || rawPlot.totalPrice || (areaGaj && pricePerGaj ? toNumber(areaGaj) * toNumber(pricePerGaj) : 0);
+                  const paidAmount = booking.paidAmount || rawPlot.paidAmount || 0;
+                  const remaining = displayTotalPrice - paidAmount;
+                  const facing = rawPlot.facing || '-';
+                  const status = rawPlot.status || booking.status || 'Pending';
+
+                  const getStatusColor = (s) => {
+                    switch (String(s).toLowerCase()) {
+                      case 'available': return 'success'
+                      case 'booked': return 'warning'
+                      case 'sold': return 'error'
+                      case 'reserved': return 'info'
+                      case 'completed': return 'success'
+                      case 'confirmed': return 'success'
+                      default: return 'default'
+                    }
+                  }
+
+                  const getStatusStyle = (s) => {
+                    switch (String(s).toLowerCase()) {
+                      case 'available': return { bgcolor: '#e8f5e9', color: '#2e7d32' }
+                      case 'booked': return { bgcolor: '#fff3e0', color: '#ef6c00' }
+                      case 'sold': return { bgcolor: '#ffebee', color: '#c62828' }
+                      default: return {}
+                    }
+                  }
+
+                  return (
+                    <TableRow key={booking._id} hover>
+                      <TableCell>{plotNo}</TableCell>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2">{customerName}</Typography>
+                          {!booking.userId && (booking.customerDetails || rawPlot.customerName) && (
+                            <Chip label="Manual" size="small" color="secondary" variant="outlined" sx={{ height: 20, fontSize: '0.625rem' }} />
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>{colonyName}</TableCell>
+                      <TableCell>
+                        {ownerType === 'khatoniHolder' ? (
+                          <Chip label="Khatoni Holder" size="small" color="info" />
+                        ) : (
+                          <Chip label="Owner" size="small" />
+                        )}
+                      </TableCell>
+                      <TableCell>{areaGaj ? Number(areaGaj).toFixed(3) : '-'}</TableCell>
+                      <TableCell>₹{pricePerGaj ? Number(pricePerGaj).toLocaleString() : '-'}</TableCell>
+                      <TableCell>
+                        {finalPricePerGaj ? (
+                          <Chip
+                            label={`₹${Number(finalPricePerGaj).toLocaleString()}`}
+                            size="small"
+                            color="success"
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">-</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <strong>₹{Number(displayTotalPrice).toLocaleString()}</strong>
+                      </TableCell>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2" fontWeight={600} color={remaining > 0 ? 'error.main' : 'success.main'}>
+                            ₹{Number(remaining).toLocaleString()}
+                          </Typography>
+                          {paidAmount > 0 && (
+                            <Typography variant="caption" color="text.secondary">
+                              Paid: ₹{Number(paidAmount).toLocaleString()}
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ textTransform: 'capitalize' }}>{facing}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={status.toUpperCase()}
+                          color={getStatusColor(status)}
+                          size="small"
+                          sx={getStatusStyle(status)}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          variant="contained"
+                          startIcon={<Visibility />}
+                          onClick={() => navigate(`/admin/bookings/${booking._id}`)}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          rowsPerPageOptions={[20, 50, 100]}
+          component="div"
+          count={filteredBookings.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </TableContainer>
 
       {/* Approve/Reject Dialog */}
