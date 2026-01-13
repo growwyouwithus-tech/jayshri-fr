@@ -466,16 +466,95 @@ const ColonyManagement = () => {
 
       if (editMode) {
         await axios.put(`/colonies/${currentColony._id}`, payload)
-        toast.success('Colony updated successfully! ✅', {
-          position: 'top-right',
-          autoClose: 3000,
-        })
+        toast.success('Colony updated successfully! ✅', { position: 'top-right', autoClose: 3000 })
+
+        // Handle document uploads for each khatoni holder
+        try {
+          // We need to use the indices from the payload/formData as they match the array order in backend
+          for (let i = 0; i < formData.khatoniHolders.length; i++) {
+            const holder = formData.khatoniHolders[i]
+            const uploadFormData = new FormData()
+            let hasFiles = false
+
+            if (holder.aadharFront instanceof File) {
+              uploadFormData.append('aadharFront', holder.aadharFront)
+              hasFiles = true
+            }
+            if (holder.aadharBack instanceof File) {
+              uploadFormData.append('aadharBack', holder.aadharBack)
+              hasFiles = true
+            }
+            if (holder.panCard instanceof File) {
+              uploadFormData.append('panCard', holder.panCard)
+              hasFiles = true
+            }
+            if (holder.passportPhoto instanceof File) {
+              uploadFormData.append('passportPhoto', holder.passportPhoto)
+              hasFiles = true
+            }
+            if (holder.fullPhoto instanceof File) {
+              uploadFormData.append('fullPhoto', holder.fullPhoto)
+              hasFiles = true
+            }
+
+            if (hasFiles) {
+              await axios.post(
+                `/colonies/${currentColony._id}/khatoni-holders/${i}/documents`,
+                uploadFormData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+              )
+            }
+          }
+        } catch (uploadError) {
+          console.error('Error uploading documents:', uploadError)
+          toast.error('Colony saved but some documents failed to upload')
+        }
+
       } else {
-        await axios.post('/colonies', payload)
-        toast.success('Colony created successfully! 🎉', {
-          position: 'top-right',
-          autoClose: 3000,
-        })
+        const response = await axios.post('/colonies', payload)
+        const newColonyId = response.data.data.colony._id
+        toast.success('Colony created successfully! 🎉', { position: 'top-right', autoClose: 3000 })
+
+        // Handle document uploads for each khatoni holder
+        try {
+          for (let i = 0; i < formData.khatoniHolders.length; i++) {
+            const holder = formData.khatoniHolders[i]
+            const uploadFormData = new FormData()
+            let hasFiles = false
+
+            if (holder.aadharFront instanceof File) {
+              uploadFormData.append('aadharFront', holder.aadharFront)
+              hasFiles = true
+            }
+            if (holder.aadharBack instanceof File) {
+              uploadFormData.append('aadharBack', holder.aadharBack)
+              hasFiles = true
+            }
+            if (holder.panCard instanceof File) {
+              uploadFormData.append('panCard', holder.panCard)
+              hasFiles = true
+            }
+            if (holder.passportPhoto instanceof File) {
+              uploadFormData.append('passportPhoto', holder.passportPhoto)
+              hasFiles = true
+            }
+            if (holder.fullPhoto instanceof File) {
+              uploadFormData.append('fullPhoto', holder.fullPhoto)
+              hasFiles = true
+            }
+
+            if (hasFiles) {
+              await axios.post(
+                `/colonies/${newColonyId}/khatoni-holders/${i}/documents`,
+                uploadFormData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+              )
+            }
+          }
+        } catch (uploadError) {
+          console.error('Error uploading documents:', uploadError)
+          toast.error('Colony created but some documents failed to upload')
+        }
       }
 
       handleCloseForm()

@@ -1682,11 +1682,13 @@ const PlotManagement = () => {
                                   '&:hover': { bgcolor: '#f0f0f0' }
                                 }}
                                 onClick={() => {
-                                  const baseURL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000'
+                                  const getFullUrl = (path) => path?.match(/^https?:\/\//) ? path : `${import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000'}${path}`
+                                  const fullUrl = getFullUrl(doc)
+
                                   if (doc.toLowerCase().endsWith('.pdf')) {
-                                    window.open(`${baseURL}${doc}`, '_blank')
+                                    window.open(fullUrl, '_blank')
                                   } else {
-                                    setSelectedImage(`${baseURL}${doc}`)
+                                    setSelectedImage(fullUrl)
                                     setImageDialogOpen(true)
                                   }
                                 }}
@@ -1700,7 +1702,7 @@ const PlotManagement = () => {
                                   </Box>
                                 ) : (
                                   <img
-                                    src={`${axios.defaults.baseURL}${doc}`}
+                                    src={doc.match(/^https?:\/\//) ? doc : `${import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000'}${doc}`}
                                     alt={`Registry ${idx + 1}`}
                                     style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
                                   />

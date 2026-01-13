@@ -88,9 +88,24 @@ const Settings = () => {
     setLoading(true)
     try {
       let payload
+      let isFormData = false;
+
       switch (settingsType) {
         case 'company':
-          payload = companySettings
+          // Create FormData for company settings to handle file uploads
+          const formData = new FormData();
+          Object.keys(companySettings).forEach(key => {
+            // Check if it's the owner documents file inputs
+            if (['aadharFront', 'aadharBack', 'panCard', 'passportPhoto', 'fullPhoto', 'logo'].includes(key)) {
+              if (companySettings[key] instanceof File) {
+                formData.append(key, companySettings[key]);
+              }
+            } else {
+              formData.append(key, companySettings[key]);
+            }
+          });
+          payload = formData;
+          isFormData = true;
           break
         case 'system':
           payload = systemSettings
@@ -104,7 +119,8 @@ const Settings = () => {
 
       // Try to update settings, if endpoint doesn't exist, just show success
       try {
-        await axios.put(`/settings/${settingsType}`, payload)
+        const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+        await axios.put(`/settings/${settingsType}`, payload, config)
       } catch (apiError) {
         // If API endpoint doesn't exist (404), just save locally
         if (apiError.response?.status === 404) {
