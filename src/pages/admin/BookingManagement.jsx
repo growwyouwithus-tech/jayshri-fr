@@ -163,10 +163,98 @@ const BookingManagement = () => {
     try {
       setLoading(true)
       const url = status ? `/bookings?status=${status}` : '/bookings'
-      const { data } = await axios.get(url)
-      const list = Array.isArray(data?.data) ? data.data : data?.data?.bookings || []
-      const normalized = list.map(normalizeBooking)
-      setBookings(normalized)
+
+      // Execute both requests in parallel
+      const [bookingsResponse, plotsResponse] = await Promise.all([
+        axios.get(url),
+        axios.get('/plots?limit=5000') // Fetch all plots to find missing bookings
+      ])
+
+      const bookingList = Array.isArray(bookingsResponse.data?.data)
+        ? bookingsResponse.data.data
+        : bookingsResponse.data?.data?.bookings || []
+
+      const allPlots = Array.isArray(plotsResponse.data?.data?.plots)
+        ? plotsResponse.data.data.plots
+        : Array.isArray(plotsResponse.data?.data)
+          ? plotsResponse.data.data
+          : []
+
+      // Normalize existing bookings
+      let combinedList = bookingList.map(normalizeBooking)
+
+      // Create a Set of Plot IDs that already have a booking
+      const bookedPlotIds = new Set(
+        combinedList.map(b => getPlotId(b))
+      )
+
+      // Helper to safely get ID
+      function getPlotId(booking) {
+        if (booking.plotId?._id) return booking.plotId._id
+        if (booking.plot?._id) return booking.plot._id
+        if (booking.plot) return booking.plot
+        return null
+      }
+
+      // Filter plots that are 'booked' (or blocked/reserved) but have NO booking record
+      // We look for statuses that imply a booking should exist
+      const missingPlots = allPlots.filter(plot => {
+        const s = (plot.status || '').toLowerCase()
+        const isBookedState = ['booked', 'blocked', 'reserved'].includes(s)
+        return isBookedState && !bookedPlotIds.has(plot._id)
+      })
+
+      // Convert these plots into "Pseudo-Booking" objects
+      const pseudoBookings = missingPlots.map(plot => {
+        // Calculate correct total price
+        const areaGaj = plot.areaGaj || (plot.area ? Number(plot.area) / 9 : 0);
+        const ratePerGaj = plot.finalPrice || plot.pricePerGaj || 0;
+
+        let calculatedTotal = plot.totalPrice || 0;
+
+        if (['sold', 'booked', 'blocked', 'reserved'].includes((plot.status || '').toLowerCase()) && ratePerGaj && areaGaj) {
+          calculatedTotal = Number(ratePerGaj) * Number(areaGaj);
+        }
+
+        return {
+          _id: `temp-${plot._id}`,
+          isPseudo: true, // Marker
+          bookingNumber: `MAN-${plot.plotNumber || plot.plotNo}`,
+
+          // Construct User/Customer object
+          userId: {
+            _id: 'manual-user',
+            name: plot.customerName || 'Manual Customer',
+            phone: plot.customerNumber,
+            email: ''
+          },
+          customerDetails: {
+            name: plot.customerName,
+            phone: plot.customerNumber,
+            address: plot.customerShortAddress
+          },
+
+          // Construct Plot object similar to populated booking.plot
+          plotId: plot, // The plot object itself
+          plot: plot,   // Fallback
+
+          totalAmount: calculatedTotal,
+          discount: 0,
+          paymentStatus: (plot.paidAmount || 0) >= calculatedTotal ? 'completed' : 'pending',
+          paidAmount: plot.paidAmount || 0,
+
+          // Status mapping
+          status: 'confirmed', // Treat physically booked plots as confirmed bookings
+          createdAt: plot.updatedAt || new Date().toISOString()
+        }
+      })
+
+      // Merge and sort by date
+      combinedList = [...combinedList, ...pseudoBookings].sort((a, b) =>
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+
+      setBookings(combinedList)
       setLoading(false)
     } catch (error) {
       console.error('Failed to fetch bookings:', error)
@@ -236,10 +324,52 @@ const BookingManagement = () => {
   }
 
   const filteredBookings = bookings.filter(booking => {
-    const plot = booking.plot || booking.plotId || {}
+    const plot = booking.plot || booking.plotId || {} // Determine plot object
     const matchesUser = filterUser === 'All Users' || booking.userId?.name === filterUser
     const matchesProperty = filterProperty === 'All Properties' || plot.colonyId?.name === filterProperty || plot.colony?.name === filterProperty
-    const matchesStatus = filterStatus === 'All Status' || booking.status === filterStatus.toLowerCase()
+    // const matchesStatus = filterStatus === 'All Status' || booking.status === filterStatus.toLowerCase()
+
+    // Determine the effective status for filtering, matching render logic
+    const effectiveStatus = (plot.status || booking.status || 'Pending').toLowerCase();
+
+    // User Requirement: ONLY show booked plots. "sold or available nahi"
+    // So we strictly require status to be 'booked'.
+    // If the user selects a status in the dropdown (if we kept it), it might conflict.
+    // However, the user asked to "show only booked".
+    // I will enforce effectiveStatus === 'booked'.
+    // But wait, what if they want to see "Approved" bookings?
+    // "Booked component me".
+    // I will allow 'booked' and maybe 'pending' if it relates to a booking?
+    // Usually 'booked' is the main status.
+    // The user said: "only booked plot ... sold or available nahi".
+    // So excluding sold/available.
+
+    const isBooked = effectiveStatus === 'booked';
+
+    // If we want to respect the dropdown too, we can combine them, but user request implies a base constraint.
+    // I'll assume the user wants this entire page to be for Booked plots.
+    // But there is a filter dropdown... 
+    // I should probably remove the "All Status" / "Available" / "Sold" options from the filter dropdown if I enforce this.
+    // But for now let's just implement the filter logic requested.
+
+    // Changing matchesStatus to check effectiveStatus against filterStatus if set, 
+    // BUT ALSO enforcing the "not sold or available" rule.
+
+    let matchesStatus = true;
+    if (filterStatus !== 'All Status') {
+      matchesStatus = effectiveStatus === filterStatus.toLowerCase();
+    }
+
+    // GLOBAL CONSTRAINT explicitly requested:
+    // "only booked plot show karne hai"
+    const isNotSoldOrAvailable = effectiveStatus !== 'sold' && effectiveStatus !== 'available';
+    // Actually user said "only booked". So let's be strict or loose?
+    // "booked component me only booked plot show karne hai" -> "In booked component satisfy only booked plot".
+    // I will filter for `effectiveStatus === 'booked'`.
+
+    // Let's rely on the user's explicit instruction.
+    const matchesGlobalConstraint = effectiveStatus === 'booked';
+
 
     let matchesDate = true
     if (fromDate && toDate) {
@@ -249,7 +379,7 @@ const BookingManagement = () => {
       matchesDate = bookingDate >= from && bookingDate <= to
     }
 
-    return matchesUser && matchesProperty && matchesStatus && matchesDate
+    return matchesUser && matchesProperty && matchesStatus && matchesGlobalConstraint && matchesDate
   })
 
   if (loading) {
@@ -307,22 +437,6 @@ const BookingManagement = () => {
         </TextField>
 
         <TextField
-          select
-          size="small"
-          value={filterStatus}
-          onChange={(e) => {
-            handleFilterChange(e.target.value)
-            setPage(0)
-          }}
-          sx={{ minWidth: 120 }}
-        >
-          <MenuItem value="All Status">All Status</MenuItem>
-          <MenuItem value="Pending">Pending</MenuItem>
-          <MenuItem value="Approved">Approved</MenuItem>
-          <MenuItem value="Rejected">Rejected</MenuItem>
-        </TextField>
-
-        <TextField
           type="date"
           size="small"
           label="From"
@@ -371,22 +485,22 @@ const BookingManagement = () => {
         </MenuItem>
       </Menu>
 
-      <TableContainer component={Paper}>
-        <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
+      <TableContainer component={Paper} sx={{ maxHeight: '75vh' }}>
+        <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot No</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Customer</TableCell>
               <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Colony</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Owner Type</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Khatoni Holders / Owners</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Customer</TableCell>
               <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Area (Gaj)</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Asking Rate</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sold Rate</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Asking Price/Gaj</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sold Price/Gaj</TableCell>
               <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Price</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Remaining</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Remaining Payment</TableCell>
               <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Facing</TableCell>
               <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Status</TableCell>
-              <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
+              <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -452,14 +566,6 @@ const BookingManagement = () => {
                   return (
                     <TableRow key={booking._id} hover>
                       <TableCell>{plotNo}</TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2">{customerName}</Typography>
-                          {!booking.userId && (booking.customerDetails || rawPlot.customerName) && (
-                            <Chip label="Manual" size="small" color="secondary" variant="outlined" sx={{ height: 20, fontSize: '0.625rem' }} />
-                          )}
-                        </Box>
-                      </TableCell>
                       <TableCell>{colonyName}</TableCell>
                       <TableCell>
                         {ownerType === 'khatoniHolder' ? (
@@ -467,6 +573,14 @@ const BookingManagement = () => {
                         ) : (
                           <Chip label="Owner" size="small" />
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2">{customerName}</Typography>
+                          {!booking.userId && (booking.customerDetails || rawPlot.customerName) && (
+                            <Chip label="Manual" size="small" color="secondary" variant="outlined" sx={{ height: 20, fontSize: '0.625rem' }} />
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell>{areaGaj ? Number(areaGaj).toFixed(3) : '-'}</TableCell>
                       <TableCell>₹{pricePerGaj ? Number(pricePerGaj).toLocaleString() : '-'}</TableCell>

@@ -190,8 +190,8 @@ const PlotManagement = () => {
     paymentSlip: null,
     registryDocument: null,
     registryDocuments: [],
+    registryPdf: null,
     registryStatus: 'pending',
-    // Customer documents
     customerAadharFront: null,
     customerAadharBack: null,
     customerPanCard: null,
@@ -662,6 +662,7 @@ const PlotManagement = () => {
       paidAmount: '',
       paymentSlip: null,
       registryDocuments: [],
+      registryPdf: null,
       registryStatus: 'pending'
     })
   }
@@ -711,7 +712,12 @@ const PlotManagement = () => {
       transactionDate: plot.transactionDate || '',
       paidAmount: plot.paidAmount?.toString() || '',
       paymentSlip: null,
-      registryDocuments: [],
+      registryDocuments: plot.registryDocument ? plot.registryDocument.map(url => ({
+        name: url.split('/').pop(),
+        url: url,
+        isExisting: true
+      })) : [],
+      registryPdf: plot.registryPdf ? { name: 'registry.pdf', url: plot.registryPdf, isExisting: true } : null,
       registryStatus: plot.registryStatus || 'pending',
     })
     setEditDialogOpen(true)
@@ -756,6 +762,7 @@ const PlotManagement = () => {
       paidAmount: '',
       paymentSlip: null,
       registryDocuments: [],
+      registryPdf: null,
       registryStatus: 'pending'
     })
   }
@@ -1017,6 +1024,9 @@ const PlotManagement = () => {
           formData.append('registryDocument', file)
         })
       }
+      if (newPlot.registryPdf) {
+        formData.append('registryPdf', newPlot.registryPdf)
+      }
       if (newPlot.plotImages && newPlot.plotImages.length > 0) {
         newPlot.plotImages.forEach((file) => {
           formData.append('plotImages', file)
@@ -1103,12 +1113,30 @@ const PlotManagement = () => {
       }
       if (newPlot.registryDocuments && newPlot.registryDocuments.length > 0) {
         newPlot.registryDocuments.forEach((file) => {
-          formData.append('registryDocument', file)
+          if (file.url && file.isExisting) {
+            // If it's an existing file (object with url), send the URL
+            formData.append('registryDocument', file.url)
+          } else {
+            // If it's a new file (File object), send the file
+            formData.append('registryDocument', file)
+          }
         })
+      }
+
+      if (newPlot.registryPdf) {
+        if (newPlot.registryPdf.url && newPlot.registryPdf.isExisting) {
+          formData.append('registryPdf', newPlot.registryPdf.url)
+        } else {
+          formData.append('registryPdf', newPlot.registryPdf)
+        }
       }
       if (newPlot.plotImages && newPlot.plotImages.length > 0) {
         newPlot.plotImages.forEach((file) => {
-          formData.append('plotImages', file)
+          if (file.url && file.isExisting) {
+            formData.append('plotImages', file.url)
+          } else {
+            formData.append('plotImages', file)
+          }
         })
       }
       // Append customer documents if exist
@@ -2722,83 +2750,125 @@ const PlotManagement = () => {
                         )}
                       </Grid>
                       {newPlot.status === 'sold' && (
+
                         <>
-                          <>
-                            <Grid item xs={12}>
-                              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                                <FormControl component="fieldset">
-                                  <FormLabel component="legend">Registry Status</FormLabel>
-                                  <RadioGroup
-                                    row
-                                    value={newPlot.registryStatus}
-                                    onChange={(e) => setNewPlot((s) => ({ ...s, registryStatus: e.target.value }))}
-                                  >
-                                    <FormControlLabel value="pending" control={<Radio />} label="Registry Pending" />
-                                    <FormControlLabel value="completed" control={<Radio />} label="Registry Completed" />
-                                  </RadioGroup>
-                                </FormControl>
-
-                                <TextField
-                                  size="small"
-                                  label="Registry Date"
-                                  type="date"
-                                  value={newPlot.registryDate || ''}
-                                  onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
-                                  InputLabelProps={{ shrink: true }}
-                                  sx={{ width: 200 }}
-                                />
-                              </Box>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Box sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 1 }}>
-                                <Typography variant="subtitle2" gutterBottom>
-                                  Registry Documents (Max 1MB per file, Images/PDFs)
-                                </Typography>
-                                <Button
-                                  variant="outlined"
-                                  component="label"
-                                  startIcon={<CloudUpload />}
-                                  size="small"
-                                  sx={{ mb: 2 }}
+                          <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                              <FormControl component="fieldset">
+                                <FormLabel component="legend">Registry Status</FormLabel>
+                                <RadioGroup
+                                  row
+                                  value={newPlot.registryStatus}
+                                  onChange={(e) => setNewPlot((s) => ({ ...s, registryStatus: e.target.value }))}
                                 >
-                                  Upload Documents
-                                  <input
-                                    type="file"
-                                    hidden
-                                    multiple
-                                    accept="image/*,.pdf"
-                                    onChange={handleRegistryFileSelect}
-                                  />
-                                </Button>
+                                  <FormControlLabel value="pending" control={<Radio />} label="Registry Pending" />
+                                  <FormControlLabel value="completed" control={<Radio />} label="Registry Completed" />
+                                </RadioGroup>
+                              </FormControl>
 
-                                {/* Selected Files List */}
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                  {newPlot.registryDocuments && newPlot.registryDocuments.map((file, index) => (
-                                    <Chip
-                                      key={index}
-                                      label={file.name}
-                                      icon={file.type && file.type.includes('pdf') ? <PictureAsPdf /> : <ImageIcon />}
-                                      onDelete={() => removeRegistryFile(index)}
-                                      color="primary"
-                                      variant="outlined"
-                                    />
-                                  ))}
-                                </Box>
+                              <TextField
+                                size="small"
+                                label="Registry Date"
+                                type="date"
+                                value={newPlot.registryDate || ''}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, registryDate: e.target.value }))}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{ width: 200 }}
+                              />
+                            </Box>
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <Box sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 1 }}>
+                              <Typography variant="subtitle2" gutterBottom>
+                                Registry Documents (Max 1MB per file, Images/PDFs)
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                component="label"
+                                startIcon={<CloudUpload />}
+                                size="small"
+                                sx={{ mb: 2 }}
+                              >
+                                Upload Documents
+                                <input
+                                  type="file"
+                                  hidden
+                                  multiple
+                                  accept="image/*,.pdf"
+                                  onChange={handleRegistryFileSelect}
+                                />
+                              </Button>
+
+                              {/* Selected Files List */}
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {newPlot.registryDocuments && newPlot.registryDocuments.map((file, index) => (
+                                  <Chip
+                                    key={index}
+                                    label={file.name}
+                                    icon={file.type && file.type.includes('pdf') ? <PictureAsPdf /> : <ImageIcon />}
+                                    onDelete={() => removeRegistryFile(index)}
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                ))}
                               </Box>
-                            </Grid>
-                          </>
+                            </Box>
+                          </Grid>
+
+                          <Grid item xs={12} sm={6}>
+                            <Box sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 1, height: '100%' }}>
+                              <Typography variant="subtitle2" gutterBottom>
+                                Registry PDF (Max 1 file)
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                component="label"
+                                startIcon={<PictureAsPdf />}
+                                size="small"
+                                sx={{ mb: 2 }}
+                              >
+                                Upload PDF
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept=".pdf"
+                                  onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file) {
+                                      if (file.size > 1024 * 1024) {
+                                        toast.error('File too large. Max 1MB.');
+                                      } else {
+                                        setNewPlot(s => ({ ...s, registryPdf: file }));
+                                      }
+                                    }
+                                  }}
+                                />
+                              </Button>
+                              {newPlot.registryPdf && (
+                                <Chip
+                                  label={newPlot.registryPdf.name || 'Existing PDF'}
+                                  icon={<PictureAsPdf />}
+                                  onDelete={() => setNewPlot(s => ({ ...s, registryPdf: null }))}
+                                  color="primary"
+                                  variant="outlined"
+                                  sx={{ ml: 1 }}
+                                />
+                              )}
+                            </Box>
+                          </Grid>
                         </>
+
                       )}
                     </Grid>
-                  </Box>
+                  </Box >
                 )}
-              </Box>
+              </Box >
 
               {/* Action Buttons */}
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+              < Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
                 <Button onClick={closeAddDialog} variant="outlined">Cancel</Button>
                 <Button variant="contained" onClick={handleAddPlot}>Add Plot</Button>
-              </Box>
+              </Box >
             </>
           ) : (
             <>
@@ -3583,41 +3653,87 @@ const PlotManagement = () => {
                             </Box>
                           </Box>
 
-                          <Box sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 1 }}>
-                            <Typography variant="subtitle2" gutterBottom>
-                              Registry Documents (Max 1MB per file, Images/PDFs)
-                            </Typography>
-                            <Button
-                              variant="outlined"
-                              component="label"
-                              startIcon={<CloudUpload />}
-                              size="small"
-                              sx={{ mb: 2 }}
-                            >
-                              Upload Documents
-                              <input
-                                type="file"
-                                hidden
-                                multiple
-                                accept="image/*,.pdf"
-                                onChange={handleRegistryFileSelect}
-                              />
-                            </Button>
-
-                            {/* Selected Files List */}
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                              {newPlot.registryDocuments && newPlot.registryDocuments.map((file, index) => (
-                                <Chip
-                                  key={index}
-                                  label={file.name}
-                                  icon={file.type && file.type.includes('pdf') ? <PictureAsPdf /> : <ImageIcon />}
-                                  onDelete={() => removeRegistryFile(index)}
-                                  color="primary"
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                              <Box sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 1, height: '100%' }}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                  Registry Documents (Max 1MB per file, Images/PDFs)
+                                </Typography>
+                                <Button
                                   variant="outlined"
-                                />
-                              ))}
-                            </Box>
-                          </Box>
+                                  component="label"
+                                  startIcon={<CloudUpload />}
+                                  size="small"
+                                  sx={{ mb: 2 }}
+                                >
+                                  Upload Documents
+                                  <input
+                                    type="file"
+                                    hidden
+                                    multiple
+                                    accept="image/*,.pdf"
+                                    onChange={handleRegistryFileSelect}
+                                  />
+                                </Button>
+
+                                {/* Selected Files List */}
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                  {newPlot.registryDocuments && newPlot.registryDocuments.map((file, index) => (
+                                    <Chip
+                                      key={index}
+                                      label={file.name}
+                                      icon={file.type && file.type.includes('pdf') ? <PictureAsPdf /> : <ImageIcon />}
+                                      onDelete={() => removeRegistryFile(index)}
+                                      color="primary"
+                                      variant="outlined"
+                                    />
+                                  ))}
+                                </Box>
+                              </Box>
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                              <Box sx={{ p: 2, border: '1px dashed #bdbdbd', borderRadius: 1, height: '100%' }}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                  Registry PDF (Max 1 file)
+                                </Typography>
+                                <Button
+                                  variant="outlined"
+                                  component="label"
+                                  startIcon={<PictureAsPdf />}
+                                  size="small"
+                                  sx={{ mb: 2 }}
+                                >
+                                  Upload PDF
+                                  <input
+                                    type="file"
+                                    hidden
+                                    accept=".pdf"
+                                    onChange={(e) => {
+                                      const file = e.target.files[0];
+                                      if (file) {
+                                        if (file.size > 1024 * 1024) {
+                                          toast.error('File too large. Max 1MB.');
+                                        } else {
+                                          setNewPlot(s => ({ ...s, registryPdf: file }));
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </Button>
+                                {newPlot.registryPdf && (
+                                  <Chip
+                                    label={newPlot.registryPdf.name || 'Existing PDF'}
+                                    icon={<PictureAsPdf />}
+                                    onDelete={() => setNewPlot(s => ({ ...s, registryPdf: null }))}
+                                    color="primary"
+                                    variant="outlined"
+                                    sx={{ ml: 1 }}
+                                  />
+                                )}
+                              </Box>
+                            </Grid>
+                          </Grid>
                         </>
                       )}
                     </Box>
@@ -3632,9 +3748,9 @@ const PlotManagement = () => {
               </Box>
             </>
           )}
-        </Paper>
+        </Paper >
         {/* Image Preview Dialog */}
-        <Dialog
+        < Dialog
           open={imageDialogOpen}
           onClose={() => setImageDialogOpen(false)}
           maxWidth="lg"
@@ -3655,8 +3771,8 @@ const PlotManagement = () => {
               />
             )}
           </Box>
-        </Dialog>
-      </Box>
+        </Dialog >
+      </Box >
     )
   }
 
