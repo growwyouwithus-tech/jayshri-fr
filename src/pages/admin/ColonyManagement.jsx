@@ -122,7 +122,7 @@ const ColonyManagement = () => {
   const fetchColonies = async () => {
     try {
       setLoading(true)
-      const { data } = await axios.get('/colonies')
+      const { data } = await axios.get('/colonies', { params: { limit: 1000 } })
       const rawColonies = data?.data?.colonies || [];
       console.log('Raw colony data from API:', rawColonies);
 

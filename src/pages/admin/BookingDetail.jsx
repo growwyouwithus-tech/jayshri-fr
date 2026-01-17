@@ -273,6 +273,26 @@ const BookingDetail = () => {
     right: dimensions.right || '-'
   }
 
+  // Helper function for number conversion
+  const toNumber = (val) => {
+    const num = Number(val)
+    return Number.isFinite(num) ? num : 0
+  }
+
+  // Calculate area in Gaj and prices (matching BookingManagement logic)
+  const areaGaj = plot.areaGaj || (plot.area ? (toNumber(plot.area) / 9).toFixed(3) : null)
+  const pricePerGaj = plot.pricePerGaj || (plot.pricePerSqFt ? (toNumber(plot.pricePerSqFt) * 9).toFixed(2) : null)
+  const finalPricePerGaj = plot.finalPrice || null
+
+
+  // Calculate total price (prioritize finalPrice calculation when available)
+  const displayTotalPrice = (finalPricePerGaj && areaGaj)
+    ? toNumber(finalPricePerGaj) * toNumber(areaGaj)
+    : (booking.totalAmount || plot.totalPrice ||
+      (areaGaj && pricePerGaj ? toNumber(areaGaj) * toNumber(pricePerGaj) : 0))
+
+
+
   return (
     <Box>
       <Box display="flex" alignItems="center" gap={2} mb={4}>
@@ -330,10 +350,10 @@ const BookingDetail = () => {
                   <strong>Plot No:</strong> {booking.plotId?.plotNo || booking.plotId?.plotNumber || '-'}
                 </Typography>
                 <Typography variant="body2" gutterBottom>
-                  <strong>Area:</strong> {booking.plotId?.area || booking.plotId?.areaGaj} Gaj
+                  <strong>Area:</strong> {booking.plotId?.areaGaj || (booking.plotId?.area ? (booking.plotId.area / 9).toFixed(3) : '-')} Gaj
                 </Typography>
                 <Typography variant="body2" gutterBottom>
-                  <strong>Total Price:</strong> ₹{booking.totalAmount?.toLocaleString()}
+                  <strong>Total Price:</strong> ₹{Number(displayTotalPrice).toLocaleString()}
                 </Typography>
               </Box>
             </Paper>
@@ -349,16 +369,26 @@ const BookingDetail = () => {
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
                 <Typography variant="body2" color="text.secondary">Plot Size (Area)</Typography>
-                <Typography variant="body1" fontWeight="medium">{plot.area || plot.areaGaj || '-'} SqFt/Gaj</Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  {plot.areaGaj || (plot.area ? (plot.area / 9).toFixed(3) : '-')} Gaj
+                </Typography>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <Typography variant="body2" color="text.secondary">Price per Gaj</Typography>
-                <Typography variant="body1" fontWeight="medium">₹{plot.pricePerSqFt ? (plot.pricePerSqFt * 9).toLocaleString() : '-'}</Typography>
+                <Typography variant="body2" color="text.secondary">Sold Price per Gaj</Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  ₹{plot.finalPrice ? Number(plot.finalPrice).toLocaleString() : '-'}
+                </Typography>
               </Grid>
               <Grid item xs={12} sm={4}>
                 <Typography variant="body2" color="text.secondary">Plot Dimension</Typography>
                 <Typography variant="body1" fontWeight="medium">
-                  {dimensions.length || '-'} x {dimensions.width || '-'}
+                  {dimensions.length || '-'} × {dimensions.width || '-'}
+                </Typography>
+                <Typography variant="caption" display="block" color="text.secondary" mt={0.5}>
+                  Front: {adjacent.front} | Back: {adjacent.back}
+                </Typography>
+                <Typography variant="caption" display="block" color="text.secondary">
+                  Left: {adjacent.left} | Right: {adjacent.right}
                 </Typography>
               </Grid>
 
@@ -477,7 +507,7 @@ const BookingDetail = () => {
           </Grid>
         </Box>
 
-        {/* 3. Registry Images */}
+        {/* 3. Registry Images
         <Box mb={4}>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
             Registry Images
@@ -498,9 +528,9 @@ const BookingDetail = () => {
               <Grid item xs={12}><Typography color="text.secondary">No registry documents uploaded.</Typography></Grid>
             )}
           </Grid>
-        </Box>
+        </Box> */}
 
-        <Divider sx={{ my: 3 }} />
+        {/* <Divider sx={{ my: 3 }} />
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
@@ -574,7 +604,7 @@ const BookingDetail = () => {
               Updates are disabled for manually booked plots.
             </Typography>
           )}
-        </Box>
+        </Box> */}
       </Paper>
 
       {/* Payment Receipts Section - Hide for Pseudo Bookings or show message */}

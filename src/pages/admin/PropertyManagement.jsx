@@ -174,7 +174,7 @@ const PropertyManagement = () => {
 
   const fetchPropertyStats = async () => {
     try {
-      const { data } = await axios.get('/plots?limit=1000')
+      const { data } = await axios.get('/plots?limit=5000')
       const plots = data?.data?.plots || []
 
       // Group plots by property
@@ -219,7 +219,7 @@ const PropertyManagement = () => {
   const fetchProperties = async () => {
     try {
       setPropertiesLoading(true)
-      const { data } = await axios.get('/properties?populate=colonyId')
+      const { data } = await axios.get('/properties?populate=colonyId&limit=1000')
       const list = Array.isArray(data?.data?.properties)
         ? data.data.properties
         : Array.isArray(data?.data)

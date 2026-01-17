@@ -17,7 +17,7 @@ import {
   Tabs,
   Alert
 } from '@mui/material'
-import { Edit, Save, Cancel, CloudUpload } from '@mui/icons-material'
+import { Edit, Save, Cancel, CloudUpload, Delete, Add } from '@mui/icons-material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -33,8 +33,7 @@ const Settings = () => {
     logo: null,
     gstNumber: '07AABCJ1234F1Z5',
     panNumber: 'AABCJ1234F',
-    ownerAadharNumber: '',
-    ownerPanNumber: ''
+    owners: [] // Array of owners
   })
 
   const [systemSettings, setSystemSettings] = useState({
@@ -59,6 +58,34 @@ const Settings = () => {
     lateFeePercentage: 2
   })
 
+  // Load settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await axios.get('/settings')
+        if (response.data.success && response.data.data) {
+          const data = response.data.data
+
+          // Update company settings
+          setCompanySettings(prev => ({
+            ...prev,
+            companyName: data.companyName || prev.companyName,
+            email: data.email || prev.email,
+            phone: data.phone || prev.phone,
+            address: data.address || prev.address,
+            website: data.website || prev.website,
+            gstNumber: data.gstNumber || prev.gstNumber,
+            panNumber: data.panNumber || prev.panNumber,
+            owners: data.owners || []
+          }))
+        }
+      } catch (error) {
+        console.error('Failed to load settings:', error)
+      }
+    }
+    loadSettings()
+  }, [])
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue)
   }
@@ -68,6 +95,49 @@ const Settings = () => {
       ...prev,
       [field]: value
     }))
+  }
+
+  // Owner management functions
+  const addOwner = () => {
+    setCompanySettings(prev => ({
+      ...prev,
+      owners: [...prev.owners, {
+        name: '',
+        phone: '',
+        aadharNumber: '',
+        panNumber: '',
+        documents: {}
+      }]
+    }))
+  }
+
+  const removeOwner = (index) => {
+    setCompanySettings(prev => ({
+      ...prev,
+      owners: prev.owners.filter((_, i) => i !== index)
+    }))
+  }
+
+  const updateOwner = (index, field, value) => {
+    setCompanySettings(prev => {
+      const newOwners = [...prev.owners]
+      newOwners[index] = {
+        ...newOwners[index],
+        [field]: value
+      }
+      return { ...prev, owners: newOwners }
+    })
+  }
+
+  const updateOwnerDocument = (index, docType, file) => {
+    setCompanySettings(prev => {
+      const newOwners = [...prev.owners]
+      if (!newOwners[index].documents) {
+        newOwners[index].documents = {}
+      }
+      newOwners[index].documents[docType] = file
+      return { ...prev, owners: newOwners }
+    })
   }
 
   const handleSystemSettingsChange = (field, value) => {
@@ -94,16 +164,41 @@ const Settings = () => {
         case 'company':
           // Create FormData for company settings to handle file uploads
           const formData = new FormData();
+
+          // Add company fields
           Object.keys(companySettings).forEach(key => {
-            // Check if it's the owner documents file inputs
-            if (['aadharFront', 'aadharBack', 'panCard', 'passportPhoto', 'fullPhoto', 'logo'].includes(key)) {
-              if (companySettings[key] instanceof File) {
-                formData.append(key, companySettings[key]);
-              }
-            } else {
+            if (key === 'owners') {
+              // Handle owners separately
+              return;
+            }
+            if (key === 'logo' && companySettings[key] instanceof File) {
+              formData.append('logo', companySettings[key]);
+            } else if (!(companySettings[key] instanceof File)) {
               formData.append(key, companySettings[key]);
             }
           });
+
+          // Add owners data (without files)
+          const ownersData = companySettings.owners.map(owner => ({
+            name: owner.name,
+            phone: owner.phone,
+            aadharNumber: owner.aadharNumber,
+            panNumber: owner.panNumber
+          }));
+          formData.append('owners', JSON.stringify(ownersData));
+
+          // Add owner documents with indexed field names
+          companySettings.owners.forEach((owner, index) => {
+            if (owner.documents) {
+              Object.keys(owner.documents).forEach(docType => {
+                const file = owner.documents[docType];
+                if (file instanceof File) {
+                  formData.append(`owner_${index}_${docType}`, file);
+                }
+              });
+            }
+          });
+
           payload = formData;
           isFormData = true;
           break
@@ -236,117 +331,219 @@ const Settings = () => {
 
         <Grid item xs={12}>
           <Divider sx={{ my: 2 }} />
-          <Typography variant="subtitle1" fontWeight="bold" mb={2}>
-            Owner Documents
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="subtitle1" fontWeight="bold">
+              Company Owners
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={addOwner}
+              size="small"
+            >
+              Add Owner
+            </Button>
+          </Box>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Owner Aadhar Number"
-            value={companySettings.ownerAadharNumber}
-            onChange={(e) => handleCompanySettingsChange('ownerAadharNumber', e.target.value)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Owner PAN Number"
-            value={companySettings.ownerPanNumber}
-            onChange={(e) => handleCompanySettingsChange('ownerPanNumber', e.target.value)}
-          />
-        </Grid>
+        {companySettings.owners.map((owner, index) => (
+          <Grid item xs={12} key={index}>
+            <Card variant="outlined" sx={{ p: 2, bgcolor: '#f9f9f9' }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="subtitle2" fontWeight="bold">
+                  Owner {index + 1}
+                </Typography>
+                <IconButton
+                  color="error"
+                  size="small"
+                  onClick={() => removeOwner(index)}
+                >
+                  <Delete />
+                </IconButton>
+              </Box>
 
-        <Grid item xs={6} md={4}>
-          <Typography variant="body2" mb={1}>Aadhar Front</Typography>
-          <Button variant="outlined" component="label" fullWidth>
-            Upload Aadhar Front
-            <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
-              const file = e.target.files[0]
-              if (file && file.size > 1024 * 1024) {
-                toast.error('File size must be less than 1MB')
-                e.target.value = ''
-              } else {
-                handleCompanySettingsChange('aadharFront', file)
-              }
-            }} />
-          </Button>
-          {companySettings.aadharFront && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
-          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-        </Grid>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={8}>
+                  <TextField
+                    fullWidth
+                    label="Name *"
+                    required
+                    value={owner.name}
+                    onChange={(e) => updateOwner(index, 'name', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Phone"
+                    value={owner.phone}
+                    onChange={(e) => updateOwner(index, 'phone', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Aadhar Number"
+                    value={owner.aadharNumber}
+                    onChange={(e) => updateOwner(index, 'aadharNumber', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="PAN Number"
+                    value={owner.panNumber}
+                    onChange={(e) => updateOwner(index, 'panNumber', e.target.value)}
+                  />
+                </Grid>
 
-        <Grid item xs={6} md={4}>
-          <Typography variant="body2" mb={1}>Aadhar Back</Typography>
-          <Button variant="outlined" component="label" fullWidth>
-            Upload Aadhar Back
-            <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
-              const file = e.target.files[0]
-              if (file && file.size > 1024 * 1024) {
-                toast.error('File size must be less than 1MB')
-                e.target.value = ''
-              } else {
-                handleCompanySettingsChange('aadharBack', file)
-              }
-            }} />
-          </Button>
-          {companySettings.aadharBack && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
-          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-        </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body2" fontWeight="bold" mb={1}>
+                    Documents
+                  </Typography>
+                </Grid>
 
-        <Grid item xs={6} md={4}>
-          <Typography variant="body2" mb={1}>PAN Card</Typography>
-          <Button variant="outlined" component="label" fullWidth>
-            Upload PAN Card
-            <input type="file" hidden accept="image/*,application/pdf" onChange={(e) => {
-              const file = e.target.files[0]
-              if (file && file.size > 1024 * 1024) {
-                toast.error('File size must be less than 1MB')
-                e.target.value = ''
-              } else {
-                handleCompanySettingsChange('panCard', file)
-              }
-            }} />
-          </Button>
-          {companySettings.panCard && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
-          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-        </Grid>
+                <Grid item xs={6} md={4}>
+                  <Typography variant="caption" display="block" mb={0.5}>Aadhar Front</Typography>
+                  <Button variant="outlined" component="label" fullWidth size="small">
+                    Upload
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*,application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          updateOwnerDocument(index, 'aadharFront', file)
+                        }
+                      }}
+                    />
+                  </Button>
+                  {owner.documents?.aadharFront && (
+                    <Typography variant="caption" color="success.main" display="block">
+                      ✓ File selected
+                    </Typography>
+                  )}
+                </Grid>
 
-        <Grid item xs={6} md={4}>
-          <Typography variant="body2" mb={1}>Passport Photo</Typography>
-          <Button variant="outlined" component="label" fullWidth>
-            Upload Passport Photo
-            <input type="file" hidden accept="image/*" onChange={(e) => {
-              const file = e.target.files[0]
-              if (file && file.size > 1024 * 1024) {
-                toast.error('File size must be less than 1MB')
-                e.target.value = ''
-              } else {
-                handleCompanySettingsChange('passportPhoto', file)
-              }
-            }} />
-          </Button>
-          {companySettings.passportPhoto && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
-          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-        </Grid>
+                <Grid item xs={6} md={4}>
+                  <Typography variant="caption" display="block" mb={0.5}>Aadhar Back</Typography>
+                  <Button variant="outlined" component="label" fullWidth size="small">
+                    Upload
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*,application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          updateOwnerDocument(index, 'aadharBack', file)
+                        }
+                      }}
+                    />
+                  </Button>
+                  {owner.documents?.aadharBack && (
+                    <Typography variant="caption" color="success.main" display="block">
+                      ✓ File selected
+                    </Typography>
+                  )}
+                </Grid>
 
-        <Grid item xs={6} md={4}>
-          <Typography variant="body2" mb={1}>Full Photo</Typography>
-          <Button variant="outlined" component="label" fullWidth>
-            Upload Full Photo
-            <input type="file" hidden accept="image/*" onChange={(e) => {
-              const file = e.target.files[0]
-              if (file && file.size > 1024 * 1024) {
-                toast.error('File size must be less than 1MB')
-                e.target.value = ''
-              } else {
-                handleCompanySettingsChange('fullPhoto', file)
-              }
-            }} />
-          </Button>
-          {companySettings.fullPhoto && <Typography variant="caption" color="success.main">✓ File selected</Typography>}
-          <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
-        </Grid>
+                <Grid item xs={6} md={4}>
+                  <Typography variant="caption" display="block" mb={0.5}>PAN Card</Typography>
+                  <Button variant="outlined" component="label" fullWidth size="small">
+                    Upload
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*,application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          updateOwnerDocument(index, 'panCard', file)
+                        }
+                      }}
+                    />
+                  </Button>
+                  {owner.documents?.panCard && (
+                    <Typography variant="caption" color="success.main" display="block">
+                      ✓ File selected
+                    </Typography>
+                  )}
+                </Grid>
+
+                <Grid item xs={6} md={4}>
+                  <Typography variant="caption" display="block" mb={0.5}>Passport Photo</Typography>
+                  <Button variant="outlined" component="label" fullWidth size="small">
+                    Upload
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          updateOwnerDocument(index, 'passportPhoto', file)
+                        }
+                      }}
+                    />
+                  </Button>
+                  {owner.documents?.passportPhoto && (
+                    <Typography variant="caption" color="success.main" display="block">
+                      ✓ File selected
+                    </Typography>
+                  )}
+                </Grid>
+
+                <Grid item xs={6} md={4}>
+                  <Typography variant="caption" display="block" mb={0.5}>Full Photo</Typography>
+                  <Button variant="outlined" component="label" fullWidth size="small">
+                    Upload
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file && file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB')
+                          e.target.value = ''
+                        } else {
+                          updateOwnerDocument(index, 'fullPhoto', file)
+                        }
+                      }}
+                    />
+                  </Button>
+                  {owner.documents?.fullPhoto && (
+                    <Typography variant="caption" color="success.main" display="block">
+                      ✓ File selected
+                    </Typography>
+                  )}
+                </Grid>
+              </Grid>
+            </Card>
+          </Grid>
+        ))}
+
+        {companySettings.owners.length === 0 && (
+          <Grid item xs={12}>
+            <Alert severity="info">
+              No owners added yet. Click "Add Owner" to add company owners.
+            </Alert>
+          </Grid>
+        )}
       </Grid>
 
       <Box mt={3}>

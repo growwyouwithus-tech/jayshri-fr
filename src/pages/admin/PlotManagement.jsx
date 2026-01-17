@@ -691,7 +691,16 @@ const PlotManagement = () => {
       facing: plot.facing || '',
       status: plot.status || 'available',
       ownerType: plot.ownerType || 'owner',
-      plotImages: [],
+      plotImages: plot.plotImages ?
+        // Flatten any nested arrays and ensure we only have URL strings
+        [plot.plotImages].flat(Infinity)
+          .filter(url => url && typeof url === 'string')
+          .map(url => ({
+            name: url.split('/').pop(),
+            url: url,
+            isExisting: true
+          }))
+        : [],
       customerName: plot.customerName || '',
       customerNumber: plot.customerNumber ? plot.customerNumber.replace(/^\+91/, '') : '',
       customerShortAddress: plot.customerShortAddress || '',
@@ -712,11 +721,16 @@ const PlotManagement = () => {
       transactionDate: plot.transactionDate || '',
       paidAmount: plot.paidAmount?.toString() || '',
       paymentSlip: null,
-      registryDocuments: plot.registryDocument ? plot.registryDocument.map(url => ({
-        name: url.split('/').pop(),
-        url: url,
-        isExisting: true
-      })) : [],
+      registryDocuments: plot.registryDocument ?
+        // Flatten any nested arrays and ensure we only have URL strings
+        [plot.registryDocument].flat(Infinity)
+          .filter(url => url && typeof url === 'string')
+          .map(url => ({
+            name: url.split('/').pop(),
+            url: url,
+            isExisting: true
+          }))
+        : [],
       registryPdf: plot.registryPdf ? { name: 'registry.pdf', url: plot.registryPdf, isExisting: true } : null,
       registryStatus: plot.registryStatus || 'pending',
     })
@@ -1006,8 +1020,13 @@ const PlotManagement = () => {
       // Create FormData if there's a file to upload
       const formData = new FormData()
 
-      // Append all payload fields
+      // Append all payload fields (excluding file-related fields)
+      const fileRelatedFields = ['registryDocuments', 'plotImages', 'paymentSlip', 'registryPdf',
+        'customerAadharFront', 'customerAadharBack', 'customerPanCard',
+        'customerPassportPhoto', 'customerFullPhoto'];
+
       Object.keys(payload).forEach(key => {
+        if (fileRelatedFields.includes(key)) return;
         if (typeof payload[key] === 'object' && payload[key] !== null) {
           formData.append(key, JSON.stringify(payload[key]))
         } else {
@@ -1098,8 +1117,13 @@ const PlotManagement = () => {
       // Create FormData if there's a file to upload
       const formData = new FormData()
 
-      // Append all payload fields
+      // Append all payload fields (excluding file-related fields)
+      const fileRelatedFields = ['registryDocuments', 'plotImages', 'paymentSlip', 'registryPdf',
+        'customerAadharFront', 'customerAadharBack', 'customerPanCard',
+        'customerPassportPhoto', 'customerFullPhoto'];
+
       Object.keys(payload).forEach(key => {
+        if (fileRelatedFields.includes(key)) return;
         if (typeof payload[key] === 'object' && payload[key] !== null) {
           formData.append(key, JSON.stringify(payload[key]))
         } else {
@@ -1111,16 +1135,42 @@ const PlotManagement = () => {
       if (newPlot.paymentSlip) {
         formData.append('paymentSlip', newPlot.paymentSlip)
       }
-      if (newPlot.registryDocuments && newPlot.registryDocuments.length > 0) {
+      if (newPlot.registryDocuments) {
+        const existingDocs = [];
         newPlot.registryDocuments.forEach((file) => {
           if (file.url && file.isExisting) {
-            // If it's an existing file (object with url), send the URL
-            formData.append('registryDocument', file.url)
-          } else {
-            // If it's a new file (File object), send the file
-            formData.append('registryDocument', file)
+            // Handle case where file.url might itself be an array or nested structure
+            const url = file.url;
+            if (Array.isArray(url)) {
+              // If url is an array, flatten it and add all URLs
+              url.flat(Infinity).filter(u => u && typeof u === 'string').forEach(u => existingDocs.push(u));
+            } else if (typeof url === 'string') {
+              existingDocs.push(url);
+            } else {
+              // Try to convert to string as last resort
+              const urlStr = String(url);
+              if (urlStr && urlStr !== '[object Object]') {
+                existingDocs.push(urlStr);
+              }
+            }
+          } else if (!file.isExisting) {
+            // This is a new file object
+            formData.append('registryDocument', file);
           }
-        })
+        });
+
+        // Triple-check: aggressively flatten any nested arrays (safety measure)
+        const flattenedDocs = existingDocs.flat(Infinity).filter(url => url && typeof url === 'string' && url.startsWith('http'));
+
+        console.log('Registry Documents Debug:', {
+          original: newPlot.registryDocuments,
+          existingDocs,
+          flattenedDocs
+        });
+
+        if (flattenedDocs.length > 0) {
+          formData.append('existingRegistryDocuments', JSON.stringify(flattenedDocs));
+        }
       }
 
       if (newPlot.registryPdf) {
@@ -1130,14 +1180,25 @@ const PlotManagement = () => {
           formData.append('registryPdf', newPlot.registryPdf)
         }
       }
-      if (newPlot.plotImages && newPlot.plotImages.length > 0) {
+      if (newPlot.plotImages) {
+        const existingImages = [];
         newPlot.plotImages.forEach((file) => {
           if (file.url && file.isExisting) {
-            formData.append('plotImages', file.url)
-          } else {
-            formData.append('plotImages', file)
+            // Ensure we're only pushing the URL string, not nested arrays
+            const url = typeof file.url === 'string' ? file.url : String(file.url);
+            existingImages.push(url);
+          } else if (!file.isExisting) {
+            // This is a new file object
+            formData.append('plotImages', file);
           }
-        })
+        });
+
+        // Double-check: flatten any nested arrays (safety measure)
+        const flattenedImages = existingImages.flat(Infinity).filter(url => typeof url === 'string');
+
+        if (flattenedImages.length > 0) {
+          formData.append('existingPlotImages', JSON.stringify(flattenedImages));
+        }
       }
       // Append customer documents if exist
       if (newPlot.customerAadharFront) {
@@ -1729,11 +1790,16 @@ const PlotManagement = () => {
                                     </Typography>
                                   </Box>
                                 ) : (
-                                  <img
-                                    src={doc.match(/^https?:\/\//) ? doc : `${import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000'}${doc}`}
-                                    alt={`Registry ${idx + 1}`}
-                                    style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
-                                  />
+                                  <Box display="flex" flexDirection="column" alignItems="center">
+                                    <img
+                                      src={doc.match(/^https?:\/\//) ? doc : `${import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000'}${doc}`}
+                                      alt={`Registry ${idx + 1}`}
+                                      style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                                    />
+                                    <Typography variant="caption" sx={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', mt: 0.5 }}>
+                                      {doc.split('/').pop()}
+                                    </Typography>
+                                  </Box>
                                 )}
                               </Box>
                             ))}
