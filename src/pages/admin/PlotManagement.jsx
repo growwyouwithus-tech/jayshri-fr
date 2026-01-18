@@ -32,6 +32,9 @@ import {
   InputAdornment,
   Autocomplete,
   Tooltip,
+  Checkbox,
+  FormGroup,
+  Alert,
 } from '@mui/material'
 import { Add, Edit, Delete, Visibility, Payment, Search, CloudUpload, ArrowBack, Close, PictureAsPdf, Image as ImageIcon } from '@mui/icons-material'
 import axios from '@/api/axios'
@@ -144,6 +147,9 @@ const PlotManagement = () => {
   const [selectedImage, setSelectedImage] = useState(null)
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [errors, setErrors] = useState({})
+  // Owner selection state
+  const [availableOwners, setAvailableOwners] = useState([])
+  const [selectedOwnerIds, setSelectedOwnerIds] = useState([])
   const [newPlot, setNewPlot] = useState({
     propertyId: '',
     colonyId: '',
@@ -353,6 +359,12 @@ const PlotManagement = () => {
         right: toNumber(newPlot.rightSide),
       },
     }
+
+    // Add selected owner IDs if owner type is 'owner'
+    if (newPlot.ownerType === 'owner' && selectedOwnerIds.length > 0) {
+      payload.selectedOwnerIds = selectedOwnerIds
+    }
+
     // Add booking/sale details if status is booked or sold
     if (newPlot.status === 'booked' || newPlot.status === 'sold') {
       payload.customerName = newPlot.customerName
@@ -462,6 +474,7 @@ const PlotManagement = () => {
     fetchPlots()
     fetchAgents()
     fetchAdvocates()
+    fetchOwners()
   }, [])
 
   // Handle pre-selected property from navigation state
@@ -551,6 +564,16 @@ const PlotManagement = () => {
     }
   }
 
+  const fetchOwners = async () => {
+    try {
+      const { data } = await axios.get('/settings/owners')
+      const ownerList = Array.isArray(data?.data?.owners) ? data.data.owners : []
+      setAvailableOwners(ownerList)
+    } catch (error) {
+      console.error('Failed to fetch owners:', error)
+    }
+  }
+
   const handleFilterChange = (colonyId) => {
     setFilterColony(colonyId)
     fetchPlots(colonyId)
@@ -630,6 +653,7 @@ const PlotManagement = () => {
   const closeAddDialog = () => {
     setAddDialogOpen(false)
     setErrors({}) // Clear all errors
+    setSelectedOwnerIds([]) // Clear selected owners
     setNewPlot({
       colonyId: '',
       plotNo: '',
@@ -734,6 +758,15 @@ const PlotManagement = () => {
       registryPdf: plot.registryPdf ? { name: 'registry.pdf', url: plot.registryPdf, isExisting: true } : null,
       registryStatus: plot.registryStatus || 'pending',
     })
+
+    // Populate selected owner IDs from plot owners
+    if (plot.plotOwners && Array.isArray(plot.plotOwners)) {
+      const ownerIds = plot.plotOwners.map(owner => owner.ownerId).filter(Boolean)
+      setSelectedOwnerIds(ownerIds)
+    } else {
+      setSelectedOwnerIds([])
+    }
+
     setEditDialogOpen(true)
   }
 
@@ -2071,6 +2104,49 @@ const PlotManagement = () => {
                   </RadioGroup>
                 </FormControl>
 
+                {/* Owner Selection - Show when 'owner' is selected */}
+                {newPlot.ownerType === 'owner' && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: '#f9f9f9', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                    <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                      Select Plot Owners
+                    </Typography>
+                    {availableOwners.length === 0 ? (
+                      <Alert severity="info" sx={{ mt: 1 }}>
+                        No owners found. Please add owners in Settings first.
+                      </Alert>
+                    ) : (
+                      <Box>
+                        <FormGroup>
+                          {availableOwners.map((owner) => (
+                            <FormControlLabel
+                              key={owner._id}
+                              control={
+                                <Checkbox
+                                  checked={selectedOwnerIds.includes(owner._id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedOwnerIds(prev => [...prev, owner._id])
+                                    } else {
+                                      setSelectedOwnerIds(prev => prev.filter(id => id !== owner._id))
+                                    }
+                                  }}
+                                  size="small"
+                                />
+                              }
+                              label={`${owner.name}${owner.phone ? ` (${owner.phone})` : ''}`}
+                            />
+                          ))}
+                        </FormGroup>
+                        {selectedOwnerIds.length > 0 && (
+                          <Typography variant="caption" color="success.main" sx={{ mt: 1, display: 'block' }}>
+                            ✓ {selectedOwnerIds.length} owner(s) selected
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
@@ -3001,6 +3077,49 @@ const PlotManagement = () => {
                     <FormControlLabel value="khatoniHolder" control={<Radio size="small" />} label="Khatoni Holder" />
                   </RadioGroup>
                 </FormControl>
+
+                {/* Owner Selection - Show when 'owner' is selected */}
+                {newPlot.ownerType === 'owner' && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: '#f9f9f9', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                    <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                      Select Plot Owners
+                    </Typography>
+                    {availableOwners.length === 0 ? (
+                      <Alert severity="info" sx={{ mt: 1 }}>
+                        No owners found. Please add owners in Settings first.
+                      </Alert>
+                    ) : (
+                      <Box>
+                        <FormGroup>
+                          {availableOwners.map((owner) => (
+                            <FormControlLabel
+                              key={owner._id}
+                              control={
+                                <Checkbox
+                                  checked={selectedOwnerIds.includes(owner._id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedOwnerIds(prev => [...prev, owner._id])
+                                    } else {
+                                      setSelectedOwnerIds(prev => prev.filter(id => id !== owner._id))
+                                    }
+                                  }}
+                                  size="small"
+                                />
+                              }
+                              label={`${owner.name}${owner.phone ? ` (${owner.phone})` : ''}`}
+                            />
+                          ))}
+                        </FormGroup>
+                        {selectedOwnerIds.length > 0 && (
+                          <Typography variant="caption" color="success.main" sx={{ mt: 1, display: 'block' }}>
+                            ✓ {selectedOwnerIds.length} owner(s) selected
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+                )}
 
                 <TextField
                   size="small"

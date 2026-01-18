@@ -455,7 +455,7 @@ const BookingDetail = () => {
               ))}
             </Grid>
           ) : (
-            <Typography color="text.secondary">No Khatoni details available.</Typography>
+            <Typography color="text.secondary">.</Typography>
           )}
         </Box>
 
@@ -477,6 +477,62 @@ const BookingDetail = () => {
                   {(!holder.documents?.aadharFront) && (
                     <Grid item xs={12}><Typography variant="caption" color="text.secondary">No documents for this holder.</Typography></Grid>
                   )}
+                </Grid>
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {/* Plot Owners (from Settings) */}
+        {plot.plotOwners && plot.plotOwners.length > 0 && (
+          <Box mb={4}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Plot Owners
+            </Typography>
+            {plot.plotOwners.map((owner, idx) => (
+              <Box key={idx} mb={3}>
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: '#f9f9f9' }}>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    Owner {idx + 1}: {owner.ownerName}
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Phone:</strong> {owner.ownerPhone || '-'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Aadhar:</strong> {owner.ownerAadharNumber || '-'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>PAN:</strong> {owner.ownerPanNumber || '-'}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Paper>
+
+                {/* Owner Documents */}
+                <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                  {owner.ownerName}'s Documents
+                </Typography>
+                <Grid container spacing={2}>
+                  <DocumentCard title="Aadhar Front" url={owner.ownerDocuments?.aadharFront} />
+                  <DocumentCard title="Aadhar Back" url={owner.ownerDocuments?.aadharBack} />
+                  <DocumentCard title="PAN Card" url={owner.ownerDocuments?.panCard} />
+                  <DocumentCard title="Passport Photo" url={owner.ownerDocuments?.passportPhoto} />
+                  <DocumentCard title="Full Photo" url={owner.ownerDocuments?.fullPhoto} />
+                  {(!owner.ownerDocuments?.aadharFront && !owner.ownerDocuments?.aadharBack &&
+                    !owner.ownerDocuments?.panCard && !owner.ownerDocuments?.passportPhoto &&
+                    !owner.ownerDocuments?.fullPhoto) && (
+                      <Grid item xs={12}>
+                        <Typography variant="caption" color="text.secondary">
+                          No documents available for this owner.
+                        </Typography>
+                      </Grid>
+                    )}
                 </Grid>
               </Box>
             ))}
@@ -507,7 +563,7 @@ const BookingDetail = () => {
           </Grid>
         </Box>
 
-        {/* 3. Registry Images
+        {/* Commented out: Registry Images section
         <Box mb={4}>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
             Registry Images
