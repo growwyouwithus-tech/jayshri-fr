@@ -1115,6 +1115,37 @@ const PlotManagement = () => {
         formData.append('customerFullPhoto', newPlot.customerFullPhoto)
       }
 
+      // Append witnesses data and documents
+      if (newPlot.witnesses && newPlot.witnesses.length > 0) {
+        // Filter out file objects from the witnesses array before stringifying
+        const witnessesData = newPlot.witnesses.map(w => {
+          const { witnessDocuments, ...rest } = w;
+          return rest;
+        });
+        formData.append('witnesses', JSON.stringify(witnessesData));
+
+        // Append witness documents
+        newPlot.witnesses.forEach((witness, idx) => {
+          if (witness.witnessDocuments) {
+            if (witness.witnessDocuments.aadharFront) {
+              formData.append(`witnessDocuments[${idx}][aadharFront]`, witness.witnessDocuments.aadharFront);
+            }
+            if (witness.witnessDocuments.aadharBack) {
+              formData.append(`witnessDocuments[${idx}][aadharBack]`, witness.witnessDocuments.aadharBack);
+            }
+            if (witness.witnessDocuments.panCard) {
+              formData.append(`witnessDocuments[${idx}][panCard]`, witness.witnessDocuments.panCard);
+            }
+            if (witness.witnessDocuments.passportPhoto) {
+              formData.append(`witnessDocuments[${idx}][passportPhoto]`, witness.witnessDocuments.passportPhoto);
+            }
+            if (witness.witnessDocuments.fullPhoto) {
+              formData.append(`witnessDocuments[${idx}][fullPhoto]`, witness.witnessDocuments.fullPhoto);
+            }
+          }
+        });
+      }
+
       const response = await axios.post('/plots', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -1262,6 +1293,37 @@ const PlotManagement = () => {
       }
       if (newPlot.customerFullPhoto) {
         formData.append('customerFullPhoto', newPlot.customerFullPhoto)
+      }
+
+      // Append witnesses data and documents
+      if (newPlot.witnesses && newPlot.witnesses.length > 0) {
+        // Filter out file objects from the witnesses array before stringifying
+        const witnessesData = newPlot.witnesses.map(w => {
+          const { witnessDocuments, ...rest } = w;
+          return rest;
+        });
+        formData.append('witnesses', JSON.stringify(witnessesData));
+
+        // Append witness documents
+        newPlot.witnesses.forEach((witness, idx) => {
+          if (witness.witnessDocuments) {
+            if (witness.witnessDocuments.aadharFront && !witness.witnessDocuments.aadharFront.isExisting) {
+              formData.append(`witnessDocuments[${idx}][aadharFront]`, witness.witnessDocuments.aadharFront);
+            }
+            if (witness.witnessDocuments.aadharBack && !witness.witnessDocuments.aadharBack.isExisting) {
+              formData.append(`witnessDocuments[${idx}][aadharBack]`, witness.witnessDocuments.aadharBack);
+            }
+            if (witness.witnessDocuments.panCard && !witness.witnessDocuments.panCard.isExisting) {
+              formData.append(`witnessDocuments[${idx}][panCard]`, witness.witnessDocuments.panCard);
+            }
+            if (witness.witnessDocuments.passportPhoto && !witness.witnessDocuments.passportPhoto.isExisting) {
+              formData.append(`witnessDocuments[${idx}][passportPhoto]`, witness.witnessDocuments.passportPhoto);
+            }
+            if (witness.witnessDocuments.fullPhoto && !witness.witnessDocuments.fullPhoto.isExisting) {
+              formData.append(`witnessDocuments[${idx}][fullPhoto]`, witness.witnessDocuments.fullPhoto);
+            }
+          }
+        });
       }
 
       const response = await axios.put(`/plots/${editingPlotId}`, formData, {
@@ -1519,7 +1581,18 @@ const PlotManagement = () => {
 
   // Show view form if viewing plot - Excel-like format
   if (viewDialogOpen && viewingPlot) {
-    const holders = getColonyKhatoniHolders(viewingPlot.colonyId)
+    // Get holders based on owner type
+    const holders = viewingPlot.ownerType === 'owner'
+      ? (viewingPlot.plotOwners || []).map(owner => ({
+        _id: owner.ownerId,
+        name: owner.ownerName,
+        mobile: owner.ownerPhone,
+        phone: owner.ownerPhone,
+        address: owner.ownerAddress,
+        aadharNumber: owner.ownerAadharNumber,
+        panNumber: owner.ownerPanNumber
+      }))
+      : getColonyKhatoniHolders(viewingPlot.colonyId)
 
     return (
       <Box>
@@ -2675,6 +2748,429 @@ const PlotManagement = () => {
 
                         </Box>
                       </Grid>
+                      {/* Witness Details Section - Wrapped in Grid Item for Add Form */}
+                      <Grid item xs={12}>
+                        <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #90caf9', mt: 2 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="subtitle2" fontWeight={600}>
+                              Witness Details (Optional)
+                            </Typography>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<Add />}
+                              onClick={() => {
+                                setNewPlot((s) => ({
+                                  ...s,
+                                  witnesses: [
+                                    ...(s.witnesses || []),
+                                    {
+                                      witnessName: '',
+                                      witnessPhone: '',
+                                      witnessAadharNumber: '',
+                                      witnessPanNumber: '',
+                                      witnessDateOfBirth: '',
+                                      witnessSonOf: '',
+                                      witnessDaughterOf: '',
+                                      witnessWifeOf: '',
+                                      witnessAddress: '',
+                                      witnessDocuments: {}
+                                    }
+                                  ]
+                                }))
+                              }}
+                            >
+                              Add Witness
+                            </Button>
+                          </Box>
+                          {newPlot.witnesses && newPlot.witnesses.length > 0 ? (
+                            newPlot.witnesses.map((witness, witnessIdx) => (
+                              <Box key={witnessIdx} sx={{ mb: 3, p: 2, bgcolor: 'white', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                  <Typography variant="subtitle2" fontWeight={600} color="primary">
+                                    Witness {witnessIdx + 1}
+                                  </Typography>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => {
+                                      setNewPlot((s) => ({
+                                        ...s,
+                                        witnesses: s.witnesses.filter((_, i) => i !== witnessIdx)
+                                      }))
+                                    }}
+                                  >
+                                    <Delete />
+                                  </IconButton>
+                                </Box>
+                                <Grid container spacing={2}>
+                                  {/* Name and Phone */}
+                                  <Grid item xs={12} sm={6}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="Name *"
+                                      value={witness.witnessName || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessName = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                    />
+                                  </Grid>
+                                  <Grid item xs={12} sm={6}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="Phone"
+                                      value={witness.witnessPhone || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessPhone = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                    />
+                                  </Grid>
+                                  {/* Aadhar, PAN, DOB */}
+                                  <Grid item xs={12} sm={4}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="Aadhar Number"
+                                      value={witness.witnessAadharNumber || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessAadharNumber = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                    />
+                                  </Grid>
+                                  <Grid item xs={12} sm={4}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="PAN Number"
+                                      value={witness.witnessPanNumber || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessPanNumber = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                    />
+                                  </Grid>
+                                  <Grid item xs={12} sm={4}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      type="date"
+                                      label="Date of Birth"
+                                      value={witness.witnessDateOfBirth || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessDateOfBirth = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                      InputLabelProps={{ shrink: true }}
+                                    />
+                                  </Grid>
+                                  {/* Son of, Daughter of, Wife of */}
+                                  <Grid item xs={12} sm={4}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="Son of"
+                                      value={witness.witnessSonOf || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessSonOf = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                    />
+                                  </Grid>
+                                  <Grid item xs={12} sm={4}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="Daughter of"
+                                      value={witness.witnessDaughterOf || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessDaughterOf = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                    />
+                                  </Grid>
+                                  <Grid item xs={12} sm={4}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="Wife of"
+                                      value={witness.witnessWifeOf || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessWifeOf = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                    />
+                                  </Grid>
+                                  {/* Address */}
+                                  <Grid item xs={12}>
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      label="Address"
+                                      multiline
+                                      rows={2}
+                                      value={witness.witnessAddress || ''}
+                                      onChange={(e) => {
+                                        const newWitnesses = [...(newPlot.witnesses || [])]
+                                        newWitnesses[witnessIdx].witnessAddress = e.target.value
+                                        setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                      }}
+                                    />
+                                  </Grid>
+                                  {/* Documents - Aadhar Front */}
+                                  <Grid item xs={12}>
+                                    <Typography variant="caption" fontWeight={600} display="block" sx={{ mb: 1 }}>
+                                      Witness Documents
+                                    </Typography>
+                                    <Grid container spacing={1}>
+                                      <Grid item xs={6} sm={4}>
+                                        <Button
+                                          variant="outlined"
+                                          component="label"
+                                          fullWidth
+                                          size="small"
+                                          startIcon={<CloudUpload />}
+                                        >
+                                          Aadhar Front
+                                          <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => {
+                                              const file = e.target.files[0]
+                                              if (file) {
+                                                if (file.size > 1024 * 1024) {
+                                                  toast.error('File too large. Max 1MB.')
+                                                } else {
+                                                  const newWitnesses = [...(newPlot.witnesses || [])]
+                                                  if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                    newWitnesses[witnessIdx].witnessDocuments = {}
+                                                  }
+                                                  newWitnesses[witnessIdx].witnessDocuments.aadharFront = file
+                                                  setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </Button>
+                                        {witness.witnessDocuments?.aadharFront && (
+                                          <Box sx={{ mt: 1 }}>
+                                            <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                              ✓ {typeof witness.witnessDocuments.aadharFront === 'string' ? 'Uploaded' : witness.witnessDocuments.aadharFront.name}
+                                            </Typography>
+                                            <Box
+                                              component="img"
+                                              src={typeof witness.witnessDocuments.aadharFront === 'string' ? witness.witnessDocuments.aadharFront : URL.createObjectURL(witness.witnessDocuments.aadharFront)}
+                                              alt="Aadhar Front"
+                                              sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                            />
+                                          </Box>
+                                        )}
+                                      </Grid>
+                                      {/* Aadhar Back */}
+                                      <Grid item xs={6} sm={4}>
+                                        <Button
+                                          variant="outlined"
+                                          component="label"
+                                          fullWidth
+                                          size="small"
+                                          startIcon={<CloudUpload />}
+                                        >
+                                          Aadhar Back
+                                          <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => {
+                                              const file = e.target.files[0]
+                                              if (file) {
+                                                if (file.size > 1024 * 1024) {
+                                                  toast.error('File too large. Max 1MB.')
+                                                } else {
+                                                  const newWitnesses = [...(newPlot.witnesses || [])]
+                                                  if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                    newWitnesses[witnessIdx].witnessDocuments = {}
+                                                  }
+                                                  newWitnesses[witnessIdx].witnessDocuments.aadharBack = file
+                                                  setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </Button>
+                                        {witness.witnessDocuments?.aadharBack && (
+                                          <Box sx={{ mt: 1 }}>
+                                            <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                              ✓ {typeof witness.witnessDocuments.aadharBack === 'string' ? 'Uploaded' : witness.witnessDocuments.aadharBack.name}
+                                            </Typography>
+                                            <Box
+                                              component="img"
+                                              src={typeof witness.witnessDocuments.aadharBack === 'string' ? witness.witnessDocuments.aadharBack : URL.createObjectURL(witness.witnessDocuments.aadharBack)}
+                                              alt="Aadhar Back"
+                                              sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                            />
+                                          </Box>
+                                        )}
+                                      </Grid>
+                                      {/* PAN Card */}
+                                      <Grid item xs={6} sm={4}>
+                                        <Button
+                                          variant="outlined"
+                                          component="label"
+                                          fullWidth
+                                          size="small"
+                                          startIcon={<CloudUpload />}
+                                        >
+                                          PAN Card
+                                          <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => {
+                                              const file = e.target.files[0]
+                                              if (file) {
+                                                if (file.size > 1024 * 1024) {
+                                                  toast.error('File too large. Max 1MB.')
+                                                } else {
+                                                  const newWitnesses = [...(newPlot.witnesses || [])]
+                                                  if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                    newWitnesses[witnessIdx].witnessDocuments = {}
+                                                  }
+                                                  newWitnesses[witnessIdx].witnessDocuments.panCard = file
+                                                  setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </Button>
+                                        {witness.witnessDocuments?.panCard && (
+                                          <Box sx={{ mt: 1 }}>
+                                            <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                              ✓ {typeof witness.witnessDocuments.panCard === 'string' ? 'Uploaded' : witness.witnessDocuments.panCard.name}
+                                            </Typography>
+                                            <Box
+                                              component="img"
+                                              src={typeof witness.witnessDocuments.panCard === 'string' ? witness.witnessDocuments.panCard : URL.createObjectURL(witness.witnessDocuments.panCard)}
+                                              alt="PAN Card"
+                                              sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                            />
+                                          </Box>
+                                        )}
+                                      </Grid>
+                                      {/* Passport Photo */}
+                                      <Grid item xs={6} sm={4}>
+                                        <Button
+                                          variant="outlined"
+                                          component="label"
+                                          fullWidth
+                                          size="small"
+                                          startIcon={<CloudUpload />}
+                                        >
+                                          Passport Photo
+                                          <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => {
+                                              const file = e.target.files[0]
+                                              if (file) {
+                                                if (file.size > 1024 * 1024) {
+                                                  toast.error('File too large. Max 1MB.')
+                                                } else {
+                                                  const newWitnesses = [...(newPlot.witnesses || [])]
+                                                  if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                    newWitnesses[witnessIdx].witnessDocuments = {}
+                                                  }
+                                                  newWitnesses[witnessIdx].witnessDocuments.passportPhoto = file
+                                                  setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </Button>
+                                        {witness.witnessDocuments?.passportPhoto && (
+                                          <Box sx={{ mt: 1 }}>
+                                            <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                              ✓ {typeof witness.witnessDocuments.passportPhoto === 'string' ? 'Uploaded' : witness.witnessDocuments.passportPhoto.name}
+                                            </Typography>
+                                            <Box
+                                              component="img"
+                                              src={typeof witness.witnessDocuments.passportPhoto === 'string' ? witness.witnessDocuments.passportPhoto : URL.createObjectURL(witness.witnessDocuments.passportPhoto)}
+                                              alt="Passport Photo"
+                                              sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                            />
+                                          </Box>
+                                        )}
+                                      </Grid>
+                                      {/* Full Photo */}
+                                      <Grid item xs={6} sm={4}>
+                                        <Button
+                                          variant="outlined"
+                                          component="label"
+                                          fullWidth
+                                          size="small"
+                                          startIcon={<CloudUpload />}
+                                        >
+                                          Full Photo
+                                          <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => {
+                                              const file = e.target.files[0]
+                                              if (file) {
+                                                if (file.size > 1024 * 1024) {
+                                                  toast.error('File too large. Max 1MB.')
+                                                } else {
+                                                  const newWitnesses = [...(newPlot.witnesses || [])]
+                                                  if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                    newWitnesses[witnessIdx].witnessDocuments = {}
+                                                  }
+                                                  newWitnesses[witnessIdx].witnessDocuments.fullPhoto = file
+                                                  setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </Button>
+                                        {witness.witnessDocuments?.fullPhoto && (
+                                          <Box sx={{ mt: 1 }}>
+                                            <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                              ✓ {typeof witness.witnessDocuments.fullPhoto === 'string' ? 'Uploaded' : witness.witnessDocuments.fullPhoto.name}
+                                            </Typography>
+                                            <Box
+                                              component="img"
+                                              src={typeof witness.witnessDocuments.fullPhoto === 'string' ? witness.witnessDocuments.fullPhoto : URL.createObjectURL(witness.witnessDocuments.fullPhoto)}
+                                              alt="Full Photo"
+                                              sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                            />
+                                          </Box>
+                                        )}
+                                      </Grid>
+                                    </Grid>
+                                  </Grid>
+                                </Grid>
+                              </Box>
+                            ))
+                          ) : (
+                            <Typography variant="body2" color="text.secondary" align="center">
+                              No witnesses added. Click "Add Witness" to add witness details.
+                            </Typography>
+                          )}
+                        </Box>
+                      </Grid>
 
                       <Grid item xs={12} sm={6}>
                         <TextField
@@ -3398,11 +3894,20 @@ const PlotManagement = () => {
                       </Typography>
                       {/* Image Previews Grid */}
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                        {newPlot.plotImages.map((file, idx) => (
+                        {newPlot.plotImages.filter(file => file).map((file, idx) => (
                           <Box key={idx} sx={{ position: 'relative' }}>
                             <Box
                               component="img"
-                              src={URL.createObjectURL(file)}
+                              src={(() => {
+                                try {
+                                  if (typeof file === 'string') return file;
+                                  if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                  return '';
+                                } catch (e) {
+                                  console.error('Error creating object URL:', e);
+                                  return '';
+                                }
+                              })()}
                               alt={`Plot Image ${idx + 1}`}
                               sx={{
                                 width: 80,
@@ -3596,7 +4101,7 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={URL.createObjectURL(newPlot.customerAadharFront)}
+                                  src={typeof newPlot.customerAadharFront === 'string' ? newPlot.customerAadharFront : URL.createObjectURL(newPlot.customerAadharFront)}
                                   alt="Aadhar Front Preview"
                                   sx={{
                                     width: 60,
@@ -3639,7 +4144,7 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={URL.createObjectURL(newPlot.customerAadharBack)}
+                                  src={typeof newPlot.customerAadharBack === 'string' ? newPlot.customerAadharBack : URL.createObjectURL(newPlot.customerAadharBack)}
                                   alt="Aadhar Back Preview"
                                   sx={{
                                     width: 60,
@@ -3682,7 +4187,7 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={URL.createObjectURL(newPlot.customerPanCard)}
+                                  src={typeof newPlot.customerPanCard === 'string' ? newPlot.customerPanCard : URL.createObjectURL(newPlot.customerPanCard)}
                                   alt="PAN Card Preview"
                                   sx={{
                                     width: 60,
@@ -3725,7 +4230,7 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={URL.createObjectURL(newPlot.customerPassportPhoto)}
+                                  src={typeof newPlot.customerPassportPhoto === 'string' ? newPlot.customerPassportPhoto : URL.createObjectURL(newPlot.customerPassportPhoto)}
                                   alt="Passport Photo Preview"
                                   sx={{
                                     width: 60,
@@ -3768,7 +4273,7 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={URL.createObjectURL(newPlot.customerFullPhoto)}
+                                  src={typeof newPlot.customerFullPhoto === 'string' ? newPlot.customerFullPhoto : URL.createObjectURL(newPlot.customerFullPhoto)}
                                   alt="Full Photo Preview"
                                   sx={{
                                     width: 60,
@@ -3785,6 +4290,427 @@ const PlotManagement = () => {
                         <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
                           Supported formats: JPG, PNG, PDF. Max size: 1MB per file.
                         </Typography>
+                      </Box>
+                      {/* Witness Details Section */}
+                      <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #90caf9', mt: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Witness Details (Optional)
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Add />}
+                            onClick={() => {
+                              setNewPlot((s) => ({
+                                ...s,
+                                witnesses: [
+                                  ...(s.witnesses || []),
+                                  {
+                                    witnessName: '',
+                                    witnessPhone: '',
+                                    witnessAadharNumber: '',
+                                    witnessPanNumber: '',
+                                    witnessDateOfBirth: '',
+                                    witnessSonOf: '',
+                                    witnessDaughterOf: '',
+                                    witnessWifeOf: '',
+                                    witnessAddress: '',
+                                    witnessDocuments: {}
+                                  }
+                                ]
+                              }))
+                            }}
+                          >
+                            Add Witness
+                          </Button>
+                        </Box>
+                        {newPlot.witnesses && newPlot.witnesses.length > 0 ? (
+                          newPlot.witnesses.map((witness, witnessIdx) => (
+                            <Box key={witnessIdx} sx={{ mb: 3, p: 2, bgcolor: 'white', borderRadius: 1, border: '1px solid #e0e0e0' }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Typography variant="subtitle2" fontWeight={600} color="primary">
+                                  Witness {witnessIdx + 1}
+                                </Typography>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => {
+                                    setNewPlot((s) => ({
+                                      ...s,
+                                      witnesses: s.witnesses.filter((_, i) => i !== witnessIdx)
+                                    }))
+                                  }}
+                                >
+                                  <Delete />
+                                </IconButton>
+                              </Box>
+                              <Grid container spacing={2}>
+                                {/* Name and Phone */}
+                                <Grid item xs={12} sm={6}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Name *"
+                                    value={witness.witnessName || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessName = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Phone"
+                                    value={witness.witnessPhone || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessPhone = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                  />
+                                </Grid>
+                                {/* Aadhar, PAN, DOB */}
+                                <Grid item xs={12} sm={4}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Aadhar Number"
+                                    value={witness.witnessAadharNumber || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessAadharNumber = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="PAN Number"
+                                    value={witness.witnessPanNumber || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessPanNumber = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    type="date"
+                                    label="Date of Birth"
+                                    value={witness.witnessDateOfBirth || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessDateOfBirth = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                    InputLabelProps={{ shrink: true }}
+                                  />
+                                </Grid>
+                                {/* Son of, Daughter of, Wife of */}
+                                <Grid item xs={12} sm={4}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Son of"
+                                    value={witness.witnessSonOf || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessSonOf = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Daughter of"
+                                    value={witness.witnessDaughterOf || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessDaughterOf = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Wife of"
+                                    value={witness.witnessWifeOf || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessWifeOf = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                  />
+                                </Grid>
+                                {/* Address */}
+                                <Grid item xs={12}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label="Address"
+                                    multiline
+                                    rows={2}
+                                    value={witness.witnessAddress || ''}
+                                    onChange={(e) => {
+                                      const newWitnesses = [...(newPlot.witnesses || [])]
+                                      newWitnesses[witnessIdx].witnessAddress = e.target.value
+                                      setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                    }}
+                                  />
+                                </Grid>
+                                {/* Documents - Aadhar Front */}
+                                <Grid item xs={12}>
+                                  <Typography variant="caption" fontWeight={600} display="block" sx={{ mb: 1 }}>
+                                    Witness Documents
+                                  </Typography>
+                                  <Grid container spacing={1}>
+                                    <Grid item xs={6} sm={4}>
+                                      <Button
+                                        variant="outlined"
+                                        component="label"
+                                        fullWidth
+                                        size="small"
+                                        startIcon={<CloudUpload />}
+                                      >
+                                        Aadhar Front
+                                        <input
+                                          type="file"
+                                          hidden
+                                          accept="image/*,.pdf"
+                                          onChange={(e) => {
+                                            const file = e.target.files[0]
+                                            if (file) {
+                                              if (file.size > 1024 * 1024) {
+                                                toast.error('File too large. Max 1MB.')
+                                              } else {
+                                                const newWitnesses = [...(newPlot.witnesses || [])]
+                                                if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                  newWitnesses[witnessIdx].witnessDocuments = {}
+                                                }
+                                                newWitnesses[witnessIdx].witnessDocuments.aadharFront = file
+                                                setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </Button>
+                                      {witness.witnessDocuments?.aadharFront && (
+                                        <Box sx={{ mt: 1 }}>
+                                          <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                            ✓ {typeof witness.witnessDocuments.aadharFront === 'string' ? 'Uploaded' : witness.witnessDocuments.aadharFront.name}
+                                          </Typography>
+                                          <Box
+                                            component="img"
+                                            src={typeof witness.witnessDocuments.aadharFront === 'string' ? witness.witnessDocuments.aadharFront : URL.createObjectURL(witness.witnessDocuments.aadharFront)}
+                                            alt="Aadhar Front"
+                                            sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                          />
+                                        </Box>
+                                      )}
+                                    </Grid>
+                                    {/* Aadhar Back */}
+                                    <Grid item xs={6} sm={4}>
+                                      <Button
+                                        variant="outlined"
+                                        component="label"
+                                        fullWidth
+                                        size="small"
+                                        startIcon={<CloudUpload />}
+                                      >
+                                        Aadhar Back
+                                        <input
+                                          type="file"
+                                          hidden
+                                          accept="image/*,.pdf"
+                                          onChange={(e) => {
+                                            const file = e.target.files[0]
+                                            if (file) {
+                                              if (file.size > 1024 * 1024) {
+                                                toast.error('File too large. Max 1MB.')
+                                              } else {
+                                                const newWitnesses = [...(newPlot.witnesses || [])]
+                                                if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                  newWitnesses[witnessIdx].witnessDocuments = {}
+                                                }
+                                                newWitnesses[witnessIdx].witnessDocuments.aadharBack = file
+                                                setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </Button>
+                                      {witness.witnessDocuments?.aadharBack && (
+                                        <Box sx={{ mt: 1 }}>
+                                          <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                            ✓ {typeof witness.witnessDocuments.aadharBack === 'string' ? 'Uploaded' : witness.witnessDocuments.aadharBack.name}
+                                          </Typography>
+                                          <Box
+                                            component="img"
+                                            src={typeof witness.witnessDocuments.aadharBack === 'string' ? witness.witnessDocuments.aadharBack : URL.createObjectURL(witness.witnessDocuments.aadharBack)}
+                                            alt="Aadhar Back"
+                                            sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                          />
+                                        </Box>
+                                      )}
+                                    </Grid>
+                                    {/* PAN Card */}
+                                    <Grid item xs={6} sm={4}>
+                                      <Button
+                                        variant="outlined"
+                                        component="label"
+                                        fullWidth
+                                        size="small"
+                                        startIcon={<CloudUpload />}
+                                      >
+                                        PAN Card
+                                        <input
+                                          type="file"
+                                          hidden
+                                          accept="image/*,.pdf"
+                                          onChange={(e) => {
+                                            const file = e.target.files[0]
+                                            if (file) {
+                                              if (file.size > 1024 * 1024) {
+                                                toast.error('File too large. Max 1MB.')
+                                              } else {
+                                                const newWitnesses = [...(newPlot.witnesses || [])]
+                                                if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                  newWitnesses[witnessIdx].witnessDocuments = {}
+                                                }
+                                                newWitnesses[witnessIdx].witnessDocuments.panCard = file
+                                                setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </Button>
+                                      {witness.witnessDocuments?.panCard && (
+                                        <Box sx={{ mt: 1 }}>
+                                          <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                            ✓ {typeof witness.witnessDocuments.panCard === 'string' ? 'Uploaded' : witness.witnessDocuments.panCard.name}
+                                          </Typography>
+                                          <Box
+                                            component="img"
+                                            src={typeof witness.witnessDocuments.panCard === 'string' ? witness.witnessDocuments.panCard : URL.createObjectURL(witness.witnessDocuments.panCard)}
+                                            alt="PAN Card"
+                                            sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                          />
+                                        </Box>
+                                      )}
+                                    </Grid>
+                                    {/* Passport Photo */}
+                                    <Grid item xs={6} sm={4}>
+                                      <Button
+                                        variant="outlined"
+                                        component="label"
+                                        fullWidth
+                                        size="small"
+                                        startIcon={<CloudUpload />}
+                                      >
+                                        Passport Photo
+                                        <input
+                                          type="file"
+                                          hidden
+                                          accept="image/*,.pdf"
+                                          onChange={(e) => {
+                                            const file = e.target.files[0]
+                                            if (file) {
+                                              if (file.size > 1024 * 1024) {
+                                                toast.error('File too large. Max 1MB.')
+                                              } else {
+                                                const newWitnesses = [...(newPlot.witnesses || [])]
+                                                if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                  newWitnesses[witnessIdx].witnessDocuments = {}
+                                                }
+                                                newWitnesses[witnessIdx].witnessDocuments.passportPhoto = file
+                                                setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </Button>
+                                      {witness.witnessDocuments?.passportPhoto && (
+                                        <Box sx={{ mt: 1 }}>
+                                          <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                            ✓ {typeof witness.witnessDocuments.passportPhoto === 'string' ? 'Uploaded' : witness.witnessDocuments.passportPhoto.name}
+                                          </Typography>
+                                          <Box
+                                            component="img"
+                                            src={typeof witness.witnessDocuments.passportPhoto === 'string' ? witness.witnessDocuments.passportPhoto : URL.createObjectURL(witness.witnessDocuments.passportPhoto)}
+                                            alt="Passport Photo"
+                                            sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                          />
+                                        </Box>
+                                      )}
+                                    </Grid>
+                                    {/* Full Photo */}
+                                    <Grid item xs={6} sm={4}>
+                                      <Button
+                                        variant="outlined"
+                                        component="label"
+                                        fullWidth
+                                        size="small"
+                                        startIcon={<CloudUpload />}
+                                      >
+                                        Full Photo
+                                        <input
+                                          type="file"
+                                          hidden
+                                          accept="image/*,.pdf"
+                                          onChange={(e) => {
+                                            const file = e.target.files[0]
+                                            if (file) {
+                                              if (file.size > 1024 * 1024) {
+                                                toast.error('File too large. Max 1MB.')
+                                              } else {
+                                                const newWitnesses = [...(newPlot.witnesses || [])]
+                                                if (!newWitnesses[witnessIdx].witnessDocuments) {
+                                                  newWitnesses[witnessIdx].witnessDocuments = {}
+                                                }
+                                                newWitnesses[witnessIdx].witnessDocuments.fullPhoto = file
+                                                setNewPlot((s) => ({ ...s, witnesses: newWitnesses }))
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </Button>
+                                      {witness.witnessDocuments?.fullPhoto && (
+                                        <Box sx={{ mt: 1 }}>
+                                          <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                            ✓ {typeof witness.witnessDocuments.fullPhoto === 'string' ? 'Uploaded' : witness.witnessDocuments.fullPhoto.name}
+                                          </Typography>
+                                          <Box
+                                            component="img"
+                                            src={typeof witness.witnessDocuments.fullPhoto === 'string' ? witness.witnessDocuments.fullPhoto : URL.createObjectURL(witness.witnessDocuments.fullPhoto)}
+                                            alt="Full Photo"
+                                            sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                          />
+                                        </Box>
+                                      )}
+                                    </Grid>
+                                  </Grid>
+                                </Grid>
+                              </Grid>
+                            </Box>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary" align="center">
+                            No witnesses added. Click "Add Witness" to add witness details.
+                          </Typography>
+                        )}
                       </Box>
 
                       <TextField
@@ -4070,7 +4996,7 @@ const PlotManagement = () => {
                                         <Box key={index} sx={{ position: 'relative' }}>
                                           <Box
                                             component="img"
-                                            src={URL.createObjectURL(file)}
+                                            src={typeof file === 'string' ? file : URL.createObjectURL(file)}
                                             alt={`Registry Doc ${index + 1}`}
                                             sx={{
                                               width: 60,
