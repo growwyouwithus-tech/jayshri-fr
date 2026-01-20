@@ -511,90 +511,182 @@ const BookingDetail = () => {
                     </Box>
                   </Box>
 
-                  {/* Document Buttons Section */}
-                  <Box sx={{ bgcolor: '#4caf50', p: 1.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {holder.documents?.aadharFront && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(holder.documents.aadharFront, '_blank')}
-                      >
-                        Aadhar frnt
-                      </Button>
-                    )}
-                    {holder.documents?.aadharBack && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(holder.documents.aadharBack, '_blank')}
-                      >
-                        Aadhar bck
-                      </Button>
-                    )}
-                    {holder.documents?.panCard && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(holder.documents.panCard, '_blank')}
-                      >
-                        PanCard
-                      </Button>
-                    )}
-                    {holder.documents?.passportPhoto && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(holder.documents.passportPhoto, '_blank')}
-                      >
-                        Passport
-                      </Button>
-                    )}
-                    {holder.documents?.fullPhoto && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(holder.documents.fullPhoto, '_blank')}
-                      >
-                        Full Photo
-                      </Button>
-                    )}
-                    {(!holder.documents?.aadharFront && !holder.documents?.aadharBack &&
-                      !holder.documents?.panCard && !holder.documents?.passportPhoto &&
-                      !holder.documents?.fullPhoto) && (
-                        <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
-                          No documents available
-                        </Typography>
+                  {/* Document Previews and Buttons Section */}
+                  <Box sx={{ bgcolor: '#4caf50', p: 1.5 }}>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      {holder.documents?.aadharFront && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.aadharFront}
+                            alt="Aadhar Front"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(holder.documents.aadharFront, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(holder.documents.aadharFront, '_blank')}
+                          >
+                            Aadhar frnt
+                          </Button>
+                        </Box>
                       )}
+                      {holder.documents?.aadharBack && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.aadharBack}
+                            alt="Aadhar Back"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(holder.documents.aadharBack, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(holder.documents.aadharBack, '_blank')}
+                          >
+                            Aadhar bck
+                          </Button>
+                        </Box>
+                      )}
+                      {holder.documents?.panCard && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.panCard}
+                            alt="PAN Card"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(holder.documents.panCard, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(holder.documents.panCard, '_blank')}
+                          >
+                            PanCard
+                          </Button>
+                        </Box>
+                      )}
+                      {holder.documents?.passportPhoto && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.passportPhoto}
+                            alt="Passport Photo"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(holder.documents.passportPhoto, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(holder.documents.passportPhoto, '_blank')}
+                          >
+                            Passport
+                          </Button>
+                        </Box>
+                      )}
+                      {holder.documents?.fullPhoto && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.fullPhoto}
+                            alt="Full Photo"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(holder.documents.fullPhoto, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(holder.documents.fullPhoto, '_blank')}
+                          >
+                            Full Photo
+                          </Button>
+                        </Box>
+                      )}
+                      {(!holder.documents?.aadharFront && !holder.documents?.aadharBack &&
+                        !holder.documents?.panCard && !holder.documents?.passportPhoto &&
+                        !holder.documents?.fullPhoto) && (
+                          <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
+                            No documents available
+                          </Typography>
+                        )}
+                    </Box>
                   </Box>
                 </Paper>
               </Box>
@@ -675,90 +767,182 @@ const BookingDetail = () => {
                     </Box>
                   </Box>
 
-                  {/* Document Buttons Section */}
-                  <Box sx={{ bgcolor: '#4caf50', p: 1.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {owner.ownerDocuments?.aadharFront && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(owner.ownerDocuments.aadharFront, '_blank')}
-                      >
-                        Aadhar frnt
-                      </Button>
-                    )}
-                    {owner.ownerDocuments?.aadharBack && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(owner.ownerDocuments.aadharBack, '_blank')}
-                      >
-                        Aadhar bck
-                      </Button>
-                    )}
-                    {owner.ownerDocuments?.panCard && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(owner.ownerDocuments.panCard, '_blank')}
-                      >
-                        PanCard
-                      </Button>
-                    )}
-                    {owner.ownerDocuments?.passportPhoto && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(owner.ownerDocuments.passportPhoto, '_blank')}
-                      >
-                        Passport
-                      </Button>
-                    )}
-                    {owner.ownerDocuments?.fullPhoto && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        sx={{
-                          bgcolor: '#2e7d32',
-                          color: '#fff',
-                          '&:hover': { bgcolor: '#1b5e20' },
-                          textTransform: 'none'
-                        }}
-                        onClick={() => window.open(owner.ownerDocuments.fullPhoto, '_blank')}
-                      >
-                        Full Photo
-                      </Button>
-                    )}
-                    {(!owner.ownerDocuments?.aadharFront && !owner.ownerDocuments?.aadharBack &&
-                      !owner.ownerDocuments?.panCard && !owner.ownerDocuments?.passportPhoto &&
-                      !owner.ownerDocuments?.fullPhoto) && (
-                        <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
-                          No documents available
-                        </Typography>
+                  {/* Document Previews and Buttons Section */}
+                  <Box sx={{ bgcolor: '#4caf50', p: 1.5 }}>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      {owner.ownerDocuments?.aadharFront && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={owner.ownerDocuments.aadharFront}
+                            alt="Aadhar Front"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.aadharFront, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.aadharFront, '_blank')}
+                          >
+                            Aadhar frnt
+                          </Button>
+                        </Box>
                       )}
+                      {owner.ownerDocuments?.aadharBack && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={owner.ownerDocuments.aadharBack}
+                            alt="Aadhar Back"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.aadharBack, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.aadharBack, '_blank')}
+                          >
+                            Aadhar bck
+                          </Button>
+                        </Box>
+                      )}
+                      {owner.ownerDocuments?.panCard && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={owner.ownerDocuments.panCard}
+                            alt="PAN Card"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.panCard, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.panCard, '_blank')}
+                          >
+                            PanCard
+                          </Button>
+                        </Box>
+                      )}
+                      {owner.ownerDocuments?.passportPhoto && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={owner.ownerDocuments.passportPhoto}
+                            alt="Passport Photo"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.passportPhoto, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.passportPhoto, '_blank')}
+                          >
+                            Passport
+                          </Button>
+                        </Box>
+                      )}
+                      {owner.ownerDocuments?.fullPhoto && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={owner.ownerDocuments.fullPhoto}
+                            alt="Full Photo"
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '2px solid #fff',
+                              cursor: 'pointer',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.fullPhoto, '_blank')}
+                          />
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              bgcolor: '#2e7d32',
+                              color: '#fff',
+                              '&:hover': { bgcolor: '#1b5e20' },
+                              textTransform: 'none',
+                              minWidth: 80
+                            }}
+                            onClick={() => window.open(owner.ownerDocuments.fullPhoto, '_blank')}
+                          >
+                            Full Photo
+                          </Button>
+                        </Box>
+                      )}
+                      {(!owner.ownerDocuments?.aadharFront && !owner.ownerDocuments?.aadharBack &&
+                        !owner.ownerDocuments?.panCard && !owner.ownerDocuments?.passportPhoto &&
+                        !owner.ownerDocuments?.fullPhoto) && (
+                          <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
+                            No documents available
+                          </Typography>
+                        )}
+                    </Box>
                   </Box>
                 </Paper>
               </Box>

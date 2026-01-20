@@ -478,9 +478,38 @@ const Settings = () => {
                     />
                   </Button>
                   {owner.documents?.aadharFront && (
-                    <Typography variant="caption" color="success.main" display="block">
-                      ✓ File selected
-                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="success.main" display="block" mb={0.5}>
+                        ✓ File selected
+                      </Typography>
+                      {typeof owner.documents.aadharFront === 'string' ? (
+                        <Box
+                          component="img"
+                          src={owner.documents.aadharFront}
+                          alt="Aadhar Front Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          component="img"
+                          src={URL.createObjectURL(owner.documents.aadharFront)}
+                          alt="Aadhar Front Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      )}
+                    </Box>
                   )}
                 </Grid>
 
@@ -504,9 +533,38 @@ const Settings = () => {
                     />
                   </Button>
                   {owner.documents?.aadharBack && (
-                    <Typography variant="caption" color="success.main" display="block">
-                      ✓ File selected
-                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="success.main" display="block" mb={0.5}>
+                        ✓ File selected
+                      </Typography>
+                      {typeof owner.documents.aadharBack === 'string' ? (
+                        <Box
+                          component="img"
+                          src={owner.documents.aadharBack}
+                          alt="Aadhar Back Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          component="img"
+                          src={URL.createObjectURL(owner.documents.aadharBack)}
+                          alt="Aadhar Back Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      )}
+                    </Box>
                   )}
                 </Grid>
 
@@ -530,9 +588,38 @@ const Settings = () => {
                     />
                   </Button>
                   {owner.documents?.panCard && (
-                    <Typography variant="caption" color="success.main" display="block">
-                      ✓ File selected
-                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="success.main" display="block" mb={0.5}>
+                        ✓ File selected
+                      </Typography>
+                      {typeof owner.documents.panCard === 'string' ? (
+                        <Box
+                          component="img"
+                          src={owner.documents.panCard}
+                          alt="PAN Card Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          component="img"
+                          src={URL.createObjectURL(owner.documents.panCard)}
+                          alt="PAN Card Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      )}
+                    </Box>
                   )}
                 </Grid>
 
@@ -556,9 +643,38 @@ const Settings = () => {
                     />
                   </Button>
                   {owner.documents?.passportPhoto && (
-                    <Typography variant="caption" color="success.main" display="block">
-                      ✓ File selected
-                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="success.main" display="block" mb={0.5}>
+                        ✓ File selected
+                      </Typography>
+                      {typeof owner.documents.passportPhoto === 'string' ? (
+                        <Box
+                          component="img"
+                          src={owner.documents.passportPhoto}
+                          alt="Passport Photo Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          component="img"
+                          src={URL.createObjectURL(owner.documents.passportPhoto)}
+                          alt="Passport Photo Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      )}
+                    </Box>
                   )}
                 </Grid>
 
@@ -582,9 +698,38 @@ const Settings = () => {
                     />
                   </Button>
                   {owner.documents?.fullPhoto && (
-                    <Typography variant="caption" color="success.main" display="block">
-                      ✓ File selected
-                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="success.main" display="block" mb={0.5}>
+                        ✓ File selected
+                      </Typography>
+                      {typeof owner.documents.fullPhoto === 'string' ? (
+                        <Box
+                          component="img"
+                          src={owner.documents.fullPhoto}
+                          alt="Full Photo Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          component="img"
+                          src={URL.createObjectURL(owner.documents.fullPhoto)}
+                          alt="Full Photo Preview"
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #ddd'
+                          }}
+                        />
+                      )}
+                    </Box>
                   )}
                 </Grid>
               </Grid>

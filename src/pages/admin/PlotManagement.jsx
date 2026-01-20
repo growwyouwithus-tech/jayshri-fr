@@ -3393,10 +3393,51 @@ const PlotManagement = () => {
                   </Typography>
                   {newPlot.plotImages && newPlot.plotImages.length > 0 && (
                     <Box sx={{ mt: 2 }}>
-                      <Typography variant="body2" color="success.main">
+                      <Typography variant="body2" color="success.main" sx={{ mb: 1 }}>
                         ✓ {newPlot.plotImages.length} image(s) selected
                       </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                      {/* Image Previews Grid */}
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                        {newPlot.plotImages.map((file, idx) => (
+                          <Box key={idx} sx={{ position: 'relative' }}>
+                            <Box
+                              component="img"
+                              src={URL.createObjectURL(file)}
+                              alt={`Plot Image ${idx + 1}`}
+                              sx={{
+                                width: 80,
+                                height: 80,
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                                border: '1px solid #ddd'
+                              }}
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setNewPlot((s) => ({
+                                  ...s,
+                                  plotImages: s.plotImages.filter((_, i) => i !== idx)
+                                }))
+                              }}
+                              sx={{
+                                position: 'absolute',
+                                top: -8,
+                                right: -8,
+                                bgcolor: 'error.main',
+                                color: 'white',
+                                width: 20,
+                                height: 20,
+                                '&:hover': { bgcolor: 'error.dark' }
+                              }}
+                            >
+                              <Close sx={{ fontSize: 14 }} />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Box>
+                      {/* File Names */}
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {newPlot.plotImages.map((file, idx) => (
                           <Chip
                             key={idx}
@@ -3549,9 +3590,23 @@ const PlotManagement = () => {
                               />
                             </Button>
                             {newPlot.customerAadharFront && (
-                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
-                                ✓ {newPlot.customerAadharFront.name}
-                              </Typography>
+                              <Box sx={{ mt: 1 }}>
+                                <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                  ✓ {newPlot.customerAadharFront.name}
+                                </Typography>
+                                <Box
+                                  component="img"
+                                  src={URL.createObjectURL(newPlot.customerAadharFront)}
+                                  alt="Aadhar Front Preview"
+                                  sx={{
+                                    width: 60,
+                                    height: 60,
+                                    objectFit: 'cover',
+                                    borderRadius: 1,
+                                    border: '1px solid #ddd'
+                                  }}
+                                />
+                              </Box>
                             )}
                           </Grid>
                           <Grid item xs={6}>
@@ -3578,9 +3633,23 @@ const PlotManagement = () => {
                               />
                             </Button>
                             {newPlot.customerAadharBack && (
-                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
-                                ✓ {newPlot.customerAadharBack.name}
-                              </Typography>
+                              <Box sx={{ mt: 1 }}>
+                                <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                  ✓ {newPlot.customerAadharBack.name}
+                                </Typography>
+                                <Box
+                                  component="img"
+                                  src={URL.createObjectURL(newPlot.customerAadharBack)}
+                                  alt="Aadhar Back Preview"
+                                  sx={{
+                                    width: 60,
+                                    height: 60,
+                                    objectFit: 'cover',
+                                    borderRadius: 1,
+                                    border: '1px solid #ddd'
+                                  }}
+                                />
+                              </Box>
                             )}
                           </Grid>
                           <Grid item xs={6}>
@@ -3607,9 +3676,23 @@ const PlotManagement = () => {
                               />
                             </Button>
                             {newPlot.customerPanCard && (
-                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
-                                ✓ {newPlot.customerPanCard.name}
-                              </Typography>
+                              <Box sx={{ mt: 1 }}>
+                                <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                  ✓ {newPlot.customerPanCard.name}
+                                </Typography>
+                                <Box
+                                  component="img"
+                                  src={URL.createObjectURL(newPlot.customerPanCard)}
+                                  alt="PAN Card Preview"
+                                  sx={{
+                                    width: 60,
+                                    height: 60,
+                                    objectFit: 'cover',
+                                    borderRadius: 1,
+                                    border: '1px solid #ddd'
+                                  }}
+                                />
+                              </Box>
                             )}
                           </Grid>
                           <Grid item xs={6}>
@@ -3636,9 +3719,23 @@ const PlotManagement = () => {
                               />
                             </Button>
                             {newPlot.customerPassportPhoto && (
-                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
-                                ✓ {newPlot.customerPassportPhoto.name}
-                              </Typography>
+                              <Box sx={{ mt: 1 }}>
+                                <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                  ✓ {newPlot.customerPassportPhoto.name}
+                                </Typography>
+                                <Box
+                                  component="img"
+                                  src={URL.createObjectURL(newPlot.customerPassportPhoto)}
+                                  alt="Passport Photo Preview"
+                                  sx={{
+                                    width: 60,
+                                    height: 60,
+                                    objectFit: 'cover',
+                                    borderRadius: 1,
+                                    border: '1px solid #ddd'
+                                  }}
+                                />
+                              </Box>
                             )}
                           </Grid>
                           <Grid item xs={12}>
@@ -3665,9 +3762,23 @@ const PlotManagement = () => {
                               />
                             </Button>
                             {newPlot.customerFullPhoto && (
-                              <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
-                                ✓ {newPlot.customerFullPhoto.name}
-                              </Typography>
+                              <Box sx={{ mt: 1 }}>
+                                <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
+                                  ✓ {newPlot.customerFullPhoto.name}
+                                </Typography>
+                                <Box
+                                  component="img"
+                                  src={URL.createObjectURL(newPlot.customerFullPhoto)}
+                                  alt="Full Photo Preview"
+                                  sx={{
+                                    width: 60,
+                                    height: 60,
+                                    objectFit: 'cover',
+                                    borderRadius: 1,
+                                    border: '1px solid #ddd'
+                                  }}
+                                />
+                              </Box>
                             )}
                           </Grid>
                         </Grid>
@@ -3950,6 +4061,46 @@ const PlotManagement = () => {
                                     onChange={handleRegistryFileSelect}
                                   />
                                 </Button>
+
+                                {/* Image Previews Grid */}
+                                {newPlot.registryDocuments && newPlot.registryDocuments.length > 0 && (
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                                    {newPlot.registryDocuments.map((file, index) => (
+                                      file.type && file.type.includes('image') && (
+                                        <Box key={index} sx={{ position: 'relative' }}>
+                                          <Box
+                                            component="img"
+                                            src={URL.createObjectURL(file)}
+                                            alt={`Registry Doc ${index + 1}`}
+                                            sx={{
+                                              width: 60,
+                                              height: 60,
+                                              objectFit: 'cover',
+                                              borderRadius: 1,
+                                              border: '1px solid #ddd'
+                                            }}
+                                          />
+                                          <IconButton
+                                            size="small"
+                                            onClick={() => removeRegistryFile(index)}
+                                            sx={{
+                                              position: 'absolute',
+                                              top: -8,
+                                              right: -8,
+                                              bgcolor: 'error.main',
+                                              color: 'white',
+                                              width: 18,
+                                              height: 18,
+                                              '&:hover': { bgcolor: 'error.dark' }
+                                            }}
+                                          >
+                                            <Close sx={{ fontSize: 12 }} />
+                                          </IconButton>
+                                        </Box>
+                                      )
+                                    ))}
+                                  </Box>
+                                )}
 
                                 {/* Selected Files List */}
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
