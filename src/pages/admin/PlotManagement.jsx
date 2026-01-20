@@ -177,6 +177,10 @@ const PlotManagement = () => {
     customerShortAddress: '',
     customerAadharNumber: '',
     customerPanNumber: '',
+    customerDateOfBirth: '',
+    customerSonOf: '',
+    customerDaughterOf: '',
+    customerWifeOf: '',
     customerFullAddress: '',
     registryDate: '',
     moreInformation: '',
@@ -670,6 +674,12 @@ const PlotManagement = () => {
       customerName: '',
       customerNumber: '',
       customerShortAddress: '',
+      customerAadharNumber: '',
+      customerPanNumber: '',
+      customerDateOfBirth: '',
+      customerSonOf: '',
+      customerDaughterOf: '',
+      customerWifeOf: '',
       customerFullAddress: '',
       registryDate: '',
       moreInformation: '',
@@ -730,6 +740,10 @@ const PlotManagement = () => {
       customerShortAddress: plot.customerShortAddress || '',
       customerAadharNumber: plot.customerAadharNumber || '',
       customerPanNumber: plot.customerPanNumber || '',
+      customerDateOfBirth: plot.customerDateOfBirth || '',
+      customerSonOf: plot.customerSonOf || '',
+      customerDaughterOf: plot.customerDaughterOf || '',
+      customerWifeOf: plot.customerWifeOf || '',
       customerFullAddress: plot.customerFullAddress || '',
       registryDate: plot.registryDate || '',
       moreInformation: plot.moreInformation || '',
@@ -2525,6 +2539,44 @@ const PlotManagement = () => {
                               inputProps={{ maxLength: 10 }}
                             />
                           </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Date of Birth (Optional)"
+                              type="date"
+                              value={newPlot.customerDateOfBirth || ''}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, customerDateOfBirth: e.target.value }))}
+                              InputLabelProps={{ shrink: true }}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Son of (Optional)"
+                              value={newPlot.customerSonOf || ''}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, customerSonOf: e.target.value }))}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Daughter of (Optional)"
+                              value={newPlot.customerDaughterOf || ''}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, customerDaughterOf: e.target.value }))}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Wife of (Optional)"
+                              value={newPlot.customerWifeOf || ''}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, customerWifeOf: e.target.value }))}
+                            />
+                          </Grid>
                         </Grid>
                         {/* <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
                             💡 You can manually enter Aadhar and PAN numbers here, and optionally upload document images below.
@@ -3421,6 +3473,44 @@ const PlotManagement = () => {
                             onChange={(e) => setNewPlot((s) => ({ ...s, customerPanNumber: e.target.value.toUpperCase() }))}
                             placeholder="Enter 10-character PAN"
                             inputProps={{ maxLength: 10 }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Date of Birth (Optional)"
+                            type="date"
+                            value={newPlot.customerDateOfBirth || ''}
+                            onChange={(e) => setNewPlot((s) => ({ ...s, customerDateOfBirth: e.target.value }))}
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Son of (Optional)"
+                            value={newPlot.customerSonOf || ''}
+                            onChange={(e) => setNewPlot((s) => ({ ...s, customerSonOf: e.target.value }))}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Daughter of (Optional)"
+                            value={newPlot.customerDaughterOf || ''}
+                            onChange={(e) => setNewPlot((s) => ({ ...s, customerDaughterOf: e.target.value }))}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Wife of (Optional)"
+                            value={newPlot.customerWifeOf || ''}
+                            onChange={(e) => setNewPlot((s) => ({ ...s, customerWifeOf: e.target.value }))}
                           />
                         </Grid>
                       </Grid>

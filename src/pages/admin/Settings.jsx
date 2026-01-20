@@ -106,6 +106,11 @@ const Settings = () => {
         phone: '',
         aadharNumber: '',
         panNumber: '',
+        dateOfBirth: '',
+        sonOf: '',
+        daughterOf: '',
+        wifeOf: '',
+        address: '',
         documents: {}
       }]
     }))
@@ -183,7 +188,12 @@ const Settings = () => {
             name: owner.name,
             phone: owner.phone,
             aadharNumber: owner.aadharNumber,
-            panNumber: owner.panNumber
+            panNumber: owner.panNumber,
+            dateOfBirth: owner.dateOfBirth,
+            sonOf: owner.sonOf,
+            daughterOf: owner.daughterOf,
+            wifeOf: owner.wifeOf,
+            address: owner.address
           }));
           formData.append('owners', JSON.stringify(ownersData));
 
@@ -394,6 +404,51 @@ const Settings = () => {
                     label="PAN Number"
                     value={owner.panNumber}
                     onChange={(e) => updateOwner(index, 'panNumber', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Date of Birth"
+                    type="date"
+                    value={owner.dateOfBirth || ''}
+                    onChange={(e) => updateOwner(index, 'dateOfBirth', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Son of"
+                    value={owner.sonOf || ''}
+                    onChange={(e) => updateOwner(index, 'sonOf', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Daughter of"
+                    value={owner.daughterOf || ''}
+                    onChange={(e) => updateOwner(index, 'daughterOf', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Wife of"
+                    value={owner.wifeOf || ''}
+                    onChange={(e) => updateOwner(index, 'wifeOf', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Address"
+                    multiline
+                    rows={2}
+                    value={owner.address || ''}
+                    onChange={(e) => updateOwner(index, 'address', e.target.value)}
+                    placeholder="as per aadhar card"
                   />
                 </Grid>
 

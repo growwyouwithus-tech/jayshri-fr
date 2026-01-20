@@ -435,55 +435,171 @@ const BookingDetail = () => {
           </Grid>
         </Box>
 
-        {/* Khatoni / Owner Details */}
-        <Box mb={4}>
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Khatoni Holders / Owners
-          </Typography>
-          {booking.plotId?.colony?.khatoniHolders?.length > 0 || booking.plotId?.colonyId?.khatoniHolders?.length > 0 ? (
-            <Grid container spacing={2}>
-              {(booking.plotId?.colony?.khatoniHolders || booking.plotId?.colonyId?.khatoniHolders || []).map((holder, idx) => (
-                <Grid item xs={12} sm={6} md={4} key={idx}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold">{holder.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">Mobile: {holder.mobile}</Typography>
-                    <Typography variant="body2" color="text.secondary">Address: {holder.address}</Typography>
-                    {holder.aadharNumber && <Typography variant="caption" display="block">Aadhar: {holder.aadharNumber}</Typography>}
-                    {holder.panNumber && <Typography variant="caption" display="block">PAN: {holder.panNumber}</Typography>}
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-            <Typography color="text.secondary">.</Typography>
-          )}
-        </Box>
-
-        {/* 2.1 Khatoni Holder Documents */}
-        {colony.khatoniHolders && colony.khatoniHolders.length > 0 && (
+        {/* Khatoni Holders / Owners - New Structured Format */}
+        {(colony.khatoniHolders && colony.khatoniHolders.length > 0) && (
           <Box mb={4}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Khatoni Holder/Owner Documents
+              Khatoni Holders / Owners
             </Typography>
             {colony.khatoniHolders.map((holder, idx) => (
               <Box key={idx} mb={3}>
-                <Typography variant="subtitle2" gutterBottom>{holder.name} ({holder.type || 'Owner'})</Typography>
-                <Grid container spacing={2}>
-                  <DocumentCard title="Aadhar Front" url={holder.documents?.aadharFront} />
-                  <DocumentCard title="Aadhar Back" url={holder.documents?.aadharBack} />
-                  <DocumentCard title="PAN Card" url={holder.documents?.panCard} />
-                  <DocumentCard title="Passport Photo" url={holder.documents?.passportPhoto} />
-                  <DocumentCard title="Full Photo" url={holder.documents?.fullPhoto} />
-                  {(!holder.documents?.aadharFront) && (
-                    <Grid item xs={12}><Typography variant="caption" color="text.secondary">No documents for this holder.</Typography></Grid>
-                  )}
-                </Grid>
-              </Box>
-            ))}
-          </Box>
-        )}
+                {/* Khatoni Holder Details Box */}
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    border: '2px solid #000',
+                    borderRadius: 1,
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* Holder Info Section */}
+                  <Box sx={{ p: 2, bgcolor: '#fff' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                          KHATONI HOLDER NO {idx + 1}
+                        </Typography>
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>NAME</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.name || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>ADD</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.address || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>MOBI</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.mobile || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>ADHAR NO</strong>&nbsp;: {holder.aadharNumber || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>PAN NO</strong>&nbsp;&nbsp;&nbsp;&nbsp;: {holder.panNumber || '-'}
+                          </Typography>
+                          {holder.dateOfBirth && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>DOB</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.dateOfBirth}
+                            </Typography>
+                          )}
+                          {holder.sonOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>SON OF</strong>&nbsp;&nbsp;&nbsp;: {holder.sonOf}
+                            </Typography>
+                          )}
+                          {holder.daughterOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>D/O</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.daughterOf}
+                            </Typography>
+                          )}
+                          {holder.wifeOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>WIFE OF</strong>&nbsp;&nbsp;: {holder.wifeOf}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => {
+                          const text = `KHATONI HOLDER NO ${idx + 1}\nNAME: ${holder.name || '-'}\nADD: ${holder.address || '-'}\nMOBI: ${holder.mobile || '-'}\nADHAR NO: ${holder.aadharNumber || '-'}\nPAN NO: ${holder.panNumber || '-'}`;
+                          navigator.clipboard.writeText(text);
+                          toast.success('Khatoni holder details copied!');
+                        }}
+                      >
+                        COPY
+                      </Button>
+                    </Box>
+                  </Box>
 
-        {/* Plot Owners (from Settings) */}
+                  {/* Document Buttons Section */}
+                  <Box sx={{ bgcolor: '#4caf50', p: 1.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {holder.documents?.aadharFront && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(holder.documents.aadharFront, '_blank')}
+                      >
+                        Aadhar frnt
+                      </Button>
+                    )}
+                    {holder.documents?.aadharBack && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(holder.documents.aadharBack, '_blank')}
+                      >
+                        Aadhar bck
+                      </Button>
+                    )}
+                    {holder.documents?.panCard && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(holder.documents.panCard, '_blank')}
+                      >
+                        PanCard
+                      </Button>
+                    )}
+                    {holder.documents?.passportPhoto && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(holder.documents.passportPhoto, '_blank')}
+                      >
+                        Passport
+                      </Button>
+                    )}
+                    {holder.documents?.fullPhoto && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(holder.documents.fullPhoto, '_blank')}
+                      >
+                        Full Photo
+                      </Button>
+                    )}
+                    {(!holder.documents?.aadharFront && !holder.documents?.aadharBack &&
+                      !holder.documents?.panCard && !holder.documents?.passportPhoto &&
+                      !holder.documents?.fullPhoto) && (
+                        <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
+                          No documents available
+                        </Typography>
+                      )}
+                  </Box>
+                </Paper>
+              </Box>
+            ))}\n          </Box>
+        )}\n\n        {/* Plot Owners (from Settings) - New Structured Format */}
         {plot.plotOwners && plot.plotOwners.length > 0 && (
           <Box mb={4}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
@@ -491,49 +607,160 @@ const BookingDetail = () => {
             </Typography>
             {plot.plotOwners.map((owner, idx) => (
               <Box key={idx} mb={3}>
-                <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: '#f9f9f9' }}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Owner {idx + 1}: {owner.ownerName}
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Phone:</strong> {owner.ownerPhone || '-'}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Aadhar:</strong> {owner.ownerAadharNumber || '-'}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>PAN:</strong> {owner.ownerPanNumber || '-'}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Paper>
-
-                {/* Owner Documents */}
-                <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                  {owner.ownerName}'s Documents
-                </Typography>
-                <Grid container spacing={2}>
-                  <DocumentCard title="Aadhar Front" url={owner.ownerDocuments?.aadharFront} />
-                  <DocumentCard title="Aadhar Back" url={owner.ownerDocuments?.aadharBack} />
-                  <DocumentCard title="PAN Card" url={owner.ownerDocuments?.panCard} />
-                  <DocumentCard title="Passport Photo" url={owner.ownerDocuments?.passportPhoto} />
-                  <DocumentCard title="Full Photo" url={owner.ownerDocuments?.fullPhoto} />
-                  {(!owner.ownerDocuments?.aadharFront && !owner.ownerDocuments?.aadharBack &&
-                    !owner.ownerDocuments?.panCard && !owner.ownerDocuments?.passportPhoto &&
-                    !owner.ownerDocuments?.fullPhoto) && (
-                      <Grid item xs={12}>
-                        <Typography variant="caption" color="text.secondary">
-                          No documents available for this owner.
+                {/* Owner Details Box */}
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    border: '2px solid #000',
+                    borderRadius: 1,
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* Owner Info Section */}
+                  <Box sx={{ p: 2, bgcolor: '#fff' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                          OWNER NO {idx + 1}
                         </Typography>
-                      </Grid>
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>NAME</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {owner.ownerName || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>ADD</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {owner.ownerAddress || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>MOBI</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {owner.ownerPhone || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>ADHAR NO</strong>&nbsp;: {owner.ownerAadharNumber || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>PAN NO</strong>&nbsp;&nbsp;&nbsp;&nbsp;: {owner.ownerPanNumber || '-'}
+                          </Typography>
+                          {owner.ownerDateOfBirth && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>DOB</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {owner.ownerDateOfBirth}
+                            </Typography>
+                          )}
+                          {owner.ownerSonOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>SON OF</strong>&nbsp;&nbsp;&nbsp;: {owner.ownerSonOf}
+                            </Typography>
+                          )}
+                          {owner.ownerDaughterOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>D/O</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {owner.ownerDaughterOf}
+                            </Typography>
+                          )}
+                          {owner.ownerWifeOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>WIFE OF</strong>&nbsp;&nbsp;: {owner.ownerWifeOf}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => {
+                          const text = `OWNER NO ${idx + 1}\nNAME: ${owner.ownerName || '-'}\nADD: ${owner.ownerAddress || '-'}\nMOBI: ${owner.ownerPhone || '-'}\nADHAR NO: ${owner.ownerAadharNumber || '-'}\nPAN NO: ${owner.ownerPanNumber || '-'}`;
+                          navigator.clipboard.writeText(text);
+                          toast.success('Owner details copied!');
+                        }}
+                      >
+                        COPY
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  {/* Document Buttons Section */}
+                  <Box sx={{ bgcolor: '#4caf50', p: 1.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {owner.ownerDocuments?.aadharFront && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(owner.ownerDocuments.aadharFront, '_blank')}
+                      >
+                        Aadhar frnt
+                      </Button>
                     )}
-                </Grid>
+                    {owner.ownerDocuments?.aadharBack && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(owner.ownerDocuments.aadharBack, '_blank')}
+                      >
+                        Aadhar bck
+                      </Button>
+                    )}
+                    {owner.ownerDocuments?.panCard && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(owner.ownerDocuments.panCard, '_blank')}
+                      >
+                        PanCard
+                      </Button>
+                    )}
+                    {owner.ownerDocuments?.passportPhoto && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(owner.ownerDocuments.passportPhoto, '_blank')}
+                      >
+                        Passport
+                      </Button>
+                    )}
+                    {owner.ownerDocuments?.fullPhoto && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: '#2e7d32',
+                          color: '#fff',
+                          '&:hover': { bgcolor: '#1b5e20' },
+                          textTransform: 'none'
+                        }}
+                        onClick={() => window.open(owner.ownerDocuments.fullPhoto, '_blank')}
+                      >
+                        Full Photo
+                      </Button>
+                    )}
+                    {(!owner.ownerDocuments?.aadharFront && !owner.ownerDocuments?.aadharBack &&
+                      !owner.ownerDocuments?.panCard && !owner.ownerDocuments?.passportPhoto &&
+                      !owner.ownerDocuments?.fullPhoto) && (
+                        <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
+                          No documents available
+                        </Typography>
+                      )}
+                  </Box>
+                </Paper>
               </Box>
             ))}
           </Box>
@@ -661,147 +888,149 @@ const BookingDetail = () => {
             </Typography>
           )}
         </Box> */}
-      </Paper>
+      </Paper >
 
       {/* Payment Receipts Section - Hide for Pseudo Bookings or show message */}
-      {!id.startsWith('temp-') ? (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" fontWeight="bold" mb={3}>
-            Payment Receipts
-          </Typography>
-          {/* ... existing receipt table ... */}
-          <TableContainer>
-            <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Receipt No</TableCell>
-                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Amount</TableCell>
-                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Mode</TableCell>
-                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Date</TableCell>
-                  <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>File</TableCell>
-                  <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {receipts.length === 0 ? (
+      {
+        !id.startsWith('temp-') ? (
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="bold" mb={3}>
+              Payment Receipts
+            </Typography>
+            {/* ... existing receipt table ... */}
+            <TableContainer>
+              <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      <Typography color="text.secondary">
-                        No receipts added yet.
-                      </Typography>
-                    </TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Receipt No</TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Amount</TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Mode</TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Date</TableCell>
+                    <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>File</TableCell>
+                    <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
                   </TableRow>
-                ) : (
-                  receipts.map((receipt, index) => (
-                    <TableRow key={receipt._id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>₹{receipt.amount?.toLocaleString()}</TableCell>
-                      <TableCell>{receipt.paymentMode}</TableCell>
-                      <TableCell>
-                        {receipt.paymentDate ? format(new Date(receipt.paymentDate), 'dd-MM-yyyy') : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {receipt.receiptFile ? (
-                          <Button size="small" onClick={() => window.open(receipt.receiptFile)}>
-                            View File
-                          </Button>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton size="small" color="error" onClick={() => handleDeleteReceipt(receipt._id)}>
-                          <Delete fontSize="small" />
-                        </IconButton>
+                </TableHead>
+                <TableBody>
+                  {receipts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                        <Typography color="text.secondary">
+                          No receipts added yet.
+                        </Typography>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  ) : (
+                    receipts.map((receipt, index) => (
+                      <TableRow key={receipt._id}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>₹{receipt.amount?.toLocaleString()}</TableCell>
+                        <TableCell>{receipt.paymentMode}</TableCell>
+                        <TableCell>
+                          {receipt.paymentDate ? format(new Date(receipt.paymentDate), 'dd-MM-yyyy') : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {receipt.receiptFile ? (
+                            <Button size="small" onClick={() => window.open(receipt.receiptFile)}>
+                              View File
+                            </Button>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton size="small" color="error" onClick={() => handleDeleteReceipt(receipt._id)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-          <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 3 }} />
 
-          <Typography variant="h6" fontWeight="bold" mb={3}>
-            Add New Receipt
-          </Typography>
+            <Typography variant="h6" fontWeight="bold" mb={3}>
+              Add New Receipt
+            </Typography>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" mb={1}>Amount (₹)</Typography>
-              <TextField
-                fullWidth
-                type="number"
-                value={receiptData.amount}
-                onChange={(e) => setReceiptData({ ...receiptData, amount: e.target.value })}
-                placeholder="Enter amount"
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" mb={1}>Payment Mode</Typography>
-              <TextField
-                fullWidth
-                select
-                value={receiptData.paymentMode}
-                onChange={(e) => setReceiptData({ ...receiptData, paymentMode: e.target.value })}
-              >
-                <MenuItem value="Cash">Cash</MenuItem>
-                <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-                <MenuItem value="Cheque">Cheque</MenuItem>
-                <MenuItem value="Online">Online</MenuItem>
-                <MenuItem value="UPI">UPI</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" mb={1}>Payment Date</Typography>
-              <TextField
-                fullWidth
-                type="date"
-                value={receiptData.paymentDate}
-                onChange={(e) => setReceiptData({ ...receiptData, paymentDate: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="body2" mb={1}>Receipt File</Typography>
-              <Button
-                fullWidth
-                variant="outlined"
-                component="label"
-                startIcon={<CloudUpload />}
-                sx={{ height: 56 }}
-              >
-                Choose file
-                <input
-                  type="file"
-                  hidden
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => setReceiptData({ ...receiptData, receiptFile: e.target.files[0] })}
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={3}>
+                <Typography variant="body2" mb={1}>Amount (₹)</Typography>
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={receiptData.amount}
+                  onChange={(e) => setReceiptData({ ...receiptData, amount: e.target.value })}
+                  placeholder="Enter amount"
                 />
-              </Button>
-              {receiptData.receiptFile && (
-                <Typography variant="caption" color="success.main" display="block" mt={1}>
-                  ✓ {receiptData.receiptFile.name}
-                </Typography>
-              )}
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="body2" mb={1}>Payment Mode</Typography>
+                <TextField
+                  fullWidth
+                  select
+                  value={receiptData.paymentMode}
+                  onChange={(e) => setReceiptData({ ...receiptData, paymentMode: e.target.value })}
+                >
+                  <MenuItem value="Cash">Cash</MenuItem>
+                  <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                  <MenuItem value="Cheque">Cheque</MenuItem>
+                  <MenuItem value="Online">Online</MenuItem>
+                  <MenuItem value="UPI">UPI</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="body2" mb={1}>Payment Date</Typography>
+                <TextField
+                  fullWidth
+                  type="date"
+                  value={receiptData.paymentDate}
+                  onChange={(e) => setReceiptData({ ...receiptData, paymentDate: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="body2" mb={1}>Receipt File</Typography>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  component="label"
+                  startIcon={<CloudUpload />}
+                  sx={{ height: 56 }}
+                >
+                  Choose file
+                  <input
+                    type="file"
+                    hidden
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => setReceiptData({ ...receiptData, receiptFile: e.target.files[0] })}
+                  />
+                </Button>
+                {receiptData.receiptFile && (
+                  <Typography variant="caption" color="success.main" display="block" mt={1}>
+                    ✓ {receiptData.receiptFile.name}
+                  </Typography>
+                )}
+              </Grid>
             </Grid>
-          </Grid>
 
-          <Box mt={3}>
-            <Button variant="contained" onClick={handleAddReceipt}>
-              Add Receipt
-            </Button>
-          </Box>
-        </Paper>
-      ) : (
-        <Paper sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="h6" color="text.secondary">
-            Receipt management is not available for manual bookings (Pseudo-Booking).
-          </Typography>
-        </Paper>
-      )}
-    </Box>
+            <Box mt={3}>
+              <Button variant="contained" onClick={handleAddReceipt}>
+                Add Receipt
+              </Button>
+            </Box>
+          </Paper>
+        ) : (
+          <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="h6" color="text.secondary">
+              Receipt management is not available for manual bookings (Pseudo-Booking).
+            </Typography>
+          </Paper>
+        )
+      }
+    </Box >
   )
 }
 

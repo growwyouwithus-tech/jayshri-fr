@@ -68,7 +68,17 @@ const ColonyManagement = () => {
     status: 'planning'
   })
 
-  const [newKhatoniHolder, setNewKhatoniHolder] = useState({ name: '', address: '', mobile: '', aadharNumber: '', panNumber: '' })
+  const [newKhatoniHolder, setNewKhatoniHolder] = useState({
+    name: '',
+    address: '',
+    mobile: '',
+    aadharNumber: '',
+    panNumber: '',
+    dateOfBirth: '',
+    sonOf: '',
+    daughterOf: '',
+    wifeOf: ''
+  })
   const [errors, setErrors] = useState({})
   const [khatoniPopoverAnchor, setKhatoniPopoverAnchor] = useState(null)
   const [selectedKhatoniHolders, setSelectedKhatoniHolders] = useState([])
@@ -298,14 +308,34 @@ const ColonyManagement = () => {
     setCurrentColony(null)
     setErrors({}) // Clear all errors
     // Reset new khatoni holder form
-    setNewKhatoniHolder({ name: '', address: '', mobile: '', aadharNumber: '', panNumber: '' })
+    setNewKhatoniHolder({
+      name: '',
+      address: '',
+      mobile: '',
+      aadharNumber: '',
+      panNumber: '',
+      dateOfBirth: '',
+      sonOf: '',
+      daughterOf: '',
+      wifeOf: ''
+    })
   }
 
   // Khatoni Holder management functions
   const addKhatoniHolder = () => {
     if (newKhatoniHolder.name && newKhatoniHolder.address && newKhatoniHolder.mobile) {
       setFormData({ ...formData, khatoniHolders: [...formData.khatoniHolders, { ...newKhatoniHolder, id: Date.now() }] })
-      setNewKhatoniHolder({ name: '', address: '', mobile: '', aadharNumber: '', panNumber: '' })
+      setNewKhatoniHolder({
+        name: '',
+        address: '',
+        mobile: '',
+        aadharNumber: '',
+        panNumber: '',
+        dateOfBirth: '',
+        sonOf: '',
+        daughterOf: '',
+        wifeOf: ''
+      })
     } else {
       toast.error('Please fill all Khatoni Holder fields')
     }
@@ -740,13 +770,26 @@ const ColonyManagement = () => {
                     <Typography variant="subtitle2" fontWeight="bold">
                       Khatoni Holder {index + 1}
                     </Typography>
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={() => removeKhatoniHolder(holder.id)}
-                    >
-                      Remove
-                    </Button>
+                    <Box>
+                      <Button
+                        size="small"
+                        color="primary"
+                        onClick={() => {
+                          // TODO: Implement edit functionality
+                          toast.info('Edit functionality coming soon!')
+                        }}
+                        sx={{ mr: 1 }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={() => removeKhatoniHolder(holder.id)}
+                      >
+                        Remove
+                      </Button>
+                    </Box>
                   </Box>
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
@@ -758,6 +801,36 @@ const ColonyManagement = () => {
                     <Grid item xs={12}>
                       <Typography variant="body2"><strong>Address:</strong> {holder.address}</Typography>
                     </Grid>
+                    {holder.aadharNumber && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2"><strong>Aadhar:</strong> {holder.aadharNumber}</Typography>
+                      </Grid>
+                    )}
+                    {holder.panNumber && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2"><strong>PAN:</strong> {holder.panNumber}</Typography>
+                      </Grid>
+                    )}
+                    {holder.dateOfBirth && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2"><strong>DOB:</strong> {holder.dateOfBirth}</Typography>
+                      </Grid>
+                    )}
+                    {holder.sonOf && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2"><strong>Son of:</strong> {holder.sonOf}</Typography>
+                      </Grid>
+                    )}
+                    {holder.daughterOf && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2"><strong>Daughter of:</strong> {holder.daughterOf}</Typography>
+                      </Grid>
+                    )}
+                    {holder.wifeOf && (
+                      <Grid item xs={6}>
+                        <Typography variant="body2"><strong>Wife of:</strong> {holder.wifeOf}</Typography>
+                      </Grid>
+                    )}
                   </Grid>
                 </Box>
               ))}
@@ -811,6 +884,44 @@ const ColonyManagement = () => {
                       label="PAN Number"
                       value={newKhatoniHolder.panNumber}
                       onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, panNumber: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Date of Birth"
+                      type="date"
+                      value={newKhatoniHolder.dateOfBirth || ''}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, dateOfBirth: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Son of"
+                      value={newKhatoniHolder.sonOf || ''}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, sonOf: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Daughter of"
+                      value={newKhatoniHolder.daughterOf || ''}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, daughterOf: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Wife of"
+                      value={newKhatoniHolder.wifeOf || ''}
+                      onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, wifeOf: e.target.value })}
                     />
                   </Grid>
                   <Grid item xs={12}>
