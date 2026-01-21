@@ -2988,7 +2988,15 @@ const PlotManagement = () => {
                                             </Typography>
                                             <Box
                                               component="img"
-                                              src={typeof witness.witnessDocuments.aadharFront === 'string' ? witness.witnessDocuments.aadharFront : URL.createObjectURL(witness.witnessDocuments.aadharFront)}
+                                              src={(() => {
+                                                try {
+                                                  const file = witness.witnessDocuments.aadharFront;
+                                                  if (typeof file === 'string') return file;
+                                                  if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                                  if (file?.url) return file.url;
+                                                  return '';
+                                                } catch (e) { return ''; }
+                                              })()}
                                               alt="Aadhar Front"
                                               sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
                                             />
@@ -3033,7 +3041,15 @@ const PlotManagement = () => {
                                             </Typography>
                                             <Box
                                               component="img"
-                                              src={typeof witness.witnessDocuments.aadharBack === 'string' ? witness.witnessDocuments.aadharBack : URL.createObjectURL(witness.witnessDocuments.aadharBack)}
+                                              src={(() => {
+                                                try {
+                                                  const file = witness.witnessDocuments.aadharBack;
+                                                  if (typeof file === 'string') return file;
+                                                  if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                                  if (file?.url) return file.url;
+                                                  return '';
+                                                } catch (e) { return ''; }
+                                              })()}
                                               alt="Aadhar Back"
                                               sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
                                             />
@@ -3078,7 +3094,15 @@ const PlotManagement = () => {
                                             </Typography>
                                             <Box
                                               component="img"
-                                              src={typeof witness.witnessDocuments.panCard === 'string' ? witness.witnessDocuments.panCard : URL.createObjectURL(witness.witnessDocuments.panCard)}
+                                              src={(() => {
+                                                try {
+                                                  const file = witness.witnessDocuments.panCard;
+                                                  if (typeof file === 'string') return file;
+                                                  if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                                  if (file?.url) return file.url;
+                                                  return '';
+                                                } catch (e) { return ''; }
+                                              })()}
                                               alt="PAN Card"
                                               sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
                                             />
@@ -3123,7 +3147,15 @@ const PlotManagement = () => {
                                             </Typography>
                                             <Box
                                               component="img"
-                                              src={typeof witness.witnessDocuments.passportPhoto === 'string' ? witness.witnessDocuments.passportPhoto : URL.createObjectURL(witness.witnessDocuments.passportPhoto)}
+                                              src={(() => {
+                                                try {
+                                                  const file = witness.witnessDocuments.passportPhoto;
+                                                  if (typeof file === 'string') return file;
+                                                  if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                                  if (file?.url) return file.url;
+                                                  return '';
+                                                } catch (e) { return ''; }
+                                              })()}
                                               alt="Passport Photo"
                                               sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
                                             />
@@ -3168,7 +3200,15 @@ const PlotManagement = () => {
                                             </Typography>
                                             <Box
                                               component="img"
-                                              src={typeof witness.witnessDocuments.fullPhoto === 'string' ? witness.witnessDocuments.fullPhoto : URL.createObjectURL(witness.witnessDocuments.fullPhoto)}
+                                              src={(() => {
+                                                try {
+                                                  const file = witness.witnessDocuments.fullPhoto;
+                                                  if (typeof file === 'string') return file;
+                                                  if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                                  if (file?.url) return file.url;
+                                                  return '';
+                                                } catch (e) { return ''; }
+                                              })()}
                                               alt="Full Photo"
                                               sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
                                             />
@@ -4118,7 +4158,15 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={typeof newPlot.customerAadharFront === 'string' ? newPlot.customerAadharFront : URL.createObjectURL(newPlot.customerAadharFront)}
+                                  src={(() => {
+                                    try {
+                                      const file = newPlot.customerAadharFront;
+                                      if (typeof file === 'string') return file;
+                                      if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                      if (file?.url) return file.url;
+                                      return '';
+                                    } catch (e) { return ''; }
+                                  })()}
                                   alt="Aadhar Front Preview"
                                   sx={{
                                     width: 60,
@@ -4161,7 +4209,15 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={typeof newPlot.customerAadharBack === 'string' ? newPlot.customerAadharBack : URL.createObjectURL(newPlot.customerAadharBack)}
+                                  src={(() => {
+                                    try {
+                                      const file = newPlot.customerAadharBack;
+                                      if (typeof file === 'string') return file;
+                                      if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                      if (file?.url) return file.url;
+                                      return '';
+                                    } catch (e) { return ''; }
+                                  })()}
                                   alt="Aadhar Back Preview"
                                   sx={{
                                     width: 60,
@@ -4204,7 +4260,15 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={typeof newPlot.customerPanCard === 'string' ? newPlot.customerPanCard : URL.createObjectURL(newPlot.customerPanCard)}
+                                  src={(() => {
+                                    try {
+                                      const file = newPlot.customerPanCard;
+                                      if (typeof file === 'string') return file;
+                                      if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                      if (file?.url) return file.url;
+                                      return '';
+                                    } catch (e) { return ''; }
+                                  })()}
                                   alt="PAN Card Preview"
                                   sx={{
                                     width: 60,
@@ -4247,7 +4311,15 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={typeof newPlot.customerPassportPhoto === 'string' ? newPlot.customerPassportPhoto : URL.createObjectURL(newPlot.customerPassportPhoto)}
+                                  src={(() => {
+                                    try {
+                                      const file = newPlot.customerPassportPhoto;
+                                      if (typeof file === 'string') return file;
+                                      if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                      if (file?.url) return file.url;
+                                      return '';
+                                    } catch (e) { return ''; }
+                                  })()}
                                   alt="Passport Photo Preview"
                                   sx={{
                                     width: 60,
@@ -4290,7 +4362,15 @@ const PlotManagement = () => {
                                 </Typography>
                                 <Box
                                   component="img"
-                                  src={typeof newPlot.customerFullPhoto === 'string' ? newPlot.customerFullPhoto : URL.createObjectURL(newPlot.customerFullPhoto)}
+                                  src={(() => {
+                                    try {
+                                      const file = newPlot.customerFullPhoto;
+                                      if (typeof file === 'string') return file;
+                                      if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
+                                      if (file?.url) return file.url;
+                                      return '';
+                                    } catch (e) { return ''; }
+                                  })()}
                                   alt="Full Photo Preview"
                                   sx={{
                                     width: 60,

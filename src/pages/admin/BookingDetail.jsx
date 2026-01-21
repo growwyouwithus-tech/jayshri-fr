@@ -117,50 +117,83 @@ const BookingDetail = () => {
         const { data } = await axios.get(`/plots/${plotId}`)
         const plot = data.data.plot || data.data
 
-        // Mock a booking object from plot data
-        const mockBooking = {
+        // Construct pseudo-booking object
+        const pseudoBooking = {
           _id: id,
-          bookingNumber: `MAN-${plot.plotNumber || plot.plotNo || '---'}`,
-          status: 'Approved', // Pseudo-bookings are usually physically booked/sold plots
-          paymentStatus: (plot.paidAmount >= plot.totalPrice) ? 'Paid' : 'Partial',
-          totalAmount: plot.totalPrice,
-          discount: 0, // Not tracked on plot
-          remarks: 'Auto-generated from Plot details',
-          createdAt: plot.updatedAt,
-          plotId: plot, // Populate plot
-          plot: plot,   // Fallback
-          // Mock User/Customer
+          isPseudo: true,
+          bookingNumber: `SOLD-${plot.plotNumber || plot.plotNo}`,
           userId: {
-            _id: 'manual',
-            name: plot.customerName || 'Manual Customer',
-            phone: plot.customerNumber || '',
-            address: plot.customerFullAddress || ''
+            _id: 'manual-user',
+            name: plot.customerName || 'Direct Customer',
+            phone: plot.customerNumber,
+            email: ''
           },
           customerDetails: {
             name: plot.customerName,
             phone: plot.customerNumber,
-            address: plot.customerShortAddress,
-            aadharNumber: plot.customerAadharNumber,
-            panNumber: plot.customerPanNumber
+            address: plot.customerShortAddress
           },
-          // Ensure correct total price logic
-          finalAmount: plot.finalPrice || plot.totalPrice,
+          plotId: plot,
+          plot: plot, // Redundant but safe
+
+          // Financials
+          totalAmount: plot.totalPrice || 0,
+          discount: 0,
+          paidAmount: plot.paidAmount || 0,
+
+          // Status Logic
+          status: 'Approved',
+          paymentStatus: (plot.paidAmount >= plot.totalPrice) ? 'Paid' : 'Partial',
+
+          // Metadata
+          remarks: 'Auto-generated from Plot details',
+          createdAt: plot.updatedAt || new Date().toISOString()
         }
 
+        setBooking(pseudoBooking)
+        setBookingData({
+          status: 'Approved',
+          paymentStatus: (plot.paidAmount >= plot.totalPrice) ? 'Paid' : 'Partial', // Simple logic
+          finalAmount: plot.finalPrice || plot.totalPrice || '',
+          discount: '0.00',
+          remarks: 'Auto-generated from Sold Plot details'
+        })
+        setLoading(false)
+        return
+      }
+
+      if (id === 'new') {
+        const mockBooking = {
+          _id: 'new',
+          bookingNumber: 'BK-NEW',
+          customerName: 'New Customer',
+          plot: {
+            plotNumber: 'A-101',
+            colony: { name: 'Green Valley' },
+            area: 1000,
+            rate: 2500,
+            image: null
+          },
+          amount: 2500000,
+          date: new Date().toISOString(),
+          status: 'Pending',
+          paymentStatus: 'Unpaid',
+          tahsil: 'Default Tahsil'
+        }
         setBooking(mockBooking)
         setBookingData({
           status: 'Approved',
-          paymentStatus: (plot.paidAmount >= plot.totalPrice) ? 'Paid' : 'Partial',
-          finalAmount: plot.finalPrice || plot.totalPrice || '',
+          paymentStatus: 'Unpaid',
+          finalAmount: mockBooking.amount,
           discount: '0.00',
-          remarks: 'Auto-generated from Plot details'
+          remarks: 'New booking'
         })
         setLoading(false)
         return
       }
 
       const { data } = await axios.get(`/bookings/${id}`)
-      const bookingInfo = data.data.booking
+      const bookingInfo = data.data
       setBooking(bookingInfo)
       setBookingData({
         status: bookingInfo.status || 'Pending',
@@ -172,6 +205,8 @@ const BookingDetail = () => {
       setLoading(false)
     } catch (error) {
       console.error(error)
+      // If 404 and it looks like a valid ID, maybe it's a plot ID passed mistakenly without temp tag?
+      // For now, just show error.
       toast.error('Failed to fetch booking details')
       setLoading(false)
     }
@@ -301,7 +336,7 @@ const BookingDetail = () => {
           <ArrowBack />
         </IconButton>
         <Typography variant="h4" fontWeight="bold">
-          {(plot.status === 'sold' || booking.status === 'completed') ? 'Sold Plot Detail' : `Booking #${booking.bookingNumber || booking._id?.slice(-6)}`}
+          {(plot.status === 'sold' || booking.status === 'completed') ? 'Sold Plot Detail' : 'Booking Detail'}
         </Typography>
       </Box>
 
@@ -437,7 +472,7 @@ const BookingDetail = () => {
         </Box>
 
         {/* Khatoni Holders / Owners - New Structured Format */}
-        {(colony.khatoniHolders && colony.khatoniHolders.length > 0) && (
+        {(colony.khatoniHolders && colony.khatoniHolders.length > 0 && (!plot.ownerType || plot.ownerType === 'khatoniHolder')) && (
           <Box mb={4}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               Khatoni Holders / Owners
@@ -951,7 +986,7 @@ const BookingDetail = () => {
           </Box>
         )}
 
-        {plot.plotOwners && plot.plotOwners.length > 0 && (
+        {(plot.plotOwners && plot.plotOwners.length > 0 && (!plot.ownerType || plot.ownerType === 'owner')) && (
           <Box mb={4}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               Plot Owners
@@ -1364,14 +1399,14 @@ const BookingDetail = () => {
         </Box> */}
       </Paper >
 
-      {/* Payment Receipts Section - Hide for Pseudo Bookings or show message */}
-      {
-        !id.startsWith('temp-') ? (
-          <Paper sx={{ p: 3 }}>
+      {/* Payment Receipts Section - REMOVED AS PER USER REQUEST */}
+      {/* 
+      {!id.startsWith('temp-') && (
+        <>
+          <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" fontWeight="bold" mb={3}>
               Payment Receipts
             </Typography>
-            {/* ... existing receipt table ... */}
             <TableContainer>
               <Table sx={{ '& td, & th': { border: '1px solid #000' } }}>
                 <TableHead>
@@ -1385,126 +1420,115 @@ const BookingDetail = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {receipts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                        <Typography color="text.secondary">
-                          No receipts added yet.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    receipts.map((receipt, index) => (
+                  {receipts.length > 0 ? (
+                    receipts.map((receipt) => (
                       <TableRow key={receipt._id}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>₹{receipt.amount?.toLocaleString()}</TableCell>
-                        <TableCell>{receipt.paymentMode}</TableCell>
-                        <TableCell>
-                          {receipt.paymentDate ? format(new Date(receipt.paymentDate), 'dd-MM-yyyy') : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {receipt.receiptFile ? (
-                            <Button size="small" onClick={() => window.open(receipt.receiptFile)}>
-                              View File
+                        <TableCell sx={{ border: '1px solid #000' }}>{receipt.receiptNumber}</TableCell>
+                        <TableCell sx={{ border: '1px solid #000' }}>₹{receipt.amount}</TableCell>
+                        <TableCell sx={{ border: '1px solid #000' }}>{receipt.paymentMode}</TableCell>
+                        <TableCell sx={{ border: '1px solid #000' }}>{format(new Date(receipt.paymentDate), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell sx={{ border: '1px solid #000' }}>
+                          {receipt.receiptFile && (
+                            <Button
+                              size="small"
+                              startIcon={<CloudUpload />}
+                              href={receipt.receiptFile}
+                              target="_blank"
+                            >
+                              View
                             </Button>
-                          ) : (
-                            '-'
                           )}
                         </TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" color="error" onClick={() => handleDeleteReceipt(receipt._id)}>
-                            <Delete fontSize="small" />
+                        <TableCell align="right" sx={{ border: '1px solid #000' }}>
+                          <IconButton color="error" onClick={() => handleDeleteReceipt(receipt._id)}>
+                            <Delete />
                           </IconButton>
                         </TableCell>
                       </TableRow>
                     ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 3, border: '1px solid #000' }}>
+                        No receipts added yet.
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>
             </TableContainer>
 
-            <Divider sx={{ my: 3 }} />
-
-            <Typography variant="h6" fontWeight="bold" mb={3}>
-              Add New Receipt
-            </Typography>
-
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={3}>
-                <Typography variant="body2" mb={1}>Amount (₹)</Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={receiptData.amount}
-                  onChange={(e) => setReceiptData({ ...receiptData, amount: e.target.value })}
-                  placeholder="Enter amount"
-                />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Typography variant="body2" mb={1}>Payment Mode</Typography>
-                <TextField
-                  fullWidth
-                  select
-                  value={receiptData.paymentMode}
-                  onChange={(e) => setReceiptData({ ...receiptData, paymentMode: e.target.value })}
-                >
-                  <MenuItem value="Cash">Cash</MenuItem>
-                  <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-                  <MenuItem value="Cheque">Cheque</MenuItem>
-                  <MenuItem value="Online">Online</MenuItem>
-                  <MenuItem value="UPI">UPI</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Typography variant="body2" mb={1}>Payment Date</Typography>
-                <TextField
-                  fullWidth
-                  type="date"
-                  value={receiptData.paymentDate}
-                  onChange={(e) => setReceiptData({ ...receiptData, paymentDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Typography variant="body2" mb={1}>Receipt File</Typography>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  component="label"
-                  startIcon={<CloudUpload />}
-                  sx={{ height: 56 }}
-                >
-                  Choose file
-                  <input
-                    type="file"
-                    hidden
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => setReceiptData({ ...receiptData, receiptFile: e.target.files[0] })}
+            <Box mt={4}>
+              <Typography variant="h6" fontWeight="bold" mb={2}>
+                Add New Receipt
+              </Typography>
+              <Grid container spacing={2} alignItems="flex-end">
+                <Grid item xs={12} md={3}>
+                  <Typography variant="body2" mb={1}>Amount (₹)</Typography>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    placeholder="Enter amount"
+                    value={receiptData.amount}
+                    onChange={(e) => setReceiptData({ ...receiptData, amount: e.target.value })}
                   />
-                </Button>
-                {receiptData.receiptFile && (
-                  <Typography variant="caption" color="success.main" display="block" mt={1}>
-                    ✓ {receiptData.receiptFile.name}
-                  </Typography>
-                )}
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="body2" mb={1}>Payment Mode</Typography>
+                  <TextField
+                    fullWidth
+                    select
+                    value={receiptData.paymentMode}
+                    onChange={(e) => setReceiptData({ ...receiptData, paymentMode: e.target.value })}
+                  >
+                    <MenuItem value="Cash">Cash</MenuItem>
+                    <MenuItem value="Online">Online</MenuItem>
+                    <MenuItem value="Cheque">Cheque</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="body2" mb={1}>Payment Date</Typography>
+                  <TextField
+                    fullWidth
+                    type="date"
+                    value={receiptData.paymentDate}
+                    onChange={(e) => setReceiptData({ ...receiptData, paymentDate: e.target.value })}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Typography variant="body2" mb={1}>Receipt File</Typography>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUpload />}
+                    sx={{ height: 56 }}
+                  >
+                    Choose file
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => setReceiptData({ ...receiptData, receiptFile: e.target.files[0] })}
+                    />
+                  </Button>
+                  {receiptData.receiptFile && (
+                    <Typography variant="caption" color="success.main" display="block" mt={1}>
+                      ✓ {receiptData.receiptFile.name}
+                    </Typography>
+                  )}
+                </Grid>
               </Grid>
-            </Grid>
 
-            <Box mt={3}>
-              <Button variant="contained" onClick={handleAddReceipt}>
-                Add Receipt
-              </Button>
-            </Box>
-          </Paper>
-        ) : (
-          <Paper sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary">
-              Receipt management is not available for manual bookings (Pseudo-Booking).
-            </Typography>
-          </Paper>
-        )
-      }
-    </Box >
+              <Box mt={3}>
+                <Button variant="contained" onClick={handleAddReceipt}>
+                  Add Receipt
+                </Button>
+              </Box>
+            </Paper>
+          </>
+        )}
+       */}
+    </Box>
   )
 }
 
