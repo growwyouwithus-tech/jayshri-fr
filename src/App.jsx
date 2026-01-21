@@ -25,6 +25,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import ColonyManagement from './pages/admin/ColonyManagement'
 import PlotManagement from './pages/admin/PlotManagement'
 import BookingManagement from './pages/admin/BookingManagement'
+import SoldPlotManagement from './pages/admin/SoldPlotManagement'
 import RegistryManagement from './pages/admin/RegistryManagement'
 import CommissionManagement from './pages/admin/CommissionManagement'
 import UserManagement from './pages/admin/UserManagement'
@@ -40,6 +41,8 @@ import KisanPaymentManagement from './pages/admin/KisanPaymentManagement'
 import ExpenseManagement from './pages/admin/ExpenseManagement'
 import AgentManagement from './pages/admin/AgentManagement'
 import AdvocateManagement from './pages/admin/AdvocateManagement'
+
+
 
 // Lawyer Pages
 import LawyerDashboard from './pages/lawyer/LawyerDashboard'
@@ -131,6 +134,7 @@ function App() {
           <Route path="colonies" element={<RoleRoute roles={['Admin', 'Manager']}><ColonyManagement /></RoleRoute>} />
           <Route path="plots" element={<RoleRoute roles={['Admin', 'Manager', 'Colony Manager']} permissions={['plot_read', 'plots_read', 'plot_create', 'plots_create']}><PlotManagement /></RoleRoute>} />
           <Route path="bookings" element={<RoleRoute roles={['Admin', 'Manager', 'Agent']}><BookingManagement /></RoleRoute>} />
+          <Route path="sold-plots" element={<RoleRoute roles={['Admin', 'Manager', 'Agent']}><SoldPlotManagement /></RoleRoute>} />
           <Route path="registry" element={<RoleRoute roles={['Admin', 'Manager']}><RegistryManagement /></RoleRoute>} />
           <Route path="commissions" element={<RoleRoute roles={['Admin', 'Manager']}><CommissionManagement /></RoleRoute>} />
           <Route path="properties" element={<RoleRoute roles={['Admin', 'Manager']}><PropertyManagement /></RoleRoute>} />

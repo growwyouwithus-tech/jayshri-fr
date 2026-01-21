@@ -769,8 +769,24 @@ const PlotManagement = () => {
             isExisting: true
           }))
         : [],
-      registryPdf: plot.registryPdf ? { name: 'registry.pdf', url: plot.registryPdf, isExisting: true } : null,
       registryStatus: plot.registryStatus || 'pending',
+      // Customer Documents (Mapping from nested object to flat state)
+      customerAadharFront: plot.customerDocuments?.aadharFront || null,
+      customerAadharBack: plot.customerDocuments?.aadharBack || null,
+      customerPanCard: plot.customerDocuments?.panCard || null,
+      customerPassportPhoto: plot.customerDocuments?.passportPhoto || null,
+      customerFullPhoto: plot.customerDocuments?.fullPhoto || null,
+
+      witnesses: plot.witnesses ? plot.witnesses.map(w => ({
+        ...w,
+        witnessDocuments: {
+          aadharFront: w.witnessDocuments?.aadharFront || null,
+          aadharBack: w.witnessDocuments?.aadharBack || null,
+          panCard: w.witnessDocuments?.panCard || null,
+          passportPhoto: w.witnessDocuments?.passportPhoto || null,
+          fullPhoto: w.witnessDocuments?.fullPhoto || null,
+        }
+      })) : []
     })
 
     // Populate selected owner IDs from plot owners
@@ -1116,32 +1132,32 @@ const PlotManagement = () => {
       }
 
       // Append witnesses data and documents
+      // Append witnesses data and documents
       if (newPlot.witnesses && newPlot.witnesses.length > 0) {
-        // Filter out file objects from the witnesses array before stringifying
+        // Prepare witness data for JSON (preserve existing URLs, exclude File objects)
         const witnessesData = newPlot.witnesses.map(w => {
-          const { witnessDocuments, ...rest } = w;
-          return rest;
+          const documents = {};
+          if (w.witnessDocuments) {
+            Object.keys(w.witnessDocuments).forEach(docType => {
+              const val = w.witnessDocuments[docType];
+              if (typeof val === 'string') {
+                documents[docType] = val; // Keep existing URL
+              }
+            });
+          }
+          return { ...w, witnessDocuments: documents };
         });
         formData.append('witnesses', JSON.stringify(witnessesData));
 
-        // Append witness documents
+        // Append new witness documents (Files only)
         newPlot.witnesses.forEach((witness, idx) => {
           if (witness.witnessDocuments) {
-            if (witness.witnessDocuments.aadharFront) {
-              formData.append(`witnessDocuments[${idx}][aadharFront]`, witness.witnessDocuments.aadharFront);
-            }
-            if (witness.witnessDocuments.aadharBack) {
-              formData.append(`witnessDocuments[${idx}][aadharBack]`, witness.witnessDocuments.aadharBack);
-            }
-            if (witness.witnessDocuments.panCard) {
-              formData.append(`witnessDocuments[${idx}][panCard]`, witness.witnessDocuments.panCard);
-            }
-            if (witness.witnessDocuments.passportPhoto) {
-              formData.append(`witnessDocuments[${idx}][passportPhoto]`, witness.witnessDocuments.passportPhoto);
-            }
-            if (witness.witnessDocuments.fullPhoto) {
-              formData.append(`witnessDocuments[${idx}][fullPhoto]`, witness.witnessDocuments.fullPhoto);
-            }
+            Object.keys(witness.witnessDocuments).forEach(docType => {
+              const val = witness.witnessDocuments[docType];
+              if (val instanceof File) {
+                formData.append(`witnessDocuments[${idx}][${docType}]`, val);
+              }
+            });
           }
         });
       }
@@ -1296,32 +1312,32 @@ const PlotManagement = () => {
       }
 
       // Append witnesses data and documents
+      // Append witnesses data and documents
       if (newPlot.witnesses && newPlot.witnesses.length > 0) {
-        // Filter out file objects from the witnesses array before stringifying
+        // Prepare witness data for JSON (preserve existing URLs, exclude File objects)
         const witnessesData = newPlot.witnesses.map(w => {
-          const { witnessDocuments, ...rest } = w;
-          return rest;
+          const documents = {};
+          if (w.witnessDocuments) {
+            Object.keys(w.witnessDocuments).forEach(docType => {
+              const val = w.witnessDocuments[docType];
+              if (typeof val === 'string') {
+                documents[docType] = val; // Keep existing URL
+              }
+            });
+          }
+          return { ...w, witnessDocuments: documents };
         });
         formData.append('witnesses', JSON.stringify(witnessesData));
 
-        // Append witness documents
+        // Append new witness documents (Files only)
         newPlot.witnesses.forEach((witness, idx) => {
           if (witness.witnessDocuments) {
-            if (witness.witnessDocuments.aadharFront && !witness.witnessDocuments.aadharFront.isExisting) {
-              formData.append(`witnessDocuments[${idx}][aadharFront]`, witness.witnessDocuments.aadharFront);
-            }
-            if (witness.witnessDocuments.aadharBack && !witness.witnessDocuments.aadharBack.isExisting) {
-              formData.append(`witnessDocuments[${idx}][aadharBack]`, witness.witnessDocuments.aadharBack);
-            }
-            if (witness.witnessDocuments.panCard && !witness.witnessDocuments.panCard.isExisting) {
-              formData.append(`witnessDocuments[${idx}][panCard]`, witness.witnessDocuments.panCard);
-            }
-            if (witness.witnessDocuments.passportPhoto && !witness.witnessDocuments.passportPhoto.isExisting) {
-              formData.append(`witnessDocuments[${idx}][passportPhoto]`, witness.witnessDocuments.passportPhoto);
-            }
-            if (witness.witnessDocuments.fullPhoto && !witness.witnessDocuments.fullPhoto.isExisting) {
-              formData.append(`witnessDocuments[${idx}][fullPhoto]`, witness.witnessDocuments.fullPhoto);
-            }
+            Object.keys(witness.witnessDocuments).forEach(docType => {
+              const val = witness.witnessDocuments[docType];
+              if (val instanceof File) {
+                formData.append(`witnessDocuments[${idx}][${docType}]`, val);
+              }
+            });
           }
         });
       }
@@ -3901,6 +3917,7 @@ const PlotManagement = () => {
                               src={(() => {
                                 try {
                                   if (typeof file === 'string') return file;
+                                  if (file.url && file.isExisting) return file.url;
                                   if (file instanceof File || file instanceof Blob) return URL.createObjectURL(file);
                                   return '';
                                 } catch (e) {
@@ -4097,7 +4114,7 @@ const PlotManagement = () => {
                             {newPlot.customerAadharFront && (
                               <Box sx={{ mt: 1 }}>
                                 <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
-                                  ✓ {newPlot.customerAadharFront.name}
+                                  ✓ {typeof newPlot.customerAadharFront === 'string' ? 'Uploaded' : newPlot.customerAadharFront.name}
                                 </Typography>
                                 <Box
                                   component="img"
@@ -4140,7 +4157,7 @@ const PlotManagement = () => {
                             {newPlot.customerAadharBack && (
                               <Box sx={{ mt: 1 }}>
                                 <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
-                                  ✓ {newPlot.customerAadharBack.name}
+                                  ✓ {typeof newPlot.customerAadharBack === 'string' ? 'Uploaded' : newPlot.customerAadharBack.name}
                                 </Typography>
                                 <Box
                                   component="img"
@@ -4183,7 +4200,7 @@ const PlotManagement = () => {
                             {newPlot.customerPanCard && (
                               <Box sx={{ mt: 1 }}>
                                 <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
-                                  ✓ {newPlot.customerPanCard.name}
+                                  ✓ {typeof newPlot.customerPanCard === 'string' ? 'Uploaded' : newPlot.customerPanCard.name}
                                 </Typography>
                                 <Box
                                   component="img"
@@ -4226,7 +4243,7 @@ const PlotManagement = () => {
                             {newPlot.customerPassportPhoto && (
                               <Box sx={{ mt: 1 }}>
                                 <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
-                                  ✓ {newPlot.customerPassportPhoto.name}
+                                  ✓ {typeof newPlot.customerPassportPhoto === 'string' ? 'Uploaded' : newPlot.customerPassportPhoto.name}
                                 </Typography>
                                 <Box
                                   component="img"
@@ -4269,7 +4286,7 @@ const PlotManagement = () => {
                             {newPlot.customerFullPhoto && (
                               <Box sx={{ mt: 1 }}>
                                 <Typography variant="caption" display="block" sx={{ mb: 0.5, color: 'success.main' }}>
-                                  ✓ {newPlot.customerFullPhoto.name}
+                                  ✓ {typeof newPlot.customerFullPhoto === 'string' ? 'Uploaded' : newPlot.customerFullPhoto.name}
                                 </Typography>
                                 <Box
                                   component="img"

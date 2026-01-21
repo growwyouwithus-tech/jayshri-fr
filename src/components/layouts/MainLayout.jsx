@@ -43,6 +43,7 @@ import {
   AccountBalance,
   PersonPin,
   Work,
+  CheckCircle,
 } from '@mui/icons-material'
 import { logout } from '@/store/slices/authSlice'
 import toast from 'react-hot-toast'
@@ -185,6 +186,11 @@ const MainLayout = () => {
     // Bookings (check both booking_read and bookings_read)
     if (hasPermission('booking_read') || hasPermission('bookings_read') || hasPermission('booking_create') || hasPermission('bookings_create')) {
       dynamicItems.push({ text: 'Bookings', icon: <Receipt />, path: '/admin/bookings' })
+    }
+
+    // Sold Plots
+    if (hasPermission('plot_read') || hasPermission('plots_read')) {
+      dynamicItems.push({ text: 'Sold Plots', icon: <CheckCircle />, path: '/admin/sold-plots' })
     }
 
     // Commissions

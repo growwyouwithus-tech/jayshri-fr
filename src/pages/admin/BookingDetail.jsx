@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   Box,
   Typography,
@@ -79,6 +79,7 @@ const DocumentCard = ({ title, url }) => {
 const BookingDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [booking, setBooking] = useState(null)
   const [receipts, setReceipts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -296,11 +297,11 @@ const BookingDetail = () => {
   return (
     <Box>
       <Box display="flex" alignItems="center" gap={2} mb={4}>
-        <IconButton onClick={() => navigate('/admin/bookings')}>
+        <IconButton onClick={() => navigate(location.state?.from || '/admin/bookings')}>
           <ArrowBack />
         </IconButton>
         <Typography variant="h4" fontWeight="bold">
-          Booking #{booking.bookingNumber || booking._id?.slice(-6)}
+          {(plot.status === 'sold' || booking.status === 'completed') ? 'Sold Plot Detail' : `Booking #${booking.bookingNumber || booking._id?.slice(-6)}`}
         </Typography>
       </Box>
 
@@ -1232,10 +1233,41 @@ const BookingDetail = () => {
           </Grid>
         </Box>
 
-        {/* Commented out: Registry Images section
+        {/* Registry Details Section */}
+        {(plot.status === 'sold' || booking.status === 'completed' || plot.registryDate) && (
+          <Box mb={4}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Registry Details
+            </Typography>
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="body2" color="text.secondary">Registry Date</Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {plot.registryDate ? format(new Date(plot.registryDate), 'dd-MM-yyyy') : '-'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="body2" color="text.secondary">Registry Number</Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {plot.registryNumber || '-'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="body2" color="text.secondary">Registry Place</Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {plot.registryPlace || '-'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Box>
+        )}
+
+        {/* Registry Scans/Documents */}
         <Box mb={4}>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Registry Images
+            Registry Documents
           </Typography>
           <Grid container spacing={2}>
             {plot.registryDocument?.map((url, idx) => (
@@ -1253,7 +1285,7 @@ const BookingDetail = () => {
               <Grid item xs={12}><Typography color="text.secondary">No registry documents uploaded.</Typography></Grid>
             )}
           </Grid>
-        </Box> */}
+        </Box>
 
         {/* <Divider sx={{ my: 3 }} />
 
