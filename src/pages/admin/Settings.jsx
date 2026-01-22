@@ -33,7 +33,8 @@ const Settings = () => {
     logo: null,
     gstNumber: '07AABCJ1234F1Z5',
     panNumber: 'AABCJ1234F',
-    owners: [] // Array of owners
+    owners: [], // Array of owners
+    companyWitnesses: [] // Array of company witnesses
   })
 
   const [systemSettings, setSystemSettings] = useState({
@@ -76,7 +77,8 @@ const Settings = () => {
             website: data.website || prev.website,
             gstNumber: data.gstNumber || prev.gstNumber,
             panNumber: data.panNumber || prev.panNumber,
-            owners: data.owners || []
+            owners: data.owners || [],
+            companyWitnesses: data.companyWitnesses || []
           }))
         }
       } catch (error) {
@@ -152,6 +154,58 @@ const Settings = () => {
     }))
   }
 
+
+
+  // Company Witness management functions
+  const handleAddWitness = () => {
+    setCompanySettings(prev => ({
+      ...prev,
+      companyWitnesses: [...(prev.companyWitnesses || []), {
+        name: '',
+        phone: '',
+        aadharNumber: '',
+        panNumber: '',
+        dateOfBirth: '',
+        sonOf: '',
+        daughterOf: '',
+        wifeOf: '',
+        address: '',
+        documents: {}
+      }]
+    }))
+  }
+
+  const handleRemoveWitness = (index) => {
+    setCompanySettings(prev => ({
+      ...prev,
+      companyWitnesses: (prev.companyWitnesses || []).filter((_, i) => i !== index)
+    }))
+  }
+
+  const handleWitnessChange = (index, field, value) => {
+    setCompanySettings(prev => {
+      const newWitnesses = [...(prev.companyWitnesses || [])]
+      newWitnesses[index] = {
+        ...newWitnesses[index],
+        [field]: value
+      }
+      return { ...prev, companyWitnesses: newWitnesses }
+    })
+  }
+
+  const handleWitnessFileChange = (index, docType, file) => {
+    setCompanySettings(prev => {
+      const newWitnesses = [...(prev.companyWitnesses || [])]
+      if (!newWitnesses[index]) return prev;
+
+      if (!newWitnesses[index].documents) {
+        newWitnesses[index].documents = {}
+      }
+      newWitnesses[index].documents[docType] = file
+      return { ...prev, companyWitnesses: newWitnesses }
+    })
+  }
+
   const handlePaymentSettingsChange = (field, value) => {
     setPaymentSettings(prev => ({
       ...prev,
@@ -208,6 +262,34 @@ const Settings = () => {
               });
             }
           });
+
+          // Add company witnesses data
+          if (companySettings.companyWitnesses && companySettings.companyWitnesses.length > 0) {
+            const witnessesData = companySettings.companyWitnesses.map(witness => ({
+              name: witness.name,
+              phone: witness.phone,
+              aadharNumber: witness.aadharNumber,
+              panNumber: witness.panNumber,
+              dateOfBirth: witness.dateOfBirth,
+              sonOf: witness.sonOf,
+              daughterOf: witness.daughterOf,
+              wifeOf: witness.wifeOf,
+              address: witness.address
+            }));
+            formData.append('companyWitnesses', JSON.stringify(witnessesData));
+
+            // Add witness documents with indexed field names
+            companySettings.companyWitnesses.forEach((witness, index) => {
+              if (witness.documents) {
+                Object.keys(witness.documents).forEach(docType => {
+                  const file = witness.documents[docType];
+                  if (file instanceof File) {
+                    formData.append(`witness_${index}_${docType}`, file);
+                  }
+                });
+              }
+            });
+          }
 
           payload = formData;
           isFormData = true;
@@ -985,6 +1067,183 @@ const Settings = () => {
     </Paper>
   )
 
+  const renderWitnessSettings = () => (
+    <Paper sx={{ p: 3 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h6" fontWeight="bold">
+          Company Witnesses
+        </Typography>
+        <Button
+          startIcon={<Add />}
+          variant="contained"
+          onClick={handleAddWitness}
+          sx={{ bgcolor: '#4caf50', '&:hover': { bgcolor: '#388e3c' } }}
+        >
+          Add Witness
+        </Button>
+      </Box>
+
+      {companySettings.companyWitnesses && companySettings.companyWitnesses.length > 0 ? (
+        companySettings.companyWitnesses.map((witness, index) => (
+          <Box key={index} sx={{ mb: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                Witness {index + 1}
+              </Typography>
+              <IconButton
+                color="error"
+                onClick={() => handleRemoveWitness(index)}
+                size="small"
+              >
+                <Delete />
+              </IconButton>
+            </Box>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Name"
+                  value={witness.name || ''}
+                  onChange={(e) => handleWitnessChange(index, 'name', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  value={witness.phone || ''}
+                  onChange={(e) => handleWitnessChange(index, 'phone', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Aadhar Number"
+                  value={witness.aadharNumber || ''}
+                  onChange={(e) => handleWitnessChange(index, 'aadharNumber', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="PAN Number"
+                  value={witness.panNumber || ''}
+                  onChange={(e) => handleWitnessChange(index, 'panNumber', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Date of Birth"
+                  InputLabelProps={{ shrink: true }}
+                  value={witness.dateOfBirth || ''}
+                  onChange={(e) => handleWitnessChange(index, 'dateOfBirth', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="Son of"
+                  value={witness.sonOf || ''}
+                  onChange={(e) => handleWitnessChange(index, 'sonOf', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="Daughter of"
+                  value={witness.daughterOf || ''}
+                  onChange={(e) => handleWitnessChange(index, 'daughterOf', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="Wife of"
+                  value={witness.wifeOf || ''}
+                  onChange={(e) => handleWitnessChange(index, 'wifeOf', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Address"
+                  multiline
+                  rows={2}
+                  value={witness.address || ''}
+                  onChange={(e) => handleWitnessChange(index, 'address', e.target.value)}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                  Witness Documents
+                </Typography>
+                <Grid container spacing={2}>
+                  {['aadharFront', 'aadharBack', 'panCard', 'passportPhoto', 'fullPhoto'].map((docType) => (
+                    <Grid item xs={12} sm={6} md={2.4} key={docType}>
+                      <Button
+                        fullWidth
+                        component="label"
+                        variant="outlined"
+                        startIcon={
+                          (witness.documents && witness.documents[docType]) ? (
+                            <Box
+                              component="img"
+                              src={
+                                witness.documents[docType] instanceof File
+                                  ? URL.createObjectURL(witness.documents[docType])
+                                  : witness.documents[docType]
+                              }
+                              sx={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <CloudUpload />
+                          )
+                        }
+                        sx={{
+                          height: '56px',
+                          textTransform: 'none',
+                          borderColor: (witness.documents && witness.documents[docType]) ? 'success.main' : 'inherit',
+                          color: (witness.documents && witness.documents[docType]) ? 'success.main' : 'inherit',
+                        }}
+                      >
+                        {docType.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={(e) => handleWitnessFileChange(index, docType, e.target.files[0])}
+                        />
+                      </Button>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Grid>
+            </Grid>
+          </Box>
+        ))
+      ) : (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          No witnesses added yet. Click "Add Witness" to add company witnesses.
+        </Alert>
+      )}
+
+      <Box mt={3}>
+        <Button
+          variant="contained"
+          onClick={() => handleSaveSettings('company')}
+          disabled={loading}
+        >
+          Save Company Witnesses
+        </Button>
+      </Box>
+    </Paper>
+  )
+
   return (
     <Box>
       <Typography variant="h4" fontWeight="bold" mb={4}>
@@ -1000,12 +1259,14 @@ const Settings = () => {
           <Tab label="Company" />
           <Tab label="System" />
           <Tab label="Payment" />
+          <Tab label="Company Witness" />
         </Tabs>
       </Paper>
 
       {activeTab === 0 && renderCompanySettings()}
       {activeTab === 1 && renderSystemSettings()}
       {activeTab === 2 && renderPaymentSettings()}
+      {activeTab === 3 && renderWitnessSettings()}
     </Box>
   )
 }
