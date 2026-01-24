@@ -226,8 +226,8 @@ const Settings = () => {
 
           // Add company fields
           Object.keys(companySettings).forEach(key => {
-            if (key === 'owners') {
-              // Handle owners separately
+            if (key === 'owners' || key === 'companyWitnesses') {
+              // Handle owners and witnesses separately
               return;
             }
             if (key === 'logo' && companySettings[key] instanceof File) {
@@ -264,8 +264,9 @@ const Settings = () => {
           });
 
           // Add company witnesses data
-          if (companySettings.companyWitnesses && companySettings.companyWitnesses.length > 0) {
+          if (Array.isArray(companySettings.companyWitnesses)) {
             const witnessesData = companySettings.companyWitnesses.map(witness => ({
+              _id: witness._id,
               name: witness.name,
               phone: witness.phone,
               aadharNumber: witness.aadharNumber,

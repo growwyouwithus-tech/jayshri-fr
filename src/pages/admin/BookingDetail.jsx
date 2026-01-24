@@ -84,6 +84,7 @@ const BookingDetail = () => {
   const [receipts, setReceipts] = useState([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [companyWitnesses, setCompanyWitnesses] = useState([])
   const [bookingData, setBookingData] = useState({
     status: '',
     paymentStatus: '',
@@ -100,6 +101,7 @@ const BookingDetail = () => {
 
   useEffect(() => {
     fetchBookingDetail()
+    fetchCompanyWitnesses()
   }, [id])
 
   // Split effect for receipts to depend on booking state or handle inside fetchBookingDetail
@@ -218,6 +220,17 @@ const BookingDetail = () => {
       setReceipts(data.data.receipts || [])
     } catch (error) {
       console.error('Failed to fetch receipts')
+    }
+  }
+
+  const fetchCompanyWitnesses = async () => {
+    try {
+      const { data } = await axios.get('/settings')
+      if (data.success && data.data && data.data.companyWitnesses) {
+        setCompanyWitnesses(data.data.companyWitnesses)
+      }
+    } catch (error) {
+      console.error('Failed to fetch company witnesses:', error)
     }
   }
 
@@ -727,264 +740,283 @@ const BookingDetail = () => {
                 </Paper>
               </Box>
             ))}         </Box>
-        )}       {/* Witness Details - New Structured Format */}
-        {plot.witnesses && plot.witnesses.length > 0 && (
-          <Box mb={4}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Witness Details
-            </Typography>
-            {plot.witnesses.map((witness, idx) => (
-              <Box key={idx} mb={3}>
-                {/* Witness Details Box */}
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    border: '2px solid #000',
-                    borderRadius: 1,
-                    overflow: 'hidden'
-                  }}
-                >
-                  {/* Witness Info Section */}
-                  <Box sx={{ p: 2, bgcolor: '#fff' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                          WITNESS NO {idx + 1}
-                        </Typography>
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                            <strong>NAME</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessName || '-'}
-                          </Typography>
-                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                            <strong>ADD</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessAddress || '-'}
-                          </Typography>
-                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                            <strong>MOBI</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessPhone || '-'}
-                          </Typography>
-                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                            <strong>ADHAR NO</strong>&nbsp;: {witness.witnessAadharNumber || '-'}
-                          </Typography>
-                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                            <strong>PAN NO</strong>&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessPanNumber || '-'}
-                          </Typography>
-                          {witness.witnessDateOfBirth && (
-                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                              <strong>DOB</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessDateOfBirth}
-                            </Typography>
-                          )}
-                          {witness.witnessSonOf && (
-                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                              <strong>SON OF</strong>&nbsp;&nbsp;&nbsp;: {witness.witnessSonOf}
-                            </Typography>
-                          )}
-                          {witness.witnessDaughterOf && (
-                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                              <strong>D/O</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessDaughterOf}
-                            </Typography>
-                          )}
-                          {witness.witnessWifeOf && (
-                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
-                              <strong>WIFE OF</strong>&nbsp;&nbsp;: {witness.witnessWifeOf}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => {
-                          const text = `WITNESS NO ${idx + 1}\nNAME: ${witness.witnessName || '-'}\nADD: ${witness.witnessAddress || '-'}\nMOBI: ${witness.witnessPhone || '-'}\nADHAR NO: ${witness.witnessAadharNumber || '-'}\nPAN NO: ${witness.witnessPanNumber || '-'}`;
-                          navigator.clipboard.writeText(text);
-                          toast.success('Witness details copied!');
-                        }}
-                      >
-                        COPY
-                      </Button>
-                    </Box>
-                  </Box>
+        )}       {/* Witness Details - Conditional Display */}
+        {(() => {
+          const hasPlotWitnesses = plot.witnesses && plot.witnesses.length > 0;
+          const hasCompanyWitnesses = companyWitnesses && companyWitnesses.length > 0;
 
-                  {/* Document Previews and Buttons Section */}
-                  <Box sx={{ bgcolor: '#4caf50', p: 1.5 }}>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                      {witness.witnessDocuments?.aadharFront && (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                          <Box
-                            component="img"
-                            src={witness.witnessDocuments.aadharFront}
-                            alt="Aadhar Front"
-                            sx={{
-                              width: 80,
-                              height: 80,
-                              objectFit: 'cover',
-                              borderRadius: 1,
-                              border: '2px solid #fff',
-                              cursor: 'pointer',
-                              '&:hover': { opacity: 0.8 }
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.aadharFront, '_blank')}
-                          />
-                          <Button
-                            variant="contained"
-                            size="small"
-                            sx={{
-                              bgcolor: '#2e7d32',
-                              color: '#fff',
-                              '&:hover': { bgcolor: '#1b5e20' },
-                              textTransform: 'none',
-                              minWidth: 80
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.aadharFront, '_blank')}
-                          >
-                            Aadhar frnt
-                          </Button>
-                        </Box>
-                      )}
-                      {witness.witnessDocuments?.aadharBack && (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                          <Box
-                            component="img"
-                            src={witness.witnessDocuments.aadharBack}
-                            alt="Aadhar Back"
-                            sx={{
-                              width: 80,
-                              height: 80,
-                              objectFit: 'cover',
-                              borderRadius: 1,
-                              border: '2px solid #fff',
-                              cursor: 'pointer',
-                              '&:hover': { opacity: 0.8 }
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.aadharBack, '_blank')}
-                          />
-                          <Button
-                            variant="contained"
-                            size="small"
-                            sx={{
-                              bgcolor: '#2e7d32',
-                              color: '#fff',
-                              '&:hover': { bgcolor: '#1b5e20' },
-                              textTransform: 'none',
-                              minWidth: 80
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.aadharBack, '_blank')}
-                          >
-                            Aadhar bck
-                          </Button>
-                        </Box>
-                      )}
-                      {witness.witnessDocuments?.panCard && (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                          <Box
-                            component="img"
-                            src={witness.witnessDocuments.panCard}
-                            alt="PAN Card"
-                            sx={{
-                              width: 80,
-                              height: 80,
-                              objectFit: 'cover',
-                              borderRadius: 1,
-                              border: '2px solid #fff',
-                              cursor: 'pointer',
-                              '&:hover': { opacity: 0.8 }
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.panCard, '_blank')}
-                          />
-                          <Button
-                            variant="contained"
-                            size="small"
-                            sx={{
-                              bgcolor: '#2e7d32',
-                              color: '#fff',
-                              '&:hover': { bgcolor: '#1b5e20' },
-                              textTransform: 'none',
-                              minWidth: 80
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.panCard, '_blank')}
-                          >
-                            PanCard
-                          </Button>
-                        </Box>
-                      )}
-                      {witness.witnessDocuments?.passportPhoto && (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                          <Box
-                            component="img"
-                            src={witness.witnessDocuments.passportPhoto}
-                            alt="Passport Photo"
-                            sx={{
-                              width: 80,
-                              height: 80,
-                              objectFit: 'cover',
-                              borderRadius: 1,
-                              border: '2px solid #fff',
-                              cursor: 'pointer',
-                              '&:hover': { opacity: 0.8 }
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.passportPhoto, '_blank')}
-                          />
-                          <Button
-                            variant="contained"
-                            size="small"
-                            sx={{
-                              bgcolor: '#2e7d32',
-                              color: '#fff',
-                              '&:hover': { bgcolor: '#1b5e20' },
-                              textTransform: 'none',
-                              minWidth: 80
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.passportPhoto, '_blank')}
-                          >
-                            Passport
-                          </Button>
-                        </Box>
-                      )}
-                      {witness.witnessDocuments?.fullPhoto && (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                          <Box
-                            component="img"
-                            src={witness.witnessDocuments.fullPhoto}
-                            alt="Full Photo"
-                            sx={{
-                              width: 80,
-                              height: 80,
-                              objectFit: 'cover',
-                              borderRadius: 1,
-                              border: '2px solid #fff',
-                              cursor: 'pointer',
-                              '&:hover': { opacity: 0.8 }
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.fullPhoto, '_blank')}
-                          />
-                          <Button
-                            variant="contained"
-                            size="small"
-                            sx={{
-                              bgcolor: '#2e7d32',
-                              color: '#fff',
-                              '&:hover': { bgcolor: '#1b5e20' },
-                              textTransform: 'none',
-                              minWidth: 80
-                            }}
-                            onClick={() => window.open(witness.witnessDocuments.fullPhoto, '_blank')}
-                          >
-                            Full Photo
-                          </Button>
-                        </Box>
-                      )}
-                      {(!witness.witnessDocuments?.aadharFront && !witness.witnessDocuments?.aadharBack &&
-                        !witness.witnessDocuments?.panCard && !witness.witnessDocuments?.passportPhoto &&
-                        !witness.witnessDocuments?.fullPhoto) && (
-                          <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
-                            No documents available
+          const witnessesToDisplay = hasPlotWitnesses
+            ? plot.witnesses
+            : (hasCompanyWitnesses
+              ? companyWitnesses.map(cw => ({
+                witnessName: cw.name,
+                witnessPhone: cw.phone,
+                witnessAadharNumber: cw.aadharNumber,
+                witnessPanNumber: cw.panNumber,
+                witnessDateOfBirth: cw.dateOfBirth,
+                witnessSonOf: cw.sonOf,
+                witnessDaughterOf: cw.daughterOf,
+                witnessWifeOf: cw.wifeOf,
+                witnessAddress: cw.address,
+                witnessDocuments: cw.documents
+              }))
+              : []);
+
+          return witnessesToDisplay.length > 0 && (
+            <Box mb={4}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Witness Details {!hasPlotWitnesses && <Typography component="span" variant="caption" color="text.secondary">(Company Witnesses)</Typography>}
+              </Typography>
+              {witnessesToDisplay.map((witness, idx) => (
+                <Box key={idx} mb={3}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      border: '2px solid #000',
+                      borderRadius: 1,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <Box sx={{ p: 2, bgcolor: '#fff' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                            WITNESS NO {idx + 1}
                           </Typography>
-                        )}
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>NAME</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessName || '-'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>ADD</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessAddress || '-'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>MOBI</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessPhone || '-'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>ADHAR NO</strong>&nbsp;: {witness.witnessAadharNumber || '-'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>PAN NO</strong>&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessPanNumber || '-'}
+                            </Typography>
+                            {witness.witnessDateOfBirth && (
+                              <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                                <strong>DOB</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessDateOfBirth}
+                              </Typography>
+                            )}
+                            {witness.witnessSonOf && (
+                              <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                                <strong>SON OF</strong>&nbsp;&nbsp;&nbsp;: {witness.witnessSonOf}
+                              </Typography>
+                            )}
+                            {witness.witnessDaughterOf && (
+                              <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                                <strong>D/O</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {witness.witnessDaughterOf}
+                              </Typography>
+                            )}
+                            {witness.witnessWifeOf && (
+                              <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                                <strong>WIFE OF</strong>&nbsp;&nbsp;: {witness.witnessWifeOf}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => {
+                            const text = `WITNESS NO ${idx + 1}\\nNAME: ${witness.witnessName || '-'}\\nADD: ${witness.witnessAddress || '-'}\\nMOBI: ${witness.witnessPhone || '-'}\\nADHAR NO: ${witness.witnessAadharNumber || '-'}\\nPAN NO: ${witness.witnessPanNumber || '-'}`;
+                            navigator.clipboard.writeText(text);
+                            toast.success('Witness details copied!');
+                          }}
+                        >
+                          COPY
+                        </Button>
+                      </Box>
                     </Box>
-                  </Box>
-                </Paper>
-              </Box>
-            ))}
-          </Box>
-        )}
+
+                    <Box sx={{ bgcolor: '#4caf50', p: 1.5 }}>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        {witness.witnessDocuments?.aadharFront && (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                            <Box
+                              component="img"
+                              src={witness.witnessDocuments.aadharFront}
+                              alt="Aadhar Front"
+                              sx={{
+                                width: 80,
+                                height: 80,
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                                border: '2px solid #fff',
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.aadharFront, '_blank')}
+                            />
+                            <Button
+                              variant="contained"
+                              size="small"
+                              sx={{
+                                bgcolor: '#2e7d32',
+                                color: '#fff',
+                                '&:hover': { bgcolor: '#1b5e20' },
+                                textTransform: 'none',
+                                minWidth: 80
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.aadharFront, '_blank')}
+                            >
+                              Aadhar frnt
+                            </Button>
+                          </Box>
+                        )}
+                        {witness.witnessDocuments?.aadharBack && (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                            <Box
+                              component="img"
+                              src={witness.witnessDocuments.aadharBack}
+                              alt="Aadhar Back"
+                              sx={{
+                                width: 80,
+                                height: 80,
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                                border: '2px solid #fff',
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.aadharBack, '_blank')}
+                            />
+                            <Button
+                              variant="contained"
+                              size="small"
+                              sx={{
+                                bgcolor: '#2e7d32',
+                                color: '#fff',
+                                '&:hover': { bgcolor: '#1b5e20' },
+                                textTransform: 'none',
+                                minWidth: 80
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.aadharBack, '_blank')}
+                            >
+                              Aadhar bck
+                            </Button>
+                          </Box>
+                        )}
+                        {witness.witnessDocuments?.panCard && (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                            <Box
+                              component="img"
+                              src={witness.witnessDocuments.panCard}
+                              alt="PAN Card"
+                              sx={{
+                                width: 80,
+                                height: 80,
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                                border: '2px solid #fff',
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.panCard, '_blank')}
+                            />
+                            <Button
+                              variant="contained"
+                              size="small"
+                              sx={{
+                                bgcolor: '#2e7d32',
+                                color: '#fff',
+                                '&:hover': { bgcolor: '#1b5e20' },
+                                textTransform: 'none',
+                                minWidth: 80
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.panCard, '_blank')}
+                            >
+                              PanCard
+                            </Button>
+                          </Box>
+                        )}
+                        {witness.witnessDocuments?.passportPhoto && (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                            <Box
+                              component="img"
+                              src={witness.witnessDocuments.passportPhoto}
+                              alt="Passport Photo"
+                              sx={{
+                                width: 80,
+                                height: 80,
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                                border: '2px solid #fff',
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.passportPhoto, '_blank')}
+                            />
+                            <Button
+                              variant="contained"
+                              size="small"
+                              sx={{
+                                bgcolor: '#2e7d32',
+                                color: '#fff',
+                                '&:hover': { bgcolor: '#1b5e20' },
+                                textTransform: 'none',
+                                minWidth: 80
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.passportPhoto, '_blank')}
+                            >
+                              Passport
+                            </Button>
+                          </Box>
+                        )}
+                        {witness.witnessDocuments?.fullPhoto && (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                            <Box
+                              component="img"
+                              src={witness.witnessDocuments.fullPhoto}
+                              alt="Full Photo"
+                              sx={{
+                                width: 80,
+                                height: 80,
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                                border: '2px solid #fff',
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.8 }
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.fullPhoto, '_blank')}
+                            />
+                            <Button
+                              variant="contained"
+                              size="small"
+                              sx={{
+                                bgcolor: '#2e7d32',
+                                color: '#fff',
+                                '&:hover': { bgcolor: '#1b5e20' },
+                                textTransform: 'none',
+                                minWidth: 80
+                              }}
+                              onClick={() => window.open(witness.witnessDocuments.fullPhoto, '_blank')}
+                            >
+                              Full Photo
+                            </Button>
+                          </Box>
+                        )}
+                        {(!witness.witnessDocuments?.aadharFront && !witness.witnessDocuments?.aadharBack &&
+                          !witness.witnessDocuments?.panCard && !witness.witnessDocuments?.passportPhoto &&
+                          !witness.witnessDocuments?.fullPhoto) && (
+                            <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
+                              No documents available
+                            </Typography>
+                          )}
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Box>
+              ))}
+            </Box>
+          );
+        })()}
 
         {(plot.plotOwners && plot.plotOwners.length > 0 && (!plot.ownerType || plot.ownerType === 'owner')) && (
           <Box mb={4}>
@@ -1268,8 +1300,8 @@ const BookingDetail = () => {
           </Grid>
         </Box>
 
-        {/* Registry Details Section */}
-        {(plot.status === 'sold' || booking.status === 'completed' || plot.registryDate) && (
+        {/* Registry Details Section - Only show if coming from Sold Plots */}
+        {(location.state?.from === '/admin/sold-plots' && (plot.status === 'sold' || booking.status === 'completed' || plot.registryDate)) && (
           <Box mb={4}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               Registry Details
@@ -1299,28 +1331,30 @@ const BookingDetail = () => {
           </Box>
         )}
 
-        {/* Registry Scans/Documents */}
-        <Box mb={4}>
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Registry Documents
-          </Typography>
-          <Grid container spacing={2}>
-            {plot.registryDocument?.map((url, idx) => (
-              <DocumentCard key={idx} title={`Registry Page ${idx + 1}`} url={url} />
-            ))}
-            {plot.registryPdf && (
-              <Grid item xs={6} sm={4} md={3}>
-                <Paper variant="outlined" sx={{ p: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 150 }}>
-                  <Typography variant="subtitle2" color="primary" gutterBottom>Registry PDF</Typography>
-                  <Button variant="contained" size="small" onClick={() => window.open(plot.registryPdf, '_blank')}>View PDF</Button>
-                </Paper>
-              </Grid>
-            )}
-            {(!plot.registryDocument?.length && !plot.registryPdf) && (
-              <Grid item xs={12}><Typography color="text.secondary">No registry documents uploaded.</Typography></Grid>
-            )}
-          </Grid>
-        </Box>
+        {/* Registry Scans/Documents - Only show if coming from Sold Plots */}
+        {(location.state?.from === '/admin/sold-plots' && (plot.status === 'sold' || booking.status === 'completed' || plot.registryDate)) && (
+          <Box mb={4}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Registry Documents
+            </Typography>
+            <Grid container spacing={2}>
+              {plot.registryDocument?.map((url, idx) => (
+                <DocumentCard key={idx} title={`Registry Page ${idx + 1}`} url={url} />
+              ))}
+              {plot.registryPdf && (
+                <Grid item xs={6} sm={4} md={3}>
+                  <Paper variant="outlined" sx={{ p: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 150 }}>
+                    <Typography variant="subtitle2" color="primary" gutterBottom>Registry PDF</Typography>
+                    <Button variant="contained" size="small" onClick={() => window.open(plot.registryPdf, '_blank')}>View PDF</Button>
+                  </Paper>
+                </Grid>
+              )}
+              {(!plot.registryDocument?.length && !plot.registryPdf) && (
+                <Grid item xs={12}><Typography color="text.secondary">No registry documents uploaded.</Typography></Grid>
+              )}
+            </Grid>
+          </Box>
+        )}
 
         {/* <Divider sx={{ my: 3 }} />
 
