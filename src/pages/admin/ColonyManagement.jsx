@@ -321,10 +321,25 @@ const ColonyManagement = () => {
     })
   }
 
+  const [editingHolderIndex, setEditingHolderIndex] = useState(null)
+
   // Khatoni Holder management functions
   const addKhatoniHolder = () => {
     if (newKhatoniHolder.name && newKhatoniHolder.address && newKhatoniHolder.mobile) {
-      setFormData({ ...formData, khatoniHolders: [...formData.khatoniHolders, { ...newKhatoniHolder, id: Date.now() }] })
+      if (editingHolderIndex !== null) {
+        // Update existing holder
+        const updatedHolders = [...formData.khatoniHolders]
+        updatedHolders[editingHolderIndex] = { ...newKhatoniHolder, id: updatedHolders[editingHolderIndex].id }
+        setFormData({ ...formData, khatoniHolders: updatedHolders })
+        setEditingHolderIndex(null)
+        toast.success('Khatoni holder updated successfully')
+      } else {
+        // Add new holder
+        setFormData({ ...formData, khatoniHolders: [...formData.khatoniHolders, { ...newKhatoniHolder, id: Date.now() }] })
+        toast.success('Khatoni holder added successfully')
+      }
+
+      // Reset form
       setNewKhatoniHolder({
         name: '',
         address: '',
@@ -334,12 +349,26 @@ const ColonyManagement = () => {
         dateOfBirth: '',
         sonOf: '',
         daughterOf: '',
-        wifeOf: ''
+        wifeOf: '',
+        aadharFront: null,
+        aadharBack: null,
+        panCard: null,
+        passportPhoto: null,
+        fullPhoto: null
       })
     } else {
       toast.error('Please fill all Khatoni Holder fields')
     }
   }
+
+  const handleEditKhatoniHolder = (holder, index) => {
+    setNewKhatoniHolder({ ...holder })
+    setEditingHolderIndex(index)
+    // Scroll to form (optional but good UX)
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+  }
+
+
 
   const removeKhatoniHolder = (id) => {
     setFormData({
@@ -774,10 +803,7 @@ const ColonyManagement = () => {
                       <Button
                         size="small"
                         color="primary"
-                        onClick={() => {
-                          // TODO: Implement edit functionality
-                          toast.info('Edit functionality coming soon!')
-                        }}
+                        onClick={() => handleEditKhatoniHolder(holder, index)}
                         sx={{ mr: 1 }}
                       >
                         Edit
@@ -902,7 +928,7 @@ const ColonyManagement = () => {
               {/* Add New Khatoni Holder */}
               <Box sx={{ p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
                 <Typography variant="subtitle2" gutterBottom>
-                  Add New Khatoni Holder
+                  {editingHolderIndex !== null ? 'Update Khatoni Holder' : 'Add New Khatoni Holder'}
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={5}>
@@ -1124,7 +1150,7 @@ const ColonyManagement = () => {
                       onClick={addKhatoniHolder}
                       sx={{ width: 'auto', px: 3 }}
                     >
-                      Add Khatoni Holder
+                      {editingHolderIndex !== null ? 'Update Khatoni Holder' : 'Add Khatoni Holder'}
                     </Button>
                   </Grid>
                 </Grid>
