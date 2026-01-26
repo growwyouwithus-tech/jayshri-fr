@@ -197,6 +197,9 @@ const BookingDetail = () => {
       const { data } = await axios.get(`/bookings/${id}`)
       const bookingInfo = data.data
       setBooking(bookingInfo)
+      console.log('Booking Info:', bookingInfo);
+      console.log('Plot Colony Data:', bookingInfo.plot?.colony);
+      console.log('Khatoni Holders:', bookingInfo.plot?.colony?.khatoniHolders);
       setBookingData({
         status: bookingInfo.status || 'Pending',
         paymentStatus: bookingInfo.paymentStatus || 'Unpaid',
@@ -485,26 +488,26 @@ const BookingDetail = () => {
         </Box>
 
         {/* Khatoni Holders / Owners - New Structured Format */}
-        {(colony.khatoniHolders && colony.khatoniHolders.length > 0 && (!plot.ownerType || plot.ownerType === 'khatoniHolder')) && (
+        {/* {(colony.khatoniHolders && colony.khatoniHolders.length > 0 && (!plot.ownerType || plot.ownerType === 'khatoniHolder')) && (
           <Box mb={4}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               Khatoni Holders / Owners
             </Typography>
             {colony.khatoniHolders.map((holder, idx) => (
-              <Box key={idx} mb={3}>
-                {/* Khatoni Holder Details Box */}
-                <Paper
+              <Box key={idx} mb={3}> */}
+        {/* Khatoni Holder Details Box */}
+        {/* <Paper
                   variant="outlined"
                   sx={{
                     border: '2px solid #000',
                     borderRadius: 1,
                     overflow: 'hidden'
                   }}
-                >
-                  {/* Holder Info Section */}
-                  <Box sx={{ p: 2, bgcolor: '#fff' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box sx={{ flex: 1 }}>
+                > */}
+        {/* Holder Info Section */}
+        {/* <Box sx={{ p: 2, bgcolor: '#fff' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}> */}
+        {/* <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                           KHATONI HOLDER NO {idx + 1}
                         </Typography>
@@ -545,8 +548,8 @@ const BookingDetail = () => {
                             </Typography>
                           )}
                         </Box>
-                      </Box>
-                      <Button
+                      </Box> */}
+        {/* <Button
                         variant="outlined"
                         size="small"
                         onClick={() => {
@@ -558,10 +561,10 @@ const BookingDetail = () => {
                         COPY
                       </Button>
                     </Box>
-                  </Box>
+                  </Box> */}
 
-                  {/* Document Previews and Buttons Section */}
-                  <Box sx={{ bgcolor: '#4caf50', p: 1.5 }}>
+        {/* Document Previews and Buttons Section */}
+        {/* <Box sx={{ bgcolor: '#4caf50', p: 1.5 }}>
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                       {holder.documents?.aadharFront && (
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
@@ -711,8 +714,8 @@ const BookingDetail = () => {
                               '&:hover': { opacity: 0.8 }
                             }}
                             onClick={() => window.open(holder.documents.fullPhoto, '_blank')}
-                          />
-                          <Button
+                          /> */}
+        {/* <Button
                             variant="contained"
                             size="small"
                             sx={{
@@ -726,21 +729,22 @@ const BookingDetail = () => {
                           >
                             Full Photo
                           </Button>
-                        </Box>
-                      )}
-                      {(!holder.documents?.aadharFront && !holder.documents?.aadharBack &&
-                        !holder.documents?.panCard && !holder.documents?.passportPhoto &&
-                        !holder.documents?.fullPhoto) && (
-                          <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
-                            No documents available
-                          </Typography>
-                        )}
-                    </Box>
-                  </Box>
-                </Paper>
-              </Box>
-            ))}         </Box>
-        )}       {/* Witness Details - Conditional Display */}
+                        </Box> */}
+        {/* //           )} */}
+        {/* //           {(!holder.documents?.aadharFront && !holder.documents?.aadharBack && */}
+        {/* //             !holder.documents?.panCard && !holder.documents?.passportPhoto &&
+            //             !holder.documents?.fullPhoto) && (
+            //               <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
+            //                 No documents available
+            //               </Typography>
+            //             )}
+            //         </Box>
+            //       </Box> */}
+        {/* //     </Paper>
+            //   </Box> */}
+        {/* // ))}         </Box> */}
+        {/* )}   
+            Witness Details - Conditional Display */}
         {(() => {
           const hasPlotWitnesses = plot.witnesses && plot.witnesses.length > 0;
           const hasCompanyWitnesses = companyWitnesses && companyWitnesses.length > 0;
@@ -1264,6 +1268,162 @@ const BookingDetail = () => {
                       {(!owner.ownerDocuments?.aadharFront && !owner.ownerDocuments?.aadharBack &&
                         !owner.ownerDocuments?.panCard && !owner.ownerDocuments?.passportPhoto &&
                         !owner.ownerDocuments?.fullPhoto) && (
+                          <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
+                            No documents available
+                          </Typography>
+                        )}
+                    </Box>
+                  </Box>
+                </Paper>
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {/* Khatoni Holders Section */}
+        {((plot.colony?.khatoniHolders?.length > 0) || (plot.colonyId?.khatoniHolders?.length > 0)) && (
+          <Box mb={4}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Khatoni Holders
+            </Typography>
+            {((plot.colony?.khatoniHolders) || (plot.colonyId?.khatoniHolders) || []).map((holder, idx) => (
+              <Box key={idx} mb={3}>
+                <Paper variant="outlined" sx={{ border: '2px solid #ed6c02', borderRadius: 1, overflow: 'hidden' }}>
+                  <Box sx={{ p: 2, bgcolor: '#fff' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="warning.dark">
+                          KHATONI HOLDER {idx + 1}
+                        </Typography>
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>NAME</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.name || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>ADD</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.address || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>MOBI</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.mobile || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>ADHAR NO</strong>&nbsp;: {holder.aadharNumber || '-'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                            <strong>PAN NO</strong>&nbsp;&nbsp;&nbsp;&nbsp;: {holder.panNumber || '-'}
+                          </Typography>
+                          {holder.dateOfBirth && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>DOB</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.dateOfBirth}
+                            </Typography>
+                          )}
+                          {holder.sonOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>SON OF</strong>&nbsp;&nbsp;&nbsp;: {holder.sonOf}
+                            </Typography>
+                          )}
+                          {holder.daughterOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>D/O</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {holder.daughterOf}
+                            </Typography>
+                          )}
+                          {holder.wifeOf && (
+                            <Typography variant="body2" sx={{ mb: 0.5, fontFamily: 'monospace' }}>
+                              <strong>WIFE OF</strong>&nbsp;&nbsp;: {holder.wifeOf}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        color="warning"
+                        size="small"
+                        onClick={() => {
+                          const text = `KHATONI HOLDER ${idx + 1}\nNAME: ${holder.name || '-'}\nADD: ${holder.address || '-'}\nMOBI: ${holder.mobile || '-'}\nADHAR NO: ${holder.aadharNumber || '-'}\nPAN NO: ${holder.panNumber || '-'}`;
+                          navigator.clipboard.writeText(text);
+                          toast.success('Khatoni holder details copied!');
+                        }}
+                      >
+                        COPY
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  {/* Document Previews */}
+                  <Box sx={{ bgcolor: '#ed6c02', p: 1.5 }}>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      {holder.documents?.aadharFront && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.aadharFront}
+                            alt="Aadhar Front"
+                            sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1, border: '2px solid #fff', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+                            onClick={() => window.open(holder.documents.aadharFront, '_blank')}
+                          />
+                          <Button variant="contained" size="small" sx={{ bgcolor: '#e65100', color: '#fff', '&:hover': { bgcolor: '#bf360c' }, textTransform: 'none', minWidth: 80 }} onClick={() => window.open(holder.documents.aadharFront, '_blank')}>
+                            Aadhar frnt
+                          </Button>
+                        </Box>
+                      )}
+                      {holder.documents?.aadharBack && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.aadharBack}
+                            alt="Aadhar Back"
+                            sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1, border: '2px solid #fff', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+                            onClick={() => window.open(holder.documents.aadharBack, '_blank')}
+                          />
+                          <Button variant="contained" size="small" sx={{ bgcolor: '#e65100', color: '#fff', '&:hover': { bgcolor: '#bf360c' }, textTransform: 'none', minWidth: 80 }} onClick={() => window.open(holder.documents.aadharBack, '_blank')}>
+                            Aadhar bck
+                          </Button>
+                        </Box>
+                      )}
+                      {holder.documents?.panCard && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.panCard}
+                            alt="PAN Card"
+                            sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1, border: '2px solid #fff', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+                            onClick={() => window.open(holder.documents.panCard, '_blank')}
+                          />
+                          <Button variant="contained" size="small" sx={{ bgcolor: '#e65100', color: '#fff', '&:hover': { bgcolor: '#bf360c' }, textTransform: 'none', minWidth: 80 }} onClick={() => window.open(holder.documents.panCard, '_blank')}>
+                            PanCard
+                          </Button>
+                        </Box>
+                      )}
+                      {holder.documents?.passportPhoto && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.passportPhoto}
+                            alt="Passport Photo"
+                            sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1, border: '2px solid #fff', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+                            onClick={() => window.open(holder.documents.passportPhoto, '_blank')}
+                          />
+                          <Button variant="contained" size="small" sx={{ bgcolor: '#e65100', color: '#fff', '&:hover': { bgcolor: '#bf360c' }, textTransform: 'none', minWidth: 80 }} onClick={() => window.open(holder.documents.passportPhoto, '_blank')}>
+                            Passport
+                          </Button>
+                        </Box>
+                      )}
+                      {holder.documents?.fullPhoto && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                          <Box
+                            component="img"
+                            src={holder.documents.fullPhoto}
+                            alt="Full Photo"
+                            sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 1, border: '2px solid #fff', cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+                            onClick={() => window.open(holder.documents.fullPhoto, '_blank')}
+                          />
+                          <Button variant="contained" size="small" sx={{ bgcolor: '#e65100', color: '#fff', '&:hover': { bgcolor: '#bf360c' }, textTransform: 'none', minWidth: 80 }} onClick={() => window.open(holder.documents.fullPhoto, '_blank')}>
+                            Full Photo
+                          </Button>
+                        </Box>
+                      )}
+                      {(!holder.documents?.aadharFront && !holder.documents?.aadharBack &&
+                        !holder.documents?.panCard && !holder.documents?.passportPhoto &&
+                        !holder.documents?.fullPhoto) && (
                           <Typography variant="caption" sx={{ color: '#fff', ml: 1 }}>
                             No documents available
                           </Typography>

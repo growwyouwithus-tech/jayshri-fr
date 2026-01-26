@@ -832,6 +832,70 @@ const ColonyManagement = () => {
                       </Grid>
                     )}
                   </Grid>
+
+                  {/* Document Previews */}
+                  <Box mt={2} p={1} bgcolor="#f5f5f5" borderRadius={1}>
+                    <Typography variant="caption" fontWeight="bold" display="block" mb={1}>
+                      Documents Preview:
+                    </Typography>
+                    <Box display="flex" gap={2} flexWrap="wrap">
+                      {/* Aadhar Front */}
+                      {(holder.aadharFront || holder.documents?.aadharFront) && (
+                        <Box display="flex" flexDirection="column" alignItems="center">
+                          <img
+                            src={holder.aadharFront instanceof File ? URL.createObjectURL(holder.aadharFront) : (holder.documents?.aadharFront || holder.aadharFront)}
+                            alt="Aadhar Front"
+                            style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4, border: '1px solid #ddd' }}
+                          />
+                          <Typography variant="caption" style={{ fontSize: '0.7rem', marginTop: 4 }}>Aadhar Frnt</Typography>
+                        </Box>
+                      )}
+                      {/* Aadhar Back */}
+                      {(holder.aadharBack || holder.documents?.aadharBack) && (
+                        <Box display="flex" flexDirection="column" alignItems="center">
+                          <img
+                            src={holder.aadharBack instanceof File ? URL.createObjectURL(holder.aadharBack) : (holder.documents?.aadharBack || holder.aadharBack)}
+                            alt="Aadhar Back"
+                            style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4, border: '1px solid #ddd' }}
+                          />
+                          <Typography variant="caption" style={{ fontSize: '0.7rem', marginTop: 4 }}>Aadhar Bck</Typography>
+                        </Box>
+                      )}
+                      {/* PAN Card */}
+                      {(holder.panCard || holder.documents?.panCard) && (
+                        <Box display="flex" flexDirection="column" alignItems="center">
+                          <img
+                            src={holder.panCard instanceof File ? URL.createObjectURL(holder.panCard) : (holder.documents?.panCard || holder.panCard)}
+                            alt="PAN Card"
+                            style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4, border: '1px solid #ddd' }}
+                          />
+                          <Typography variant="caption" style={{ fontSize: '0.7rem', marginTop: 4 }}>PAN Card</Typography>
+                        </Box>
+                      )}
+                      {/* Passport Photo */}
+                      {(holder.passportPhoto || holder.documents?.passportPhoto) && (
+                        <Box display="flex" flexDirection="column" alignItems="center">
+                          <img
+                            src={holder.passportPhoto instanceof File ? URL.createObjectURL(holder.passportPhoto) : (holder.documents?.passportPhoto || holder.passportPhoto)}
+                            alt="Passport Photo"
+                            style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4, border: '1px solid #ddd' }}
+                          />
+                          <Typography variant="caption" style={{ fontSize: '0.7rem', marginTop: 4 }}>Passport</Typography>
+                        </Box>
+                      )}
+                      {/* Full Photo */}
+                      {(holder.fullPhoto || holder.documents?.fullPhoto) && (
+                        <Box display="flex" flexDirection="column" alignItems="center">
+                          <img
+                            src={holder.fullPhoto instanceof File ? URL.createObjectURL(holder.fullPhoto) : (holder.documents?.fullPhoto || holder.fullPhoto)}
+                            alt="Full Photo"
+                            style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4, border: '1px solid #ddd' }}
+                          />
+                          <Typography variant="caption" style={{ fontSize: '0.7rem', marginTop: 4 }}>Full Photo</Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
                 </Box>
               ))}
 
@@ -943,6 +1007,15 @@ const ColonyManagement = () => {
                       }} />
                     </Button>
                     {newKhatoniHolder.aadharFront && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.aadharFront.name}</Typography>}
+                    {newKhatoniHolder.aadharFront && (
+                      <Box mt={1}>
+                        <img
+                          src={URL.createObjectURL(newKhatoniHolder.aadharFront)}
+                          alt="Preview"
+                          style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
+                        />
+                      </Box>
+                    )}
                     <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
                   </Grid>
                   <Grid item xs={6} md={4}>
@@ -959,6 +1032,15 @@ const ColonyManagement = () => {
                       }} />
                     </Button>
                     {newKhatoniHolder.aadharBack && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.aadharBack.name}</Typography>}
+                    {newKhatoniHolder.aadharBack && (
+                      <Box mt={1}>
+                        <img
+                          src={URL.createObjectURL(newKhatoniHolder.aadharBack)}
+                          alt="Preview"
+                          style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
+                        />
+                      </Box>
+                    )}
                     <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
                   </Grid>
                   <Grid item xs={6} md={4}>
@@ -975,6 +1057,15 @@ const ColonyManagement = () => {
                       }} />
                     </Button>
                     {newKhatoniHolder.panCard && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.panCard.name}</Typography>}
+                    {newKhatoniHolder.panCard && (
+                      <Box mt={1}>
+                        <img
+                          src={URL.createObjectURL(newKhatoniHolder.panCard)}
+                          alt="Preview"
+                          style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
+                        />
+                      </Box>
+                    )}
                     <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
                   </Grid>
                   <Grid item xs={6} md={4}>
@@ -991,6 +1082,15 @@ const ColonyManagement = () => {
                       }} />
                     </Button>
                     {newKhatoniHolder.passportPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.passportPhoto.name}</Typography>}
+                    {newKhatoniHolder.passportPhoto && (
+                      <Box mt={1}>
+                        <img
+                          src={URL.createObjectURL(newKhatoniHolder.passportPhoto)}
+                          alt="Preview"
+                          style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
+                        />
+                      </Box>
+                    )}
                     <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
                   </Grid>
                   <Grid item xs={6} md={4}>
@@ -1007,6 +1107,15 @@ const ColonyManagement = () => {
                       }} />
                     </Button>
                     {newKhatoniHolder.fullPhoto && <Typography variant="caption" display="block" color="success.main">✓ {newKhatoniHolder.fullPhoto.name}</Typography>}
+                    {newKhatoniHolder.fullPhoto && (
+                      <Box mt={1}>
+                        <img
+                          src={URL.createObjectURL(newKhatoniHolder.fullPhoto)}
+                          alt="Preview"
+                          style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
+                        />
+                      </Box>
+                    )}
                     <Typography variant="caption" display="block" color="text.secondary">Supported formats: JPG, PNG, PDF. Max size:1MB.</Typography>
                   </Grid>
                   <Grid item xs={12}>
@@ -1124,7 +1233,7 @@ const ColonyManagement = () => {
             </Button>
           </Box>
         </Paper>
-      </Box>
+      </Box >
     )
   }
 
