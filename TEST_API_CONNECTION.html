@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #2196F3;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .info {
+            color: #2196F3;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .credentials {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 API Connection Test</h1>
+        
+        <div class="credentials">
+            <h3>📋 Database Login Credentials:</h3>
+            <p><strong>Email:</strong> admin@digitalcolony.com</p>
+            <p><strong>Password:</strong> admin123</p>
+        </div>
+
+        <div class="test-section">
+            <h3>1. Backend Health Check</h3>
+            <button onclick="testBackendHealth()">Test Backend</button>
+            <div id="health-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Login Test</h3>
+            <button onclick="testLogin()">Test Login</button>
+            <div id="login-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Fetch Cities (with Auth)</h3>
+            <button onclick="testCities()">Fetch Cities</button>
+            <div id="cities-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Fetch Colonies (with Auth)</h3>
+            <button onclick="testColonies()">Fetch Colonies</button>
+            <div id="colonies-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Fetch Plots (with Auth)</h3>
+            <button onclick="testPlots()">Fetch Plots</button>
+            <div id="plots-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Summary</h3>
+            <div id="summary" class="result">Click buttons above to test API connection...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/v1';
+        let authToken = null;
+
+        async function testBackendHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<span class="success">✅ Backend is running!</span>\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Backend responded with error</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Backend is NOT running</span>\nError: ${error.message}`;
+            }
+            updateSummary();
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.innerHTML = 'Testing login...';
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@digitalcolony.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data.accessToken) {
+                    authToken = data.data.accessToken;
+                    localStorage.setItem('testToken', authToken);
+                    resultDiv.innerHTML = `<span class="success">✅ Login successful!</span>\n<span class="info">Token saved for other tests</span>\nUser: ${data.data.user.name} (${data.data.user.email})\nRole: ${data.data.user.roleId.name}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Login failed</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Login request failed</span>\nError: ${error.message}`;
+            }
+            updateSummary();
+        }
+
+        async function testCities() {
+            const resultDiv = document.getElementById('cities-result');
+            
+            if (!authToken) {
+                authToken = localStorage.getItem('testToken');
+            }
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<span class="error">❌ Please login first!</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Fetching cities...';
+            
+            try {
+                const response = await fetch(`${API_URL}/cities`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data.cities) {
+                    const cities = data.data.cities;
+                    resultDiv.innerHTML = `<span class="success">✅ Found ${cities.length} cities from DATABASE!</span>\n\nCities:\n${cities.map(c => `- ${c.name}, ${c.state}`).join('\n')}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Failed to fetch cities</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Request failed</span>\nError: ${error.message}`;
+            }
+            updateSummary();
+        }
+
+        async function testColonies() {
+            const resultDiv = document.getElementById('colonies-result');
+            
+            if (!authToken) {
+                authToken = localStorage.getItem('testToken');
+            }
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<span class="error">❌ Please login first!</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Fetching colonies...';
+            
+            try {
+                const response = await fetch(`${API_URL}/colonies`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data.colonies) {
+                    const colonies = data.data.colonies;
+                    resultDiv.innerHTML = `<span class="success">✅ Found ${colonies.length} colonies from DATABASE!</span>\n\nColonies:\n${colonies.map(c => `- ${c.name} (${c.location.city})`).join('\n')}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Failed to fetch colonies</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Request failed</span>\nError: ${error.message}`;
+            }
+            updateSummary();
+        }
+
+        async function testPlots() {
+            const resultDiv = document.getElementById('plots-result');
+            
+            if (!authToken) {
+                authToken = localStorage.getItem('testToken');
+            }
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<span class="error">❌ Please login first!</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Fetching plots...';
+            
+            try {
+                const response = await fetch(`${API_URL}/plots`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data.plots) {
+                    const plots = data.data.plots;
+                    const statusCount = plots.reduce((acc, p) => {
+                        acc[p.status] = (acc[p.status] || 0) + 1;
+                        return acc;
+                    }, {});
+                    
+                    resultDiv.innerHTML = `<span class="success">✅ Found ${plots.length} plots from DATABASE!</span>\n\nStatus Breakdown:\n${Object.entries(statusCount).map(([status, count]) => `- ${status}: ${count}`).join('\n')}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Failed to fetch plots</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Request failed</span>\nError: ${error.message}`;
+            }
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const healthOk = document.getElementById('health-result').innerHTML.includes('✅');
+            const loginOk = document.getElementById('login-result').innerHTML.includes('✅');
+            const citiesOk = document.getElementById('cities-result').innerHTML.includes('✅');
+            const coloniesOk = document.getElementById('colonies-result').innerHTML.includes('✅');
+            const plotsOk = document.getElementById('plots-result').innerHTML.includes('✅');
+            
+            let summary = '📊 Test Results:\n\n';
+            summary += `Backend Health: ${healthOk ? '✅' : '❌'}\n`;
+            summary += `Login: ${loginOk ? '✅' : '❌'}\n`;
+            summary += `Cities API: ${citiesOk ? '✅' : '❌'}\n`;
+            summary += `Colonies API: ${coloniesOk ? '✅' : '❌'}\n`;
+            summary += `Plots API: ${plotsOk ? '✅' : '❌'}\n\n`;
+            
+            if (healthOk && loginOk && citiesOk && coloniesOk && plotsOk) {
+                summary += '<span class="success">🎉 All tests passed! Database connection working perfectly!</span>';
+            } else {
+                summary += '<span class="error">⚠️ Some tests failed. Check individual results above.</span>';
+            }
+            
+            summaryDiv.innerHTML = summary;
+        }
+
+        // Auto-run health check on load
+        window.onload = () => {
+            testBackendHealth();
+        };
+    </script>
+</body>
+</html>
