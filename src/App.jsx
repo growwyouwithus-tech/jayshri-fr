@@ -42,6 +42,7 @@ import KisanPaymentManagement from './pages/admin/KisanPaymentManagement'
 import ExpenseManagement from './pages/admin/ExpenseManagement'
 import AgentManagement from './pages/admin/AgentManagement'
 import AdvocateManagement from './pages/admin/AdvocateManagement'
+import CustomerManagement from './pages/admin/CustomerManagement'
 
 
 
@@ -151,6 +152,7 @@ function App() {
           <Route path="calculator" element={<RoleRoute roles={['Admin', 'Manager']}><Calculator /></RoleRoute>} />
           <Route path="kisan-payments" element={<RoleRoute roles={['Admin', 'Manager']}><KisanPaymentManagement /></RoleRoute>} />
           <Route path="expenses" element={<RoleRoute roles={['Admin', 'Manager']}><ExpenseManagement /></RoleRoute>} />
+          <Route path="customers" element={<RoleRoute roles={['Admin', 'Manager']}><CustomerManagement /></RoleRoute>} />
           <Route path="agents" element={<RoleRoute roles={['Admin', 'Manager']}><AgentManagement /></RoleRoute>} />
           <Route path="advocates" element={<RoleRoute roles={['Admin', 'Manager']}><AdvocateManagement /></RoleRoute>} />
         </Route>

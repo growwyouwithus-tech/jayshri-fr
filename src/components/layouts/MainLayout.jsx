@@ -228,6 +228,11 @@ const MainLayout = () => {
       dynamicItems.push({ text: 'Accounts & Expenses', icon: <AccountBalance />, path: '/admin/expenses' })
     }
 
+    // Customers
+    if (roleName === 'Admin' || roleName === 'Manager') {
+      dynamicItems.push({ text: 'Customers', icon: <People />, path: '/admin/customers' })
+    }
+
     // Agents
     if (roleName === 'Admin' || roleName === 'Manager') {
       dynamicItems.push({ text: 'Agents', icon: <PersonPin />, path: '/admin/agents' })
