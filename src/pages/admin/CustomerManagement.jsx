@@ -63,22 +63,22 @@ const CustomerManagement = () => {
                 const customerName = plot.customerName
                 const customerPhone = plot.customerNumber
 
-                console.log('👤 Processing customer:', { name: customerName, phone: customerPhone, status: plot.status })
-
                 if (customerName && customerPhone) {
                     const plotNumber = plot.plotNumber || plot.plotNo
 
-                    // Use phone as unique key
-                    if (!customerMap.has(customerPhone)) {
-                        customerMap.set(customerPhone, {
+                    // Create a unique key combining phone and name to handle shared numbers
+                    const uniqueKey = `${customerPhone}_${customerName.toLowerCase().trim()}`
+
+                    if (!customerMap.has(uniqueKey)) {
+                        customerMap.set(uniqueKey, {
                             name: customerName,
                             phone: customerPhone,
                             plotCount: 1,
                             plots: [plotNumber]
                         })
                     } else {
-                        // Customer already exists, increment plot count and add plot if unique
-                        const existing = customerMap.get(customerPhone)
+                        // Customer entry exists, add plot if unique
+                        const existing = customerMap.get(uniqueKey)
 
                         if (!existing.plots.includes(plotNumber)) {
                             existing.plotCount += 1
@@ -171,7 +171,7 @@ const CustomerManagement = () => {
                             </TableRow>
                         ) : (
                             filteredCustomers.map((customer, index) => (
-                                <TableRow key={customer.phone}>
+                                <TableRow key={`${customer.phone}-${index}`}>
                                     <TableCell align="center">{index + 1}</TableCell>
                                     <TableCell>{customer.name}</TableCell>
                                     <TableCell>{customer.plots?.join(', ') || '-'}</TableCell>
