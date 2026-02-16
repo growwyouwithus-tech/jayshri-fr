@@ -66,19 +66,24 @@ const CustomerManagement = () => {
                 console.log('👤 Processing customer:', { name: customerName, phone: customerPhone, status: plot.status })
 
                 if (customerName && customerPhone) {
+                    const plotNumber = plot.plotNumber || plot.plotNo
+
                     // Use phone as unique key
                     if (!customerMap.has(customerPhone)) {
                         customerMap.set(customerPhone, {
                             name: customerName,
                             phone: customerPhone,
                             plotCount: 1,
-                            plots: [plot.plotNumber || plot.plotNo]
+                            plots: [plotNumber]
                         })
                     } else {
-                        // Customer already exists, increment plot count
+                        // Customer already exists, increment plot count and add plot if unique
                         const existing = customerMap.get(customerPhone)
-                        existing.plotCount += 1
-                        existing.plots.push(plot.plotNumber || plot.plotNo)
+
+                        if (!existing.plots.includes(plotNumber)) {
+                            existing.plotCount += 1
+                            existing.plots.push(plotNumber)
+                        }
                     }
                 }
             })
@@ -153,13 +158,14 @@ const CustomerManagement = () => {
                         <TableRow>
                             <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000', textAlign: 'center' }}>S.No.</TableCell>
                             <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Customer Name</TableCell>
+                            <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot No</TableCell>
                             <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Mobile No</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {filteredCustomers.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={3} align="center">
+                                <TableCell colSpan={4} align="center">
                                     No customers found.
                                 </TableCell>
                             </TableRow>
@@ -168,6 +174,7 @@ const CustomerManagement = () => {
                                 <TableRow key={customer.phone}>
                                     <TableCell align="center">{index + 1}</TableCell>
                                     <TableCell>{customer.name}</TableCell>
+                                    <TableCell>{customer.plots?.join(', ') || '-'}</TableCell>
                                     <TableCell>{customer.phone}</TableCell>
                                 </TableRow>
                             ))
