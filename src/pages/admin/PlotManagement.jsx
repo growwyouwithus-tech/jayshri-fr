@@ -207,6 +207,28 @@ const PlotManagement = () => {
     customerPanCard: null,
     customerPassportPhoto: null,
     customerFullPhoto: null,
+    // 1. Client Information
+    clientCode: '',
+    nominee: '',
+    nomineeRelation: '',
+    referralCode: '',
+    // 2. Additional Plot Information
+    khasaraNo: '',
+    plcCorner: false,
+    plcPercentage: '',
+    plcAmount: '',
+    priceWithPlc: '',
+    // 3. Tehsil Expenses
+    govPriceCircleRate: '',
+    plotSizeMtr: '',
+    priceMtr: '',
+    stampDuty: '',
+    receiptAmount: '',
+    gender: '', // Male, Female, Other
+    advocateFee: '',
+    totalExpense: '',
+    moneyDifference: '',
+    marketPriceSqYard: ''
   })
 
   const toNumber = (value) => {
@@ -432,6 +454,33 @@ const PlotManagement = () => {
       }
       if (newPlot.registryStatus) {
         payload.registryStatus = newPlot.registryStatus
+      }
+
+      // Add new fields to payload
+      payload.clientCode = newPlot.clientCode
+      payload.nominee = newPlot.nominee
+      payload.nomineeRelation = newPlot.nomineeRelation
+      payload.referralCode = newPlot.referralCode
+
+      payload.khasaraNo = newPlot.khasaraNo
+      payload.plc = {
+        isCorner: newPlot.plcCorner,
+        percentage: Number(newPlot.plcPercentage),
+        amount: Number(newPlot.plcAmount)
+      }
+      payload.priceWithPlc = Number(newPlot.priceWithPlc)
+
+      payload.tehsilExpenses = {
+        govPriceCircleRate: Number(newPlot.govPriceCircleRate),
+        plotSizeMtr: Number(newPlot.plotSizeMtr),
+        priceMtr: Number(newPlot.priceMtr),
+        stampDuty: Number(newPlot.stampDuty),
+        receiptAmount: Number(newPlot.receiptAmount),
+        gender: newPlot.gender,
+        advocateFee: Number(newPlot.advocateFee),
+        totalExpense: Number(newPlot.totalExpense),
+        moneyDifference: Number(newPlot.moneyDifference),
+        marketPriceSqYard: Number(newPlot.marketPriceSqYard)
       }
     }
 
@@ -697,7 +746,28 @@ const PlotManagement = () => {
       paymentSlip: null,
       registryDocuments: [],
       registryPdf: null,
-      registryStatus: 'pending'
+      registryPdf: null,
+      registryStatus: 'pending',
+      // Reset new fields
+      clientCode: '',
+      nominee: '',
+      nomineeRelation: '',
+      referralCode: '',
+      khasaraNo: '',
+      plcCorner: false,
+      plcPercentage: '',
+      plcAmount: '',
+      priceWithPlc: '',
+      govPriceCircleRate: '',
+      plotSizeMtr: '',
+      priceMtr: '',
+      stampDuty: '',
+      receiptAmount: '',
+      gender: '',
+      advocateFee: '',
+      totalExpense: '',
+      moneyDifference: '',
+      marketPriceSqYard: ''
     })
   }
 
@@ -786,7 +856,29 @@ const PlotManagement = () => {
           passportPhoto: w.witnessDocuments?.passportPhoto || null,
           fullPhoto: w.witnessDocuments?.fullPhoto || null,
         }
-      })) : []
+      })) : [],
+
+      // Populate new fields from existing plot
+      clientCode: plot.clientCode || '',
+      nominee: plot.nominee || '',
+      nomineeRelation: plot.nomineeRelation || '',
+      referralCode: plot.referralCode || '',
+      khasaraNo: plot.khasaraNo || '',
+      plcCorner: plot.plc?.isCorner || false,
+      plcPercentage: plot.plc?.percentage || '',
+      plcAmount: plot.plc?.amount || '',
+      priceWithPlc: plot.priceWithPlc || '',
+
+      govPriceCircleRate: plot.tehsilExpenses?.govPriceCircleRate || '',
+      plotSizeMtr: plot.tehsilExpenses?.plotSizeMtr || '',
+      priceMtr: plot.tehsilExpenses?.priceMtr || '',
+      stampDuty: plot.tehsilExpenses?.stampDuty || '',
+      receiptAmount: plot.tehsilExpenses?.receiptAmount || '',
+      gender: plot.tehsilExpenses?.gender || '',
+      advocateFee: plot.tehsilExpenses?.advocateFee || '',
+      totalExpense: plot.tehsilExpenses?.totalExpense || '',
+      moneyDifference: plot.tehsilExpenses?.moneyDifference || '',
+      marketPriceSqYard: plot.tehsilExpenses?.marketPriceSqYard || ''
     })
 
     // Populate selected owner IDs from plot owners
@@ -2294,6 +2386,30 @@ const PlotManagement = () => {
                   </Grid>
                 </Grid>
 
+                {/* Khasara and PLC Section */}
+                <Grid container spacing={2} sx={{ mt: 0 }}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Khasara No"
+                      value={newPlot.khasaraNo}
+                      onChange={(e) => setNewPlot((s) => ({ ...s, khasaraNo: e.target.value }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={newPlot.plcCorner}
+                          onChange={(e) => setNewPlot((s) => ({ ...s, plcCorner: e.target.checked }))}
+                        />
+                      }
+                      label="PLC (Corner Plot)"
+                    />
+                  </Grid>
+                </Grid>
+
                 {/* Side Measurements */}
                 <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
                   <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
@@ -2449,6 +2565,47 @@ const PlotManagement = () => {
                       InputProps={{ readOnly: true }}
                     />
                   </Grid>
+
+                  {/* PLC Details */}
+                  {(newPlot.plcCorner || newPlot.plcPercentage || newPlot.plcAmount) && (
+                    <Grid item xs={12}>
+                      <Box sx={{ p: 1, bgcolor: '#ffffcc', borderRadius: 1, border: '1px solid #eebb00' }}>
+                        <Typography variant="caption" fontWeight="bold" sx={{ mb: 1, display: 'block' }}>PLC Details</Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6} sm={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="PLC %"
+                              type="number"
+                              value={newPlot.plcPercentage}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, plcPercentage: e.target.value }))}
+                            />
+                          </Grid>
+                          <Grid item xs={6} sm={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="PLC Amount"
+                              type="number"
+                              value={newPlot.plcAmount}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, plcAmount: e.target.value }))}
+                            />
+                          </Grid>
+                          <Grid item xs={6} sm={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Price With PLC"
+                              type="number"
+                              value={newPlot.priceWithPlc}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, priceWithPlc: e.target.value }))}
+                            />
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    </Grid>
+                  )}
                 </Grid>
 
                 <Grid container spacing={2}>
@@ -2599,6 +2756,48 @@ const PlotManagement = () => {
                           helperText={errors.customerShortAddress}
                           required
                         />
+                      </Grid>
+
+                      {/* Client Additional Info */}
+                      <Grid item xs={12}>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Client Code"
+                              value={newPlot.clientCode}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, clientCode: e.target.value }))}
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Nominee Name"
+                              value={newPlot.nominee}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, nominee: e.target.value }))}
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Nominee Relation"
+                              value={newPlot.nomineeRelation}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, nomineeRelation: e.target.value }))}
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Referral Code"
+                              value={newPlot.referralCode}
+                              onChange={(e) => setNewPlot((s) => ({ ...s, referralCode: e.target.value }))}
+                            />
+                          </Grid>
+                        </Grid>
                       </Grid>
 
                       {/* Manual Aadhar/PAN Entry Section */}
@@ -2762,6 +2961,122 @@ const PlotManagement = () => {
                             </Grid>
                           </Grid>
 
+                        </Box>
+                      </Grid>
+
+                      {/* Tehsil Expenses Section */}
+                      <Grid item xs={12}>
+                        <Box sx={{ p: 2, bgcolor: '#ffebee', borderRadius: 1, border: '1px solid #ef9a9a', mt: 2 }}>
+                          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#c62828' }}>
+                            3.- Tehsil Expenses
+                          </Typography>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Gov. Price / Circle Rate"
+                                type="number"
+                                value={newPlot.govPriceCircleRate}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, govPriceCircleRate: e.target.value }))}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Plot Size in mtr."
+                                type="number"
+                                value={newPlot.plotSizeMtr}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, plotSizeMtr: e.target.value }))}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Price in mtr."
+                                type="number"
+                                value={newPlot.priceMtr}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, priceMtr: e.target.value }))}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Gender</InputLabel>
+                                <Select
+                                  value={newPlot.gender}
+                                  label="Gender"
+                                  onChange={(e) => setNewPlot((s) => ({ ...s, gender: e.target.value }))}
+                                >
+                                  <MenuItem value="Male">Male</MenuItem>
+                                  <MenuItem value="Female">Female</MenuItem>
+                                  <MenuItem value="Other">Other</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Stamp Duty (+500Rs)"
+                                type="number"
+                                value={newPlot.stampDuty}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, stampDuty: e.target.value }))}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Receipt (1% + 500)"
+                                type="number"
+                                value={newPlot.receiptAmount}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, receiptAmount: e.target.value }))}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Advocate Fee"
+                                type="number"
+                                value={newPlot.advocateFee}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, advocateFee: e.target.value }))}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Total Expense"
+                                type="number"
+                                value={newPlot.totalExpense}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, totalExpense: e.target.value }))}
+                                sx={{ bgcolor: '#fff' }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Market Price in sq.yard"
+                                type="number"
+                                value={newPlot.marketPriceSqYard}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, marketPriceSqYard: e.target.value }))}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={9}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="Money Difference"
+                                type="number"
+                                value={newPlot.moneyDifference}
+                                onChange={(e) => setNewPlot((s) => ({ ...s, moneyDifference: e.target.value }))}
+                              />
+                            </Grid>
+                          </Grid>
                         </Box>
                       </Grid>
                       {/* Witness Details Section - Wrapped in Grid Item for Add Form */}
