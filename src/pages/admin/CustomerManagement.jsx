@@ -50,11 +50,15 @@ const CustomerManagement = () => {
             console.log('📊 Total plots fetched:', plots.length)
             console.log('📊 Sample plot:', plots[0])
 
-            // Get all plots that have customer information (not just sold)
-            const plotsWithCustomers = plots.filter(plot => plot.customerName && plot.customerNumber)
+            // Get all plots that have customer information and are booked or sold
+            const plotsWithCustomers = plots.filter(plot =>
+                plot.customerName &&
+                plot.customerNumber &&
+                ['booked', 'sold'].includes(plot.status?.toLowerCase())
+            )
 
-            console.log('👥 Plots with customers:', plotsWithCustomers.length)
-            console.log('👥 Sample plot with customer:', plotsWithCustomers[0])
+            console.log('👥 Plots with customers (booked/sold):', plotsWithCustomers.length)
+            console.log('👥 Sample valid plot:', plotsWithCustomers[0])
 
             // Create a map to store unique customers by phone number
             const customerMap = new Map()
