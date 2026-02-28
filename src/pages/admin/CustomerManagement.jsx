@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
     Box,
     Typography,
@@ -22,6 +22,7 @@ const CustomerManagement = () => {
     const [loading, setLoading] = useState(true)
     const [showEntries, setShowEntries] = useState(100)
     const [searchTerm, setSearchTerm] = useState('')
+    const [selectedColony, setSelectedColony] = useState('all')
 
     useEffect(() => {
         fetchCustomersFromPlots()
@@ -30,10 +31,7 @@ const CustomerManagement = () => {
     const fetchCustomersFromPlots = async () => {
         try {
             setLoading(true)
-            // Fetch all plots with high limit to ensure we get everything
             const { data } = await axios.get('/plots?limit=10000')
-
-            console.log('🔍 Raw API Response:', data)
 
             // Extract plots array from response
             let plots = []
@@ -47,31 +45,32 @@ const CustomerManagement = () => {
                 plots = data.plots
             }
 
-            console.log('📊 Total plots fetched:', plots.length)
-            console.log('📊 Sample plot:', plots[0])
-
-            // Get all plots that have customer information and are booked or sold
+            // Get all plots that have customer information assigned (any status)
             const plotsWithCustomers = plots.filter(plot =>
                 plot.customerName &&
-                plot.customerNumber &&
-                ['booked', 'sold'].includes(plot.status?.toLowerCase())
+                plot.customerNumber
             )
 
-            console.log('👥 Plots with customers (booked/sold):', plotsWithCustomers.length)
-            console.log('👥 Sample valid plot:', plotsWithCustomers[0])
-
-            // Create a map to store unique customers by phone number
+            // Create a map to store unique customers by phone+name key
+            // Use plot._id as the unique key so same plot number in different colonies are not deduped
             const customerMap = new Map()
+            const seenPlotIds = new Set()
 
             plotsWithCustomers.forEach(plot => {
                 const customerName = plot.customerName
                 const customerPhone = plot.customerNumber
 
                 if (customerName && customerPhone) {
+                    // Use MongoDB _id to guarantee each plot is only counted once
+                    const plotId = plot._id?.toString() || `${plot.plotNumber}_${plot.colony?._id || plot.colony}`
                     const plotNumber = plot.plotNumber || plot.plotNo
-                    const colonyName = plot.colony?.name || plot.colonyName || plot.colony || ''
+                    const colonyName = plot.colony?.name || plot.colonyName || ''
 
-                    // Create a unique key combining phone and name to handle shared numbers
+                    // Skip duplicate plots
+                    if (seenPlotIds.has(plotId)) return
+                    seenPlotIds.add(plotId)
+
+                    // Group by phone + normalized name
                     const uniqueKey = `${customerPhone}_${customerName.toLowerCase().trim()}`
 
                     if (!customerMap.has(uniqueKey)) {
@@ -82,25 +81,14 @@ const CustomerManagement = () => {
                             plots: [{ plotNo: plotNumber, colony: colonyName }]
                         })
                     } else {
-                        // Customer entry exists, add plot if unique
                         const existing = customerMap.get(uniqueKey)
-
-                        const alreadyExists = existing.plots.some(p => p.plotNo === plotNumber)
-                        if (!alreadyExists) {
-                            existing.plotCount += 1
-                            existing.plots.push({ plotNo: plotNumber, colony: colonyName })
-                        }
+                        existing.plotCount += 1
+                        existing.plots.push({ plotNo: plotNumber, colony: colonyName })
                     }
                 }
             })
 
-            // Convert map to array
-            const uniqueCustomers = Array.from(customerMap.values())
-
-            console.log('✅ Unique customers extracted:', uniqueCustomers.length)
-            console.log('✅ Customers:', uniqueCustomers)
-
-            setCustomers(uniqueCustomers)
+            setCustomers(Array.from(customerMap.values()))
             setLoading(false)
         } catch (error) {
             console.error('❌ Failed to fetch customers:', error)
@@ -109,14 +97,35 @@ const CustomerManagement = () => {
         }
     }
 
-    const filteredCustomers = customers.filter(customer =>
-        customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.phone?.includes(searchTerm)
-    ).slice(0, showEntries)
+    // Collect all unique colony names across all customers
+    const allColonies = useMemo(() => {
+        const coloniesSet = new Set()
+        customers.forEach(c => {
+            c.plots?.forEach(p => {
+                if (p.colony) coloniesSet.add(p.colony)
+            })
+        })
+        return [...coloniesSet].sort()
+    }, [customers])
 
-    console.log('🔍 Filtered customers for display:', filteredCustomers.length, filteredCustomers)
-    console.log('🔍 Search term:', searchTerm)
-    console.log('🔍 Show entries:', showEntries)
+    // Apply search + colony filter
+    const filteredCustomers = useMemo(() => {
+        return customers
+            .filter(customer => {
+                const search = searchTerm.toLowerCase().trim()
+                const matchesSearch =
+                    !search ||
+                    customer.name?.toLowerCase().includes(search) ||
+                    customer.phone?.includes(search)
+
+                const matchesColony =
+                    selectedColony === 'all' ||
+                    customer.plots?.some(p => p.colony === selectedColony)
+
+                return matchesSearch && matchesColony
+            })
+            .slice(0, showEntries)
+    }, [customers, searchTerm, selectedColony, showEntries])
 
     if (loading) {
         return (
@@ -129,9 +138,10 @@ const CustomerManagement = () => {
     return (
         <Box>
             <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 250px)' }}>
-                {/* Search Bar Inside Table */}
+                {/* Filters Inside Table */}
                 <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderBottom: '1px solid #ddd' }}>
-                    <Box display="flex" gap={2} alignItems="center">
+                    <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                        {/* Search */}
                         <TextField
                             size="small"
                             placeholder="Search by name or phone"
@@ -140,25 +150,48 @@ const CustomerManagement = () => {
                             InputProps={{
                                 startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
                             }}
-                            sx={{ flexGrow: 1, bgcolor: 'white' }}
+                            sx={{ flexGrow: 1, minWidth: 200, bgcolor: 'white' }}
                         />
+
+                        {/* Colony Filter */}
+                        <TextField
+                            select
+                            size="small"
+                            label="Colony"
+                            value={selectedColony}
+                            onChange={(e) => setSelectedColony(e.target.value)}
+                            sx={{ minWidth: 200, bgcolor: 'white' }}
+                        >
+                            <MenuItem value="all">All Colonies</MenuItem>
+                            {allColonies.map(colony => (
+                                <MenuItem key={colony} value={colony}>{colony}</MenuItem>
+                            ))}
+                        </TextField>
+
+                        {/* Show entries */}
                         <Box display="flex" alignItems="center" gap={1}>
                             <Typography variant="body2">Show:</Typography>
                             <TextField
                                 select
                                 size="small"
                                 value={showEntries}
-                                onChange={(e) => setShowEntries(e.target.value)}
+                                onChange={(e) => setShowEntries(Number(e.target.value))}
                                 sx={{ minWidth: 80, bgcolor: 'white' }}
                             >
                                 <MenuItem value={10}>10</MenuItem>
                                 <MenuItem value={25}>25</MenuItem>
                                 <MenuItem value={50}>50</MenuItem>
                                 <MenuItem value={100}>100</MenuItem>
+                                <MenuItem value={500}>500</MenuItem>
                             </TextField>
                         </Box>
+
+                        <Typography variant="body2" color="text.secondary">
+                            Total: {filteredCustomers.length} customers
+                        </Typography>
                     </Box>
                 </Box>
+
                 <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
                     <TableHead>
                         <TableRow>
@@ -182,16 +215,11 @@ const CustomerManagement = () => {
                                     <TableCell align="center">{index + 1}</TableCell>
                                     <TableCell>{customer.name}</TableCell>
                                     <TableCell>
-                                        {/* Show unique colony names for all plots */}
-                                        {customer.plots
-                                            ? [...new Set(customer.plots.map(p => p.colony).filter(Boolean))].join(', ') || '-'
-                                            : '-'
-                                        }
+                                        {[...new Set(customer.plots?.map(p => p.colony).filter(Boolean))].join(', ') || '-'}
                                     </TableCell>
                                     <TableCell>
                                         {customer.plots?.map(p => p.plotNo).join(', ') || '-'}
                                     </TableCell>
-
                                     <TableCell>{customer.phone}</TableCell>
                                 </TableRow>
                             ))
