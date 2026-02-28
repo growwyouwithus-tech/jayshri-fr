@@ -69,6 +69,7 @@ const CustomerManagement = () => {
 
                 if (customerName && customerPhone) {
                     const plotNumber = plot.plotNumber || plot.plotNo
+                    const colonyName = plot.colony?.name || plot.colonyName || plot.colony || ''
 
                     // Create a unique key combining phone and name to handle shared numbers
                     const uniqueKey = `${customerPhone}_${customerName.toLowerCase().trim()}`
@@ -78,15 +79,16 @@ const CustomerManagement = () => {
                             name: customerName,
                             phone: customerPhone,
                             plotCount: 1,
-                            plots: [plotNumber]
+                            plots: [{ plotNo: plotNumber, colony: colonyName }]
                         })
                     } else {
                         // Customer entry exists, add plot if unique
                         const existing = customerMap.get(uniqueKey)
 
-                        if (!existing.plots.includes(plotNumber)) {
+                        const alreadyExists = existing.plots.some(p => p.plotNo === plotNumber)
+                        if (!alreadyExists) {
                             existing.plotCount += 1
-                            existing.plots.push(plotNumber)
+                            existing.plots.push({ plotNo: plotNumber, colony: colonyName })
                         }
                     }
                 }
@@ -162,6 +164,7 @@ const CustomerManagement = () => {
                         <TableRow>
                             <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000', textAlign: 'center' }}>S.No.</TableCell>
                             <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Customer Name</TableCell>
+                            <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Colony Name</TableCell>
                             <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot No</TableCell>
                             <TableCell sx={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Mobile No</TableCell>
                         </TableRow>
@@ -169,7 +172,7 @@ const CustomerManagement = () => {
                     <TableBody>
                         {filteredCustomers.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center">
+                                <TableCell colSpan={5} align="center">
                                     No customers found.
                                 </TableCell>
                             </TableRow>
@@ -178,7 +181,17 @@ const CustomerManagement = () => {
                                 <TableRow key={`${customer.phone}-${index}`}>
                                     <TableCell align="center">{index + 1}</TableCell>
                                     <TableCell>{customer.name}</TableCell>
-                                    <TableCell>{customer.plots?.join(', ') || '-'}</TableCell>
+                                    <TableCell>
+                                        {/* Show unique colony names for all plots */}
+                                        {customer.plots
+                                            ? [...new Set(customer.plots.map(p => p.colony).filter(Boolean))].join(', ') || '-'
+                                            : '-'
+                                        }
+                                    </TableCell>
+                                    <TableCell>
+                                        {customer.plots?.map(p => p.plotNo).join(', ') || '-'}
+                                    </TableCell>
+
                                     <TableCell>{customer.phone}</TableCell>
                                 </TableRow>
                             ))
