@@ -25,7 +25,8 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material'
-import { Add, Edit, Delete, CloudUpload, GetApp, Print, Search, FileDownload, ArrowBack, Visibility } from '@mui/icons-material'
+import { Add, Edit, Delete, CloudUpload, GetApp, Print, Search, FileDownload, ArrowBack, Visibility, VisibilityOff } from '@mui/icons-material'
+import InputAdornment from '@mui/material/InputAdornment'
 import apiService from '@/services/apiService'
 import mockApiService from '@/services/mockApiService'
 import errorService from '@/services/errorService'
@@ -39,12 +40,15 @@ const StaffManagement = () => {
   const [openDialog, setOpenDialog] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [currentStaff, setCurrentStaff] = useState(null)
-  const [showEntries, setShowEntries] = useState(10)
+  const [showEntries, setShowEntries] = useState(1000)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedRole, setSelectedRole] = useState('all')
   const [exportAnchor, setExportAnchor] = useState(null)
   const [selectedStaff, setSelectedStaff] = useState([])
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
   const [viewingStaff, setViewingStaff] = useState(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -72,7 +76,7 @@ const StaffManagement = () => {
   const fetchStaff = async () => {
     try {
       setLoading(true)
-      const { data } = await axios.get('/users')
+      const { data } = await axios.get('/users?limit=10000')
       const allUsers = (data?.data || []).map(normalizeUser)
       // Show all users except buyers (staff includes: agent, lawyer, manager, employee, accountant, etc.)
       let staffUsers = allUsers.filter(user => {
@@ -308,11 +312,18 @@ const StaffManagement = () => {
     toast.info('Excel export functionality would be implemented here')
   }
 
-  const filteredStaff = staff.filter(staffMember =>
-    staffMember.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    staffMember.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    staffMember.phone.includes(searchTerm)
-  ).slice(0, showEntries)
+  const filteredStaff = staff.filter(staffMember => {
+    const search = searchTerm.toLowerCase().trim()
+    const roleName = (staffMember.role?.name || staffMember.roleName || '').toLowerCase()
+    const matchesSearch = !search ||
+      (staffMember.name || '').toLowerCase().includes(search) ||
+      (staffMember.email || '').toLowerCase().includes(search) ||
+      (staffMember.phone || '').includes(search) ||
+      (staffMember.userCode || '').toLowerCase().includes(search) ||
+      roleName.includes(search)
+    const matchesRole = selectedRole === 'all' || roleName === selectedRole.toLowerCase()
+    return matchesSearch && matchesRole
+  }).slice(0, showEntries)
 
   if (loading) {
   return (
@@ -445,17 +456,26 @@ if (openDialog) {
             <TextField 
               fullWidth 
               label="Password" 
-              type="password" 
+              type={showPassword ? 'text' : 'password'} 
               value={formData.password} 
               onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
-              helperText={editMode ? "Leave empty to keep current password" : "Leave empty for auto-generated password"}
+              helperText={editMode ? "Leave empty to keep current password • Min 6 chars (letters, numbers, symbols allowed)" : "Leave empty for auto-generated password • Min 6 chars (letters, numbers, symbols allowed)"}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setShowPassword(prev => !prev)} edge="end">
+                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField 
               fullWidth 
               label="Confirm Password" 
-              type="password" 
+              type={showConfirmPassword ? 'text' : 'password'} 
               value={formData.confirmPassword} 
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               error={formData.password && formData.confirmPassword && formData.password.trim() !== formData.confirmPassword.trim()}
@@ -464,6 +484,15 @@ if (openDialog) {
                   ? "Passwords do not match"
                   : ""
               }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setShowConfirmPassword(prev => !prev)} edge="end">
+                      {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
             />
           </Grid>
         </Grid>
@@ -493,26 +522,43 @@ return (
           select
           size="small"
           value={showEntries}
-          onChange={(e) => setShowEntries(e.target.value)}
+          onChange={(e) => setShowEntries(Number(e.target.value))}
           sx={{ minWidth: 80 }}
         >
           <MenuItem value={10}>10</MenuItem>
           <MenuItem value={25}>25</MenuItem>
           <MenuItem value={50}>50</MenuItem>
           <MenuItem value={100}>100</MenuItem>
+          <MenuItem value={500}>500</MenuItem>
+          <MenuItem value={1000}>All</MenuItem>
         </TextField>
       </Box>
       
       <TextField
         size="small"
-        placeholder="Search"
+        placeholder="Search by name, email, phone, code, role"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         InputProps={{
             startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
           }}
-          sx={{ minWidth: 200 }}
+          sx={{ minWidth: 250 }}
         />
+
+        {/* Role Filter Dropdown */}
+        <TextField
+          select
+          size="small"
+          label="Filter by Role"
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value)}
+          sx={{ minWidth: 180 }}
+        >
+          <MenuItem value="all">All Roles</MenuItem>
+          {[...new Set(staff.map(s => (s.role?.name || s.roleName || '')).filter(Boolean))].sort().map(role => (
+            <MenuItem key={role} value={role}>{role}</MenuItem>
+          ))}
+        </TextField>
         
         <Button
           variant="contained"

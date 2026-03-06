@@ -147,6 +147,8 @@ const PlotManagement = () => {
   const [selectedImage, setSelectedImage] = useState(null)
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [errors, setErrors] = useState({})
+  // Delete password dialog state
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, plotId: null, password: '', loading: false, showPwd: false })
   // Owner selection state
   const [availableOwners, setAvailableOwners] = useState([])
   const [selectedOwnerIds, setSelectedOwnerIds] = useState([])
@@ -1468,29 +1470,28 @@ const PlotManagement = () => {
     }
   }
 
-  const handleDeletePlot = async (plotId) => {
-    if (window.confirm('Are you sure you want to delete this plot?')) {
-      try {
-        await axios.delete(`/plots/${plotId}`)
-        toast.success('Plot deleted successfully! 🗑️', {
-          position: 'top-right',
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        })
-        fetchPlots(filterColony)
-      } catch (error) {
-        toast.error('Failed to delete plot. Please try again.', {
-          position: 'top-right',
-          autoClose: 4000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        })
-      }
+  const handleDeletePlot = (plotId) => {
+    setDeleteDialog({ open: true, plotId, password: '', loading: false, showPwd: false })
+  }
+
+  const confirmDeletePlot = async () => {
+    if (!deleteDialog.password) {
+      toast.error('Please enter your password')
+      return
+    }
+    setDeleteDialog(prev => ({ ...prev, loading: true }))
+    try {
+      // Verify admin password first
+      await axios.post('/auth/verify-password', { password: deleteDialog.password })
+      // Password OK — now delete
+      await axios.delete(`/plots/${deleteDialog.plotId}`)
+      toast.success('Plot deleted successfully! 🗑️', { position: 'top-right', autoClose: 3000 })
+      setDeleteDialog({ open: false, plotId: null, password: '', loading: false, showPwd: false })
+      fetchPlots(filterColony)
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Failed to delete plot'
+      toast.error(msg, { position: 'top-right', autoClose: 4000 })
+      setDeleteDialog(prev => ({ ...prev, loading: false }))
     }
   }
 
@@ -1591,11 +1592,30 @@ const PlotManagement = () => {
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
+    const tableContainer = document.getElementById('plot-table-container')
+    if (tableContainer) {
+      tableContainer.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    // Fallback for main window scroll
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    const mainContent = document.getElementById('main-content')
+    if (mainContent) {
+      mainContent.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10))
     setPage(0)
+    const tableContainer = document.getElementById('plot-table-container')
+    if (tableContainer) {
+      tableContainer.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    const mainContent = document.getElementById('main-content')
+    if (mainContent) {
+      mainContent.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   // ============================================
@@ -5604,7 +5624,7 @@ const PlotManagement = () => {
         </Box>
       </Box>
 
-      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <TableContainer id="plot-table-container" component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
         <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
@@ -5796,8 +5816,56 @@ const PlotManagement = () => {
           )}
         </Box>
       </Dialog>
+
+      {/* Admin Password Confirmation Dialog - Plot Delete */}
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog(prev => ({ ...prev, open: false }))} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ bgcolor: '#f44336', color: 'white', fontWeight: 'bold' }}>
+          🔒 Admin Password Required
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Enter your admin password to confirm plot deletion. This action cannot be undone.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Admin Password"
+            type={deleteDialog.showPwd ? 'text' : 'password'}
+            value={deleteDialog.password}
+            onChange={(e) => setDeleteDialog(prev => ({ ...prev, password: e.target.value }))}
+            onKeyDown={(e) => e.key === 'Enter' && confirmDeletePlot()}
+            autoFocus
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setDeleteDialog(prev => ({ ...prev, showPwd: !prev.showPwd }))}>
+                    {deleteDialog.showPwd ? <Visibility fontSize="small" /> : <Visibility fontSize="small" />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setDeleteDialog({ open: false, plotId: null, password: '', loading: false, showPwd: false })}
+            disabled={deleteDialog.loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={confirmDeletePlot}
+            disabled={deleteDialog.loading || !deleteDialog.password}
+          >
+            {deleteDialog.loading ? 'Verifying...' : 'Delete Plot'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
 
 export default PlotManagement
+

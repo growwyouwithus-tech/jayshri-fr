@@ -11,6 +11,7 @@ import {
   TableRow,
   Paper,
   IconButton,
+  InputAdornment,
   Chip,
   Dialog,
   DialogTitle,
@@ -29,6 +30,7 @@ import {
   ListItemText
 } from '@mui/material'
 import { Add, Edit, Delete, Visibility, ArrowBack } from '@mui/icons-material'
+
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 import { validateRequired, validateNumeric, validatePhone, validateMinLength, validateURL } from '@/utils/validation'
@@ -82,6 +84,8 @@ const ColonyManagement = () => {
   const [errors, setErrors] = useState({})
   const [khatoniPopoverAnchor, setKhatoniPopoverAnchor] = useState(null)
   const [selectedKhatoniHolders, setSelectedKhatoniHolders] = useState([])
+  // Delete password dialog
+  const [deleteColonyDialog, setDeleteColonyDialog] = useState({ open: false, colonyId: null, password: '', loading: false, showPwd: false })
 
   // Clear error for a specific field
   const clearError = (fieldName) => {
@@ -627,21 +631,26 @@ const ColonyManagement = () => {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this colony?')) {
-      try {
-        await axios.delete(`/colonies/${id}`)
-        toast.success('Colony deleted successfully! 🗑️', {
-          position: 'top-right',
-          autoClose: 3000,
-        })
-        fetchColonies()
-      } catch (error) {
-        toast.error('Failed to delete colony. Please try again.', {
-          position: 'top-right',
-          autoClose: 4000,
-        })
-      }
+  const handleDelete = (id) => {
+    setDeleteColonyDialog({ open: true, colonyId: id, password: '', loading: false, showPwd: false })
+  }
+
+  const confirmDeleteColony = async () => {
+    if (!deleteColonyDialog.password) {
+      toast.error('Please enter your password')
+      return
+    }
+    setDeleteColonyDialog(prev => ({ ...prev, loading: true }))
+    try {
+      await axios.post('/auth/verify-password', { password: deleteColonyDialog.password })
+      await axios.delete(`/colonies/${deleteColonyDialog.colonyId}`)
+      toast.success('Colony deleted successfully! 🗑️', { position: 'top-right', autoClose: 3000 })
+      setDeleteColonyDialog({ open: false, colonyId: null, password: '', loading: false, showPwd: false })
+      fetchColonies()
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Failed to delete colony'
+      toast.error(msg, { position: 'top-right', autoClose: 4000 })
+      setDeleteColonyDialog(prev => ({ ...prev, loading: false }))
     }
   }
 
@@ -1789,6 +1798,52 @@ const ColonyManagement = () => {
           </Box>
         </Box>
       )}
+      {/* Admin Password Confirmation Dialog - Colony Delete */}
+      <Dialog open={deleteColonyDialog.open} onClose={() => setDeleteColonyDialog(prev => ({ ...prev, open: false }))} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ bgcolor: '#f44336', color: 'white', fontWeight: 'bold' }}>
+          🔒 Admin Password Required
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Enter your admin password to confirm colony deletion. This action cannot be undone.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Admin Password"
+            type={deleteColonyDialog.showPwd ? 'text' : 'password'}
+            value={deleteColonyDialog.password}
+            onChange={(e) => setDeleteColonyDialog(prev => ({ ...prev, password: e.target.value }))}
+            onKeyDown={(e) => e.key === 'Enter' && confirmDeleteColony()}
+            autoFocus
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setDeleteColonyDialog(prev => ({ ...prev, showPwd: !prev.showPwd }))}>
+                    <Visibility fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setDeleteColonyDialog({ open: false, colonyId: null, password: '', loading: false, showPwd: false })}
+            disabled={deleteColonyDialog.loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={confirmDeleteColony}
+            disabled={deleteColonyDialog.loading || !deleteColonyDialog.password}
+          >
+            {deleteColonyDialog.loading ? 'Verifying...' : 'Delete Colony'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

@@ -530,6 +530,7 @@ const MainLayout = () => {
       </Box>
 
       <Box
+        id="main-content"
         component="main"
         sx={{
           flexGrow: 1,
