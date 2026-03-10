@@ -14,6 +14,9 @@ import toast from 'react-hot-toast'
 const EXPENSE_CATEGORIES = [
   'Construction Materials',
   'Labor Charges',
+  'Landlord expenses',
+  'Electricity',
+  'Water charges',
   'Equipment Rental',
   'Transportation',
   'Legal & Documentation',
@@ -220,7 +223,7 @@ const ExpenseManagement = () => {
 
   const getFilteredExpenses = () => {
     return expenses.filter(exp => {
-      const propertyMatch = filterProperty === 'all' || 
+      const propertyMatch = filterProperty === 'all' ||
         (filterProperty === 'none' && !exp.property) ||
         (exp.property?._id === filterProperty || exp.property === filterProperty)
       const expenseTypeMatch = filterExpenseType === 'all' || exp.expenseType === filterExpenseType
