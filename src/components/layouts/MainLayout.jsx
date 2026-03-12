@@ -21,6 +21,7 @@ import {
   Chip,
   Stack,
   Collapse,
+  Button,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -44,6 +45,7 @@ import {
   PersonPin,
   Work,
   CheckCircle,
+  Close,
 } from '@mui/icons-material'
 import { logout } from '@/store/slices/authSlice'
 import toast from 'react-hot-toast'
@@ -140,7 +142,11 @@ const MainLayout = () => {
         { text: 'My Bookings', icon: <Receipt />, path: '/buyer/bookings' },
       ],
       'Lawyer': [
+        { text: 'Dashboard', icon: <DashboardIcon />, path: '/lawyer/dashboard' },
         { text: 'Registry Documents', icon: <Gavel />, path: '/lawyer/registry' },
+        { text: 'Verified Documents', icon: <CheckCircle />, path: '/lawyer/registry?status=verified' },
+        { text: 'Rejected Documents', icon: <Close />, path: '/lawyer/registry?status=rejected' },
+        { text: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' },
       ],
       'Agent': [
         { text: 'My Sales', icon: <Receipt />, path: '/agent/dashboard' },
@@ -148,9 +154,9 @@ const MainLayout = () => {
       ],
     }
 
-    // If role has specific hardcoded items, use them
+    // If role has specific hardcoded items, use only those
     if (roleSpecificItems[roleName]) {
-      return [...commonItems, ...roleSpecificItems[roleName]]
+      return roleSpecificItems[roleName]
     }
 
     // Dynamic items based on permissions for Admin, Manager, Colony Manager and custom roles
@@ -251,8 +257,15 @@ const MainLayout = () => {
     return [...commonItems, ...dynamicItems]
   }
 
+  const isLawyer = user?.role?.name === 'Lawyer'
+  const sidebarBg = isLawyer ? '#FFFFFF' : 'primary.main'
+  const sidebarColor = isLawyer ? '#1A1C1E' : '#FFFFFF'
+  const iconColor = isLawyer ? '#5F6368' : '#FFFFFF'
+  const activeBg = isLawyer ? '#E8F5E9' : 'rgba(255,255,255,0.1)'
+  const activeColor = isLawyer ? '#4CAF50' : '#FFFFFF'
+
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', color: '#fff' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', color: sidebarColor, bgcolor: sidebarBg }}>
       <Toolbar
         sx={{
           justifyContent: 'flex-start',
@@ -266,27 +279,28 @@ const MainLayout = () => {
           <Box
             component="img"
             src="/JAISHRI GROUP.png"
-            alt="Jayshri Properties"
+            alt="Smart Plot"
             sx={{
-              width: 48,
-              height: 48,
+              width: 42,
+              height: 42,
               objectFit: 'contain',
               borderRadius: 1,
               bgcolor: 'white',
+              border: isLawyer ? '1px solid #f0f0f0' : 'none',
               p: 0.5
             }}
           />
           <Box>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#fff' }}>
-              Jayshri Properties
+            <Typography variant="subtitle1" fontWeight={700} sx={{ color: sidebarColor, lineHeight: 1.2 }}>
+              {isLawyer ? 'Jayshri' : 'Jayshri Properties'}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              Smart Plot Management
+            <Typography variant="caption" sx={{ color: isLawyer ? 'text.secondary' : 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+              {isLawyer ? 'Advocate Portal' : 'Smart Plot Management'}
             </Typography>
           </Box>
         </Stack>
       </Toolbar>
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+      <Divider sx={{ mx: 2, borderColor: isLawyer ? '#f5f5f5' : 'rgba(255,255,255,0.12)' }} />
       <Box sx={{ flex: 1, overflowY: 'auto', py: 2 }}>
         <List sx={{ px: 1 }}>
           {getNavigationItems().map((item) => {
@@ -307,20 +321,28 @@ const MainLayout = () => {
                     }}
                     selected={isActive && !hasSubmenu}
                     sx={{
-                      color: 'rgba(255,255,255,0.92)',
+                      color: isActive ? activeColor : sidebarColor,
                       px: 2,
                       py: 1.2,
                       borderRadius: 0,
+                      bgcolor: isActive ? activeBg : 'transparent',
                       '&.Mui-selected': {
-                        color: '#fff',
-                        bgcolor: 'rgba(255,255,255,0.1)',
+                        color: activeColor,
+                        bgcolor: activeBg,
                         borderRadius: 0,
+                        '&:hover': {
+                          bgcolor: activeBg,
+                        }
                       },
+                      '&:hover': {
+                        bgcolor: activeBg,
+                        color: activeColor,
+                      }
                     }}
                   >
                     <ListItemIcon
                       sx={{
-                        color: '#fff',
+                        color: isActive ? activeColor : iconColor,
                         minWidth: 42,
                         '& svg': {
                           fontSize: 22,
@@ -334,7 +356,7 @@ const MainLayout = () => {
                       primaryTypographyProps={{ fontWeight: isActive ? 600 : 500 }}
                     />
                     {hasSubmenu && (
-                      <IconButton size="small" sx={{ color: '#fff' }}>
+                      <IconButton size="small" sx={{ color: isActive ? activeColor : iconColor }}>
                         {isExpanded ? <ExpandLess /> : <ExpandMore />}
                       </IconButton>
                     )}
@@ -366,7 +388,7 @@ const MainLayout = () => {
                               <ListItemText
                                 primary={subItem.text}
                                 primaryTypographyProps={{
-                                  fontWeight: isSubActive ? 600 : 400,
+                                  fontWeight: isSubActive ? 600 : (isLawyer ? 500 : 400),
                                   fontSize: '0.875rem'
                                 }}
                               />
@@ -385,18 +407,45 @@ const MainLayout = () => {
       <Box sx={{ px: 3, pb: 3 }}>
         <Box
           sx={{
-            bgcolor: 'rgba(255,255,255,0.12)',
-            borderRadius: 0,
+            bgcolor: isLawyer ? '#F8F9FA' : 'rgba(255,255,255,0.12)',
+            borderRadius: 2,
             p: 2,
+            mx: 2,
+            border: isLawyer ? '1px solid #f0f0f0' : 'none',
+            color: isLawyer ? '#1A1C1E' : '#FFFFFF',
           }}
         >
           <Typography variant="subtitle2" fontWeight={600} gutterBottom>
             Need support?
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+          <Typography variant="body2" sx={{ color: isLawyer ? 'text.secondary' : 'rgba(255,255,255,0.7)', fontSize: '0.75rem' }}>
             Contact admin team for quick assistance.
           </Typography>
         </Box>
+        {isLawyer && (
+          <Box sx={{ px: 2, mt: 2 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              startIcon={<Box component="span" sx={{ fontSize: '1.2rem' }}>+</Box>}
+              sx={{
+                py: 1.5,
+                borderRadius: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                bgcolor: '#2E7D32',
+                '&:hover': {
+                  bgcolor: '#1B5E20'
+                }
+              }}
+              onClick={() => navigate('/lawyer/registry')}
+            >
+              New Entry
+            </Button>
+          </Box>
+        )}
       </Box>
     </Box>
   )
@@ -428,7 +477,7 @@ const MainLayout = () => {
 
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h5" fontWeight={700} gutterBottom>
-              {user?.role?.name} Dashboard
+              {user?.role?.name === 'Lawyer' ? 'Advocate' : user?.role?.name} Dashboard
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Stay on top of colony performance and plot activity at a glance.
@@ -455,7 +504,7 @@ const MainLayout = () => {
                   {user?.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {user?.role?.name}
+                  {user?.role?.name === 'Lawyer' ? 'Advocate' : user?.role?.name}
                 </Typography>
               </Box>
             </Box>
@@ -520,7 +569,8 @@ const MainLayout = () => {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
               borderRadius: 0,
-              bgcolor: 'primary.main',
+              bgcolor: sidebarBg,
+              borderRight: isLawyer ? '1px solid #f0f0f0' : 'none',
             },
           }}
           open
