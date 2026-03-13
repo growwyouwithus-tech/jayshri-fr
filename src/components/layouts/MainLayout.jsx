@@ -50,7 +50,7 @@ import {
 import { logout } from '@/store/slices/authSlice'
 import toast from 'react-hot-toast'
 
-const DRAWER_WIDTH = 260
+const DRAWER_WIDTH = 240
 
 /**
  * Main Layout Component
@@ -584,7 +584,7 @@ const MainLayout = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, md: 4 },
+          p: { xs: 2, md: 2 },
           width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
           mt: { xs: 7, sm: 8 },
           minHeight: '100vh',
@@ -593,8 +593,6 @@ const MainLayout = () => {
       >
         <Box
           sx={{
-            maxWidth: 1280,
-            mx: 'auto',
             width: '100%',
             display: 'flex',
             flexDirection: 'column',

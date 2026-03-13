@@ -17,27 +17,27 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Don't add token to login/register requests to avoid 401 with old tokens
-    const isAuthEndpoint = config.url?.includes('/auth/login') || 
-                          config.url?.includes('/auth/register')
-    
+    const isAuthEndpoint = config.url?.includes('/auth/login') ||
+      config.url?.includes('/auth/register')
+
     if (!isAuthEndpoint) {
       const token = localStorage.getItem('token')
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
     }
-    
+
     // If data is FormData, remove Content-Type header to let browser set it with boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type']
       console.log('[API Request] FormData detected, removing Content-Type header')
     }
-    
+
     // Log request in development
     if (import.meta.env.DEV) {
       console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`)
     }
-    
+
     return config
   },
   (error) => {
@@ -59,9 +59,9 @@ api.interceptors.response.use(
     const originalRequest = error.config
 
     // Don't show error for auth endpoints - let them handle fallback
-    const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
-                           error.config?.url?.includes('/auth/register')
-    
+    const isAuthEndpoint = error.config?.url?.includes('/auth/login') ||
+      error.config?.url?.includes('/auth/register')
+
     if (isAuthEndpoint) {
       return Promise.reject(error)
     }

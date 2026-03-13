@@ -1273,118 +1273,232 @@ const ColonyManagement = () => {
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" fontWeight="bold">
-          Colony Management
-        </Typography>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
+      {/* Page Header */}
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: 4,
+          p: 2.5,
+          borderRadius: 2,
+          bgcolor: 'white',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        }}
+      >
+        <Box sx={{ borderLeft: '4px solid #41980a', pl: 2 }}>
+          <Typography variant="h5" fontWeight={800} sx={{ color: '#1e293b', letterSpacing: '-0.5px' }}>
+            Colony Management
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#64748b' }}>
+            Land acquisitions & project monitoring
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => handleOpenDialog()}
+          sx={{
+            background: 'linear-gradient(135deg, #41980a 0%, #2e7d32 100%)',
+            boxShadow: '0 8px 20px -5px rgba(65, 152, 10, 0.4)',
+            borderRadius: 2,
+            px: 3,
+            py: 1.2,
+            fontWeight: 700,
+            textTransform: 'none',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #4da810 0%, #388e3c 100%)',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 12px 25px -5px rgba(65, 152, 10, 0.5)',
+            },
+            transition: 'all 0.2s'
+          }}
         >
-          Add Colony
+          Add New Colony
         </Button>
       </Box>
 
-      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
-        <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
+      {/* Main Table Container */}
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          maxHeight: 'calc(100vh - 250px)',
+          borderRadius: 2,
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+          border: '1px solid #cbd5e1',
+          overflow: 'hidden',
+          '& .MuiTable-root': { borderCollapse: 'collapse' }
+        }}
+      >
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Colony</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Land (Gaj)</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Road Area(Gaj)</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Park/Tample(Gaj)</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Used Land (Gaj)</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Plots</TableCell>
-              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot Area(Gaj)</TableCell>
-              <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Action</TableCell>
+              {[
+                { label: 'Colony Details', align: 'left' },
+                { label: 'Total Land', align: 'left' },
+                { label: 'Road Area', align: 'left' },
+                { label: 'Amenity Area', align: 'left' },
+                { label: 'Used Land', align: 'left' },
+                { label: 'Plots', align: 'left' },
+                { label: 'Remaining', align: 'left' },
+                { label: 'Actions', align: 'right' }
+              ].map((column) => (
+                <TableCell 
+                  key={column.label}
+                  align={column.align}
+                  sx={{ 
+                    bgcolor: '#41980a',
+                    color: '#FFFFFF',
+                    fontWeight: 800,
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    py: 2,
+                    border: '1px solid #cbd5e1',
+                    zIndex: 10
+                  }}
+                >
+                  {column.label}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
             {colonies.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center">
-                  No colonies found. Click "Add Colony" to create one.
+                <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
+                  <Box sx={{ opacity: 0.5, textAlign: 'center' }}>
+                    <Typography variant="h6">No colonies discovered yet</Typography>
+                    <Typography variant="body2">Start by adding your first land development project.</Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             ) : (
               colonies.map((colony) => (
-                <TableRow key={colony._id}>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600} fontSize={18}>{colony.name.toUpperCase()}</Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {colony.address || colony.location?.address || '-'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {colony.city?.name || '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{colony.totalLandAreaGaj ? colony.totalLandAreaGaj.toLocaleString('en-IN') : '-'}</TableCell>
-                  <TableCell sx={{ bgcolor: '#e3f2fd', fontWeight: 600, color: '#1976d2' }}>
-                    {colony.roadAreaGaj ? colony.roadAreaGaj.toLocaleString('en-IN') : '0'}
-                  </TableCell>
-                  <TableCell sx={{ bgcolor: '#e8f5e9', fontWeight: 600, color: '#2e7d32' }}>
-                    {colony.amenityAreaGaj ? colony.amenityAreaGaj.toLocaleString('en-IN') : '0'}
-                  </TableCell>
-                  <TableCell sx={{ bgcolor: '#fff3e0', fontWeight: 600, color: '#f57c00' }}>
-                    {colony.usedLandGaj ? colony.usedLandGaj.toLocaleString('en-IN') : '0'}
-                  </TableCell>
-                  <TableCell sx={{ bgcolor: '#f3e5f5', fontWeight: 600, color: '#7b1fa2' }}>
-                    {colony.totalPlots ?? '0'}
-                  </TableCell>
-                  {/* <TableCell>₹{colony.ratePerGaj ? colony.ratePerGaj.toLocaleString('en-IN') : '-'}</TableCell> */}
-                  <TableCell>{colony.remainingLandGaj ? colony.remainingLandGaj.toLocaleString('en-IN') : '0'}</TableCell>
-                  {/* <TableCell>
-                    {colony.khatoniHolderDetails && colony.khatoniHolderDetails.length > 0 ? (
-                      <Box> */}
-                  {/* Show first Khatoni Holder */}
-                  {/* <Box mb={0.5}>
-                          <Typography variant="body2">
-                            {colony.khatoniHolderDetails[0].name || '-'}
-                          </Typography>
-                          {colony.khatoniHolderDetails[0].mobile && (
-                            <Typography variant="caption" color="text.secondary">
-                              {colony.khatoniHolderDetails[0].mobile}
-                            </Typography>
-                          )}
-                        </Box> */}
-                  {/* Show "See More" if there are multiple holders */}
-                  {/* {colony.khatoniHolderDetails.length > 1 && (
-                          <Button
-                            size="small"
-                            variant="text"
-                            onClick={(e) => {
-                              setKhatoniPopoverAnchor(e.currentTarget)
-                              setSelectedKhatoniHolders(colony.khatoniHolderDetails)
-                            }}
-                            sx={{ textTransform: 'none', p: 0, minWidth: 'auto', fontSize: '0.75rem' }}
-                          >
-                            See More ({colony.khatoniHolderDetails.length - 1} more)
-                          </Button>
-                        )}
+                <TableRow 
+                  key={colony._id}
+                  hover
+                  sx={{ 
+                    '&:hover': { bgcolor: '#f1f5f9 !important' },
+                    transition: 'background-color 0.2s',
+                    '& td': { border: '1px solid #cbd5e1' }
+                  }}
+                >
+                  <TableCell sx={{ minWidth: 250 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box 
+                        sx={{ 
+                          width: 40, 
+                          height: 40, 
+                          borderRadius: 2, 
+                          bgcolor: '#f0fdf4', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          color: '#16a34a',
+                          fontWeight: 800,
+                          fontSize: '1.2rem',
+                          border: '1px solid #dcfce7'
+                        }}
+                      >
+                        {colony.name.charAt(0).toUpperCase()}
                       </Box>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">-</Typography>
-                    )}
-                  </TableCell> */}
-                  {/* <TableCell>
-                    <Chip
-                      label={colony.status.replace('_', ' ').toUpperCase()}
-                      color={getStatusColor(colony.status)}
+                      <Box>
+                        <Typography variant="body1" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 1.2 }}>
+                          {colony.name.toUpperCase()}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                          <Typography variant="caption" sx={{ color: '#64748b' }}>
+                            {colony.location?.city || '-'} • {colony.status.replace('_', ' ')}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600} color="#334155">
+                      {colony.totalLandAreaGaj ? colony.totalLandAreaGaj.toLocaleString('en-IN') : '-'}
+                      <Typography component="span" variant="caption" sx={{ ml: 0.5, color: '#94a3b8' }}>Gaj</Typography>
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#3b82f6' }} />
+                      <Typography variant="body2" fontWeight={500} color="#1d4ed8">
+                        {colony.roadAreaGaj ? colony.roadAreaGaj.toLocaleString('en-IN') : '0'}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#10b981' }} />
+                      <Typography variant="body2" fontWeight={500} color="#065f46">
+                        {colony.amenityAreaGaj ? colony.amenityAreaGaj.toLocaleString('en-IN') : '0'}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#f59e0b' }} />
+                      <Typography variant="body2" fontWeight={500} color="#92400e">
+                        {colony.usedLandGaj ? colony.usedLandGaj.toLocaleString('en-IN') : '0'}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+
+                  <TableCell>
+                    <Chip 
+                      label={`${colony.totalPlots ?? '0'} Plots`}
                       size="small"
+                      sx={{ 
+                        bgcolor: '#f5f3ff', 
+                        color: '#7c3aed', 
+                        fontWeight: 700, 
+                        borderRadius: 1.5,
+                        fontSize: '0.75rem'
+                      }}
                     />
-                  </TableCell> */}
+                  </TableCell>
+
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600} sx={{ color: colony.remainingLandGaj > 0 ? '#16a34a' : '#ef4444' }}>
+                      {colony.remainingLandGaj ? colony.remainingLandGaj.toLocaleString('en-IN') : '0'}
+                    </Typography>
+                  </TableCell>
+
                   <TableCell align="right">
-                    <IconButton size="small" color="primary" onClick={() => handleOpenDialog(colony)}>
-                      <Visibility fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleOpenDialog(colony)}>
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDelete(colony._id)}>
-                      <Delete fontSize="small" />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleOpenDialog(colony)}
+                        sx={{ color: '#64748b', '&:hover': { color: '#41980a', bgcolor: '#f0fdf4' } }}
+                        title="View Details"
+                      >
+                        <Visibility fontSize="small" />
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleOpenDialog(colony)}
+                        sx={{ color: '#64748b', '&:hover': { color: '#3b82f6', bgcolor: '#eff6ff' } }}
+                        title="Edit Colony"
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleDelete(colony._id)}
+                        sx={{ color: '#64748b', '&:hover': { color: '#ef4444', bgcolor: '#fef2f2' } }}
+                        title="Delete Colony"
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))
@@ -1429,418 +1543,413 @@ const ColonyManagement = () => {
         </Box>
       </Popover>
 
-      {/* Add/Edit Form - Full Screen */}
+      {/* Add/Edit Form - Full Screen Redesign */}
       {showForm && (
-        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'white', zIndex: 1300, overflow: 'auto' }}>
-          <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-              <Typography variant="h4" fontWeight="bold">
-                {editMode ? 'Edit Colony' : 'Add New Colony'}
-              </Typography>
-              <Button variant="outlined" onClick={handleCloseForm}>Cancel</Button>
-            </Box>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Colony Name *"
-                  value={formData.name}
-                  onChange={(e) => {
-                    setFormData({ ...formData, name: e.target.value })
-                    clearError('name')
-                  }}
-                  error={!!errors.name}
-                  helperText={errors.name}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Purchase Price (₹)"
-                  type="number"
-                  value={formData.purchasePrice}
-                  onChange={(e) => {
-                    setFormData({ ...formData, purchasePrice: e.target.value })
-                    clearError('purchasePrice')
-                  }}
-                  error={!!errors.purchasePrice}
-                  helperText={errors.purchasePrice}
-                  placeholder="Total purchase amount"
-                />
-              </Grid>
-
-              {/* <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address *"
-                value={formData.address}
-                onChange={(e) => {
-                  setFormData({ ...formData, address: e.target.value })
-                  clearError('address')
-                }}
-                error={!!errors.address}
-                helperText={errors.address}
-                required
-              />
-            </Grid> */}
-              {/* land Location */}
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                  Colony Location
+        <Box 
+          sx={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            bgcolor: '#f8fafc', 
+            zIndex: 1300, 
+            overflow: 'auto',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+        >
+          <Box sx={{ p: { xs: 2, md: 5 }, maxWidth: 1200, mx: 'auto' }}>
+            {/* Form Header */}
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                mb: 4,
+                bgcolor: 'white',
+                p: 3,
+                borderRadius: 2,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                border: '1px solid #e2e8f0'
+              }}
+            >
+              <Box>
+                <Typography variant="h4" fontWeight={800} sx={{ color: '#1e293b', letterSpacing: '-0.5px' }}>
+                  {editMode ? 'Refine Colony Details' : 'Initialize New Colony'}
                 </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Address*"
-                  value={formData.location.address}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    location: { ...formData.location, address: e.target.value }
-                  })}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="City"
-                  value={formData.location.city}
-                  onChange={(e) => {
-                    const selectedCity = cities.find(city => city.name === e.target.value)
-                    console.log('Selected city:', selectedCity)
-                    setFormData({
-                      ...formData,
-                      location: {
-                        ...formData.location,
-                        city: e.target.value,
-                        state: selectedCity?.state || formData.location.state
-                      }
-                    })
-                  }}
-                  SelectProps={{
-                    native: false,
-                  }}
-                  helperText={`${cities.length} cities available`}
+                <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5 }}>
+                  Please ensure all mandatory information is accurately filled for legal compliance.
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button 
+                  variant="text" 
+                  onClick={handleCloseForm}
+                  sx={{ color: '#64748b', fontWeight: 600 }}
                 >
-                  <MenuItem value="">Select City</MenuItem>
-                  {cities.length === 0 ? (
-                    <MenuItem disabled>No cities found. Please create cities first.</MenuItem>
-                  ) : (
-                    cities.map((city) => (
-                      <MenuItem key={city._id} value={city.name}>
-                        {city.name}
-                      </MenuItem>
-                    ))
-                  )}
-                </TextField>
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  fullWidth
-                  label="State"
-                  value={formData.location.state}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    location: { ...formData.location, state: e.target.value }
-                  })}
-                  InputProps={{
-                    readOnly: !!formData.location.city
+                  Discard Changes
+                </Button>
+                <Button 
+                  variant="contained" 
+                  onClick={handleSubmit}
+                  sx={{
+                    background: 'linear-gradient(135deg, #41980a 0%, #2e7d32 100%)',
+                    borderRadius: 2,
+                    px: 4,
+                    fontWeight: 700,
+                    boxShadow: '0 8px 20px -5px rgba(65, 152, 10, 0.4)',
                   }}
-                  helperText={formData.location.city ? "Auto-filled from city" : ""}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  fullWidth
-                  label="Pincode"
-                  value={formData.location.pincode}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    location: { ...formData.location, pincode: e.target.value }
-                  })}
-                />
-              </Grid>
+                >
+                  {editMode ? 'Update Colony' : 'Deploy Colony'}
+                </Button>
+              </Box>
+            </Box>
 
-
-              {/* Seller & Purchase Details */}
-              {/* <Grid item xs={12}>
-              <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                Seller & Purchase Details
-              </Typography>
-            </Grid> */}
-
-              {/* <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Calculated Total Area (Gaj)"
-                value={calculateColonyArea()?.areaGaj || ''}
-                InputProps={{ readOnly: true }}
-                helperText="Area auto-calculated from the side measurements"
-              />
-            </Grid> */}
-              {/* Multiple Khatoni Holders Section */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Khatoni Holders Information
-                </Typography>
-
-                {/* Existing Khatoni Holders */}
-                {formData.khatoniHolders.map((holder, index) => (
-                  <Box key={holder.id || index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        Khatoni Holder {index + 1}
-                      </Typography>
-                      <Button
-                        size="small"
-                        color="error"
-                        onClick={() => removeKhatoniHolder(holder.id)}
-                      >
-                        Remove
-                      </Button>
-                    </Box>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Typography variant="body2"><strong>Name:</strong> {holder.name}</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2"><strong>Mobile:</strong> {holder.mobile}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="body2"><strong>Address:</strong> {holder.address}</Typography>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                ))}
-
-                {/* Add New Khatoni Holder */}
-                <Box sx={{ p: 2, border: '2px dashed #e0e0e0', borderRadius: 1 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Add New Khatoni Holder
+            <Grid container spacing={4}>
+              {/* Section 1: Core Identification */}
+              <Grid item xs={12} md={7}>
+                <Paper sx={{ p: 4, borderRadius: 2, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
+                  <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#334155', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 8, height: 24, bgcolor: '#41980a', borderRadius: 1 }} />
+                    Core Project Information
                   </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={5}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        size="small"
-                        label="Khatoni Holder Name"
-                        value={newKhatoniHolder.name}
-                        onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, name: e.target.value })}
+                        label="Colony Name"
+                        placeholder="e.g. Royal Heritage Enclave"
+                        value={formData.name}
+                        onChange={(e) => {
+                          setFormData({ ...formData, name: e.target.value })
+                          clearError('name')
+                        }}
+                        error={!!errors.name}
+                        helperText={errors.name}
+                        required
+                        variant="outlined"
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Purchase Price (₹)"
+                        type="number"
+                        value={formData.purchasePrice}
+                        onChange={(e) => {
+                          setFormData({ ...formData, purchasePrice: e.target.value })
+                          clearError('purchasePrice')
+                        }}
+                        error={!!errors.purchasePrice}
+                        helperText={errors.purchasePrice}
+                        InputProps={{ borderRadius: 2 }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Status"
+                        select
+                        SelectProps={{ native: true }}
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      >
+                        <option value="planning">Initial Planning</option>
+                        <option value="under_construction">Under Development</option>
+                        <option value="ready_to_sell">Active Inventory</option>
+                        <option value="sold_out">Project Completed</option>
+                        <option value="on_hold">On Temporary Hold</option>
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Project Address"
+                        multiline
+                        rows={2}
+                        value={formData.location.address}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          location: { ...formData.location, address: e.target.value }
+                        })}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        select
+                        label="City"
+                        value={formData.location.city}
+                        onChange={(e) => {
+                          const selectedCity = cities.find(city => city.name === e.target.value)
+                          setFormData({
+                            ...formData,
+                            location: {
+                              ...formData.location,
+                              city: e.target.value,
+                              state: selectedCity?.state || formData.location.state
+                            }
+                          })
+                        }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      >
+                        <MenuItem value="">Select City</MenuItem>
+                        {cities.map((city) => (
+                          <MenuItem key={city._id} value={city.name}>{city.name}</MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={3}>
+                      <TextField
+                        fullWidth
+                        label="State"
+                        value={formData.location.state}
+                        InputProps={{ readOnly: true }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#f1f5f9' } }}
                       />
                     </Grid>
                     <Grid item xs={3}>
                       <TextField
                         fullWidth
-                        size="small"
-                        label="Mobile"
-                        value={newKhatoniHolder.mobile}
-                        onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, mobile: e.target.value })}
+                        label="Pincode"
+                        value={formData.location.pincode}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          location: { ...formData.location, pincode: e.target.value }
+                        })}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
-                    </Grid>
-                    <Grid item xs={4}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label="Address"
-                        value={newKhatoniHolder.address}
-                        onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, address: e.target.value })}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Button
-                        variant="contained"
-                        onClick={addKhatoniHolder}
-                        sx={{ width: 'auto', px: 3 }}
-                      >
-                        Add Khatoni Holder
-                      </Button>
                     </Grid>
                   </Grid>
-                </Box>
+                </Paper>
+
+                {/* Section 2: Technical Specs */}
+                <Paper sx={{ p: 4, borderRadius: 2, border: '1px solid #e2e8f0', boxShadow: 'none', mt: 4 }}>
+                  <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: '#334155', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 8, height: 24, bgcolor: '#3b82f6', borderRadius: 1 }} />
+                    Technical Measurements (Feet)
+                  </Typography>
+                  <Grid container spacing={3}>
+                    {['front', 'back', 'left', 'right'].map((side) => (
+                      <Grid item xs={3} key={side}>
+                        <TextField
+                          fullWidth
+                          label={side.charAt(0).toUpperCase() + side.slice(1)}
+                          type="number"
+                          value={formData.sideMeasurements[side]}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            sideMeasurements: { ...formData.sideMeasurements, [side]: e.target.value }
+                          })}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                    ))}
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Estimated Price per Gaj"
+                        type="number"
+                        value={formData.basePricePerGaj}
+                        onChange={(e) => setFormData({ ...formData, basePricePerGaj: e.target.value })}
+                        InputProps={{
+                          startAdornment: <Typography sx={{ mr: 1, color: '#94a3b8' }}>₹</Typography>
+                        }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                    </Grid>
+                  </Grid>
+                </Paper>
               </Grid>
 
+              {/* Section 3: Ownership & Khatoni Holders */}
+              <Grid item xs={12} md={5}>
+                <Paper sx={{ p: 4, borderRadius: 2, border: '1px solid #e2e8f0', boxShadow: 'none', height: '100%', bgcolor: '#fdfdfd' }}>
+                  <Typography variant="h6" fontWeight={700} sx={{ mb: 1, color: '#334155', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 8, height: 24, bgcolor: '#f59e0b', borderRadius: 1 }} />
+                    Registry Ownership
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 3, color: '#64748b' }}>
+                    Documented Khatoni Holders and legal stakeholders.
+                  </Typography>
 
-              {/* <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Latitude"
-                type="number"
-                value={formData.latitude}
-                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                placeholder="e.g., 28.6139"
-                required
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Longitude"
-                type="number"
-                value={formData.longitude}
-                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                placeholder="e.g., 77.2090"
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Layout Image URL (Optional)"
-                value={formData.layoutUrl}
-                onChange={(e) => {
-                  setFormData({ ...formData, layoutUrl: e.target.value })
-                  clearError('layoutUrl')
-                }}
-                error={!!errors.layoutUrl}
-                helperText={errors.layoutUrl}
-                placeholder="https://example.com/layout-image.jpg"
-              />
-            </Grid> */}
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Asking
-                 Price per Gaj (Optional)"
-                  type="number"
-                  value={formData.basePricePerGaj}
-                  onChange={(e) => {
-                    setFormData({ ...formData, basePricePerGaj: e.target.value })
-                    clearError('basePricePerGaj')
-                  }}
-                  error={!!errors.basePricePerGaj}
-                  helperText={errors.basePricePerGaj}
-                />
+                  {/* Add New Holder Inline */}
+                  <Box sx={{ p: 3, bgcolor: 'white', borderRadius: 3, border: '1px dashed #cbd5e1', mb: 3 }}>
+                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, color: '#475569' }}>Assign New Stakeholder</Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <TextField 
+                          fullWidth size="small" label="Full Name" 
+                          value={newKhatoniHolder.name}
+                          onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, name: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <TextField 
+                          fullWidth size="small" label="Mobile" 
+                          value={newKhatoniHolder.mobile}
+                          onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, mobile: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <TextField 
+                          fullWidth size="small" label="Identity No." 
+                          placeholder="Aadhar/PAN"
+                          value={newKhatoniHolder.address}
+                          onChange={(e) => setNewKhatoniHolder({ ...newKhatoniHolder, address: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Button 
+                          fullWidth 
+                          variant="outlined" 
+                          onClick={addKhatoniHolder}
+                          sx={{ 
+                            borderRadius: 2, 
+                            textTransform: 'none', 
+                            fontWeight: 700,
+                            borderColor: '#cbd5e1',
+                            color: '#475569'
+                          }}
+                        >
+                          Add to Ownership List
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </Box>
+
+                  {/* Holders List */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {formData.khatoniHolders.length === 0 ? (
+                      <Box sx={{ textAlign: 'center', py: 4, opacity: 0.5 }}>
+                        <Typography variant="body2">No shareholders assigned yet.</Typography>
+                      </Box>
+                    ) : (
+                      formData.khatoniHolders.map((holder, index) => (
+                        <Box 
+                          key={holder.id || index} 
+                          sx={{ 
+                            p: 2, 
+                            bgcolor: 'white', 
+                            borderRadius: 3, 
+                            border: '1px solid #e2e8f0',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                          }}
+                        >
+                          <Box>
+                            <Typography variant="body2" fontWeight={700} color="#1e293b">{holder.name}</Typography>
+                            <Typography variant="caption" color="#64748b">{holder.mobile} • {holder.address}</Typography>
+                          </Box>
+                          <IconButton size="small" color="error" onClick={() => removeKhatoniHolder(holder.id)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))
+                    )}
+                  </Box>
+                </Paper>
               </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Status"
-                  select
-                  SelectProps={{ native: true }}
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            </Grid>
+
+            {/* Bottom Actions for Mobile or scroll end */}
+            <Box sx={{ mt: 6, display: 'flex', justifyContent: 'center', pb: 10 }}>
+               <Button 
+                  variant="outlined" 
+                  onClick={handleCloseForm}
+                  sx={{ mr: 2, borderRadius: 2, px: 4 }}
                 >
-                  <option value="planning">Planning</option>
-                  <option value="under_construction">Under Construction</option>
-                  <option value="ready_to_sell">Ready to Sell</option>
-                  <option value="sold_out">Sold Out</option>
-                  <option value="on_hold">On Hold</option>
-                </TextField>
-              </Grid>
-
-              {/* Side Measurements */}
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold" mt={2} mb={1}>
-                  Colony Side Measurements (in Feet)
-                </Typography>
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  fullWidth
-                  label="Front (ft)"
-                  type="number"
-                  value={formData.sideMeasurements.front}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    sideMeasurements: { ...formData.sideMeasurements, front: e.target.value }
-                  })}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  fullWidth
-                  label="Back (ft)"
-                  type="number"
-                  value={formData.sideMeasurements.back}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    sideMeasurements: { ...formData.sideMeasurements, back: e.target.value }
-                  })}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  fullWidth
-                  label="Left (ft)"
-                  type="number"
-                  value={formData.sideMeasurements.left}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    sideMeasurements: { ...formData.sideMeasurements, left: e.target.value }
-                  })}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  fullWidth
-                  label="Right (ft)"
-                  type="number"
-                  value={formData.sideMeasurements.right}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    sideMeasurements: { ...formData.sideMeasurements, right: e.target.value }
-                  })}
-                />
-              </Grid>
-
-
-            </Grid>
-
-            <Box display="flex" justifyContent="flex-end" gap={2} mt={4}>
-              <Button onClick={handleCloseForm} size="large">Cancel</Button>
-              <Button onClick={handleSubmit} variant="contained" size="large">
-                {editMode ? 'Update Colony' : 'Create Colony'}
-              </Button>
+                  Cancel
+                </Button>
+                <Button 
+                  variant="contained" 
+                  onClick={handleSubmit}
+                  sx={{
+                    background: 'linear-gradient(135deg, #41980a 0%, #2e7d32 100%)',
+                    borderRadius: 2,
+                    px: 6,
+                    fontWeight: 700,
+                  }}
+                >
+                  Confirm & Save Project
+                </Button>
             </Box>
           </Box>
         </Box>
       )}
-      {/* Admin Password Confirmation Dialog - Colony Delete */}
-      <Dialog open={deleteColonyDialog.open} onClose={() => setDeleteColonyDialog(prev => ({ ...prev, open: false }))} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#f44336', color: 'white', fontWeight: 'bold' }}>
-          🔒 Admin Password Required
+      {/* Admin Password Confirmation Dialog - Colony Delete Redesign */}
+      <Dialog 
+        open={deleteColonyDialog.open} 
+        onClose={() => setDeleteColonyDialog(prev => ({ ...prev, open: false }))} 
+        maxWidth="xs" 
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 2, overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }
+        }}
+      >
+        <DialogTitle sx={{ bgcolor: '#fef2f2', color: '#dc2626', fontWeight: 800, px: 3, pt: 3, pb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ bgcolor: '#fee2e2', p: 1, borderRadius: 2, display: 'flex' }}>
+            <Delete sx={{ fontSize: 20 }} />
+          </Box>
+          Confirm Project Deletion
         </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Enter your admin password to confirm colony deletion. This action cannot be undone.
+        <DialogContent sx={{ pt: 2, px: 3 }}>
+          <Typography variant="body2" sx={{ color: '#64748b', mb: 3, lineHeight: 1.6 }}>
+            You are about to permanently delete this colony project. Please enter your administrator password to authenticate this action.
           </Typography>
           <TextField
             fullWidth
-            label="Admin Password"
+            label="Administrator Password"
+            placeholder="••••••••"
             type={deleteColonyDialog.showPwd ? 'text' : 'password'}
             value={deleteColonyDialog.password}
             onChange={(e) => setDeleteColonyDialog(prev => ({ ...prev, password: e.target.value }))}
             onKeyDown={(e) => e.key === 'Enter' && confirmDeleteColony()}
             autoFocus
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton size="small" onClick={() => setDeleteColonyDialog(prev => ({ ...prev, showPwd: !prev.showPwd }))}>
-                    <Visibility fontSize="small" />
+                    {deleteColonyDialog.showPwd ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                   </IconButton>
                 </InputAdornment>
               )
             }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
+        <DialogActions sx={{ p: 3, pt: 1, gap: 1 }}>
           <Button
-            variant="outlined"
+            fullWidth
+            variant="text"
             onClick={() => setDeleteColonyDialog({ open: false, colonyId: null, password: '', loading: false, showPwd: false })}
             disabled={deleteColonyDialog.loading}
+            sx={{ borderRadius: 2, color: '#64748b', fontWeight: 700, textTransform: 'none' }}
           >
-            Cancel
+            Go Back
           </Button>
           <Button
+            fullWidth
             variant="contained"
             color="error"
             onClick={confirmDeleteColony}
             disabled={deleteColonyDialog.loading || !deleteColonyDialog.password}
+            sx={{ 
+              borderRadius: 2, 
+              fontWeight: 700, 
+              textTransform: 'none',
+              bgcolor: '#dc2626',
+              '&:hover': { bgcolor: '#b91c1c' },
+              boxShadow: 'none'
+            }}
           >
-            {deleteColonyDialog.loading ? 'Verifying...' : 'Delete Colony'}
+            {deleteColonyDialog.loading ? 'Authenticating...' : 'Delete Project'}
           </Button>
         </DialogActions>
       </Dialog>

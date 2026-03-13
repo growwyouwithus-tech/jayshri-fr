@@ -426,22 +426,33 @@ const SoldPlotManagement = () => {
                 </MenuItem>
             </Menu>
 
-            <TableContainer component={Paper} sx={{ maxHeight: '75vh' }}>
-                <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
+            <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 280px)', width: '100%', overflowX: 'auto', borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                <Table stickyHeader size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot No</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Colony</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Khatoni Holders / Owners</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Customer</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Area (Gaj)</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sold Price/Gaj</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Price</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Paid Amount</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Remaining</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Facing</TableCell>
-                            <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Status</TableCell>
-                            <TableCell align="right" sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Actions</TableCell>
+                            {[
+                                'Plot No', 'Colony', 'Holders/Owners', 'Customer', 'Area', 
+                                'Sold Rate', 'Total', 'Paid', 'Due', 'Facing', 'Status', 'Actions'
+                            ].map((label, idx) => (
+                                <TableCell 
+                                    key={label}
+                                    align={label === 'Actions' ? 'right' : 'left'}
+                                    sx={{ 
+                                        bgcolor: '#41980a', 
+                                        color: '#FFFFFF', 
+                                        fontWeight: 800,
+                                        fontSize: '0.65rem',
+                                        textTransform: 'uppercase',
+                                        py: 1,
+                                        px: 0.5,
+                                        borderRight: idx === 11 ? 'none' : '1px solid rgba(255,255,255,0.2)',
+                                        zIndex: 10,
+                                        lineHeight: 1.1
+                                    }}
+                                >
+                                    {label}
+                                </TableCell>
+                            ))}
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -505,7 +516,19 @@ const SoldPlotManagement = () => {
                                     }
 
                                     return (
-                                        <TableRow key={booking._id} hover>
+                                        <TableRow 
+                                            key={booking._id} 
+                                            hover
+                                            sx={{ 
+                                                '& td': { 
+                                                    borderRight: '1px solid #e2e8f0', 
+                                                    py: 0.5, 
+                                                    px: 0.5,
+                                                    fontSize: '0.75rem'
+                                                },
+                                                '& td:last-child': { borderRight: 'none' }
+                                            }}
+                                        >
                                             <TableCell>{plotNo}</TableCell>
                                             <TableCell>{colonyName}</TableCell>
                                             <TableCell>
@@ -557,12 +580,13 @@ const SoldPlotManagement = () => {
                                                     sx={getStatusStyle(status)}
                                                 />
                                             </TableCell>
-                                            <TableCell align="right">
+                                            <TableCell align="right" sx={{ whiteSpace: 'nowrap', minWidth: '70px' }}>
                                                 <Button
                                                     size="small"
                                                     variant="contained"
-                                                    startIcon={<Visibility />}
+                                                    startIcon={<Visibility sx={{ fontSize: '0.9rem !important' }} />}
                                                     onClick={() => navigate(`/admin/bookings/${booking._id}`, { state: { from: '/admin/sold-plots' } })}
+                                                    sx={{ fontSize: '0.65rem', py: 0.3, px: 1, minWidth: 'auto' }}
                                                 >
                                                     View
                                                 </Button>

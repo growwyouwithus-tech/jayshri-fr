@@ -81,7 +81,8 @@ const StaffManagement = () => {
       // Show all users except buyers (staff includes: agent, lawyer, manager, employee, accountant, etc.)
       let staffUsers = allUsers.filter(user => {
         const roleName = user.roleName?.toLowerCase()
-        return roleName !== 'buyer'
+        const email = user.email?.toLowerCase()
+        return roleName !== 'buyer' && email !== 'admin@jayshree.com' && roleName !== 'admin'
       })
 
       if (staffUsers.length === 0) {
@@ -589,7 +590,7 @@ return (
         </MenuItem>
       </Menu>
 
-      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)', width: '100%', overflowX: 'auto' }}>
         <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>

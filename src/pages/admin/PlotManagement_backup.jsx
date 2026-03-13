@@ -147,8 +147,6 @@ const PlotManagement = () => {
   const [selectedImage, setSelectedImage] = useState(null)
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [errors, setErrors] = useState({})
-  // Delete password dialog state
-  const [deleteDialog, setDeleteDialog] = useState({ open: false, plotId: null, password: '', loading: false, showPwd: false })
   // Owner selection state
   const [availableOwners, setAvailableOwners] = useState([])
   const [selectedOwnerIds, setSelectedOwnerIds] = useState([])
@@ -747,6 +745,7 @@ const PlotManagement = () => {
       paidAmount: '',
       paymentSlip: null,
       registryDocuments: [],
+      registryPdf: null,
       registryPdf: null,
       registryStatus: 'pending',
       // Reset new fields
@@ -1442,7 +1441,7 @@ const PlotManagement = () => {
       })
 
       if (response.data.success) {
-        toast.success('Plot updated successfully! âœ…', {
+        toast.success('Plot updated successfully! ✅', {
           position: 'top-right',
           autoClose: 3000,
           hideProgressBar: false,
@@ -1469,28 +1468,29 @@ const PlotManagement = () => {
     }
   }
 
-  const handleDeletePlot = (plotId) => {
-    setDeleteDialog({ open: true, plotId, password: '', loading: false, showPwd: false })
-  }
-
-  const confirmDeletePlot = async () => {
-    if (!deleteDialog.password) {
-      toast.error('Please enter your password')
-      return
-    }
-    setDeleteDialog(prev => ({ ...prev, loading: true }))
-    try {
-      // Verify admin password first
-      await axios.post('/auth/verify-password', { password: deleteDialog.password })
-      // Password OK — now delete
-      await axios.delete(`/plots/${deleteDialog.plotId}`)
-      toast.success('Plot deleted successfully! ðŸ—‘ï¸', { position: 'top-right', autoClose: 3000 })
-      setDeleteDialog({ open: false, plotId: null, password: '', loading: false, showPwd: false })
-      fetchPlots(filterColony)
-    } catch (error) {
-      const msg = error.response?.data?.message || 'Failed to delete plot'
-      toast.error(msg, { position: 'top-right', autoClose: 4000 })
-      setDeleteDialog(prev => ({ ...prev, loading: false }))
+  const handleDeletePlot = async (plotId) => {
+    if (window.confirm('Are you sure you want to delete this plot?')) {
+      try {
+        await axios.delete(`/plots/${plotId}`)
+        toast.success('Plot deleted successfully! 🗑️', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        })
+        fetchPlots(filterColony)
+      } catch (error) {
+        toast.error('Failed to delete plot. Please try again.', {
+          position: 'top-right',
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        })
+      }
     }
   }
 
@@ -1549,13 +1549,6 @@ const PlotManagement = () => {
         fontWeight: 'bold'
       }
     }
-    if (status === 'available') {
-      return {
-        backgroundColor: '#ef4444',
-        color: '#fff',
-        fontWeight: 'bold'
-      }
-    }
     return {}
   }
 
@@ -1598,30 +1591,11 @@ const PlotManagement = () => {
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
-    const tableContainer = document.getElementById('plot-table-container')
-    if (tableContainer) {
-      tableContainer.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-    // Fallback for main window scroll
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    const mainContent = document.getElementById('main-content')
-    if (mainContent) {
-      mainContent.scrollTo({ top: 0, behavior: 'smooth' })
-    }
   }
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10))
     setPage(0)
-    const tableContainer = document.getElementById('plot-table-container')
-    if (tableContainer) {
-      tableContainer.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    const mainContent = document.getElementById('main-content')
-    if (mainContent) {
-      mainContent.scrollTo({ top: 0, behavior: 'smooth' })
-    }
   }
 
   // ============================================
@@ -1713,7 +1687,7 @@ const PlotManagement = () => {
     )
   }
 
-  // Show view form if viewing plot
+  // Show view form if viewing plot - Excel-like format
   if (viewDialogOpen && viewingPlot) {
     // Get holders based on owner type
     const holders = viewingPlot.ownerType === 'owner'
@@ -1729,7 +1703,7 @@ const PlotManagement = () => {
       : getColonyKhatoniHolders(viewingPlot.colonyId)
 
     return (
-      <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" fontWeight="bold">
             Plot Details - {viewingPlot.plotNo}
@@ -1863,7 +1837,7 @@ const PlotManagement = () => {
                               </Typography>
                               {(holder?.mobile || holder?.phone || holder?.contact) && (
                                 <Typography variant="caption" color="text.secondary">
-                                  📱 {holder?.mobile || holder?.phone || holder?.contact}
+                                  📞 {holder?.mobile || holder?.phone || holder?.contact}
                                 </Typography>
                               )}
                               {holder?.address && (
@@ -2186,7 +2160,6 @@ const PlotManagement = () => {
       </Box >
     )
   }
-
 
   // Show form if add or edit dialog is open
   if (addDialogOpen || editDialogOpen) {
@@ -5568,175 +5541,84 @@ const PlotManagement = () => {
   }
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3 }, zoom: '0.9' }}>
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          mb: 4,
-          borderRadius: 2,
-          border: '1px solid #e2e8f0',
-          bgcolor: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: '6px',
-            bgcolor: '#41980a'
-          }
-        }}
-      >
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={3}>
-          <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ color: '#1e293b', mb: 0.5, letterSpacing: '-0.5px' }}>
-              Plot Management
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
-              Manage your real estate plots, track status, and customer bookings
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-            <TextField
-              size="small"
-              placeholder="Search plot, colony, customer..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setPage(0)
-              }}
-              sx={{
-                minWidth: 280,
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: '#f8fafc',
-                  '&:hover': { bgcolor: '#f1f5f9' }
-                }
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ color: '#64748b' }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              select
-              size="small"
-              label="Filter by Colony"
-              value={filterColony}
-              onChange={(e) => handleFilterChange(e.target.value)}
-              sx={{
-                minWidth: 180,
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: '#f8fafc'
-                }
-              }}
-            >
-              <MenuItem value="">All Colonies</MenuItem>
-              {colonies.map((colony) => (
-                <MenuItem key={colony._id} value={colony._id}>
-                  {colony.name}
-                </MenuItem>
-              ))}
-            </TextField>
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Typography variant="h4" fontWeight="bold">
+          Plot Management
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <TextField
+            size="small"
+            placeholder="Search by plot no, colony, customer..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setPage(0)
+            }}
+            sx={{ minWidth: 300 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            select
+            size="small"
+            label="Filter by Colony"
+            value={filterColony}
+            onChange={(e) => handleFilterChange(e.target.value)}
+            sx={{ minWidth: 200 }}
+          >
+            <MenuItem value="">All Colonies</MenuItem>
+            {colonies.map((colony) => (
+              <MenuItem key={colony._id} value={colony._id}>
+                {colony.name}
+              </MenuItem>
+            ))}
+          </TextField>
 
-            <TextField
-              select
-              size="small"
-              label="Filter by Status"
-              value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value)
-                setPage(0)
-              }}
-              sx={{
-                minWidth: 180,
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: '#f8fafc'
-                }
-              }}
-            >
-              <MenuItem value="">All Status</MenuItem>
-              <MenuItem value="sold_registered">Sold & Registered</MenuItem>
-              <MenuItem value="sold_not_registered">Sold but Not Registered</MenuItem>
-              <MenuItem value="booked">Booked</MenuItem>
-              <MenuItem value="available">Available</MenuItem>
-            </TextField>
+          <TextField
+            select
+            size="small"
+            label="Filter by Status"
+            value={filterStatus}
+            onChange={(e) => {
+              setFilterStatus(e.target.value)
+              setPage(0)
+            }}
+            sx={{ minWidth: 220 }}
+          >
+            <MenuItem value="">All Status</MenuItem>
+            <MenuItem value="sold_registered">Sold & Registered</MenuItem>
+            <MenuItem value="sold_not_registered">Sold but Not Registered</MenuItem>
+            <MenuItem value="booked">Booked</MenuItem>
+            <MenuItem value="available">Available</MenuItem>
+          </TextField>
 
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={openAddDialog}
-              sx={{
-                background: 'linear-gradient(135deg, #41980a 0%, #2d6b07 100%)',
-                boxShadow: '0 4px 12px rgba(65, 152, 10, 0.25)',
-                px: 3,
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #2d6b07 0%, #1f4d05 100%)',
-                  boxShadow: '0 6px 16px rgba(65, 152, 10, 0.35)',
-                }
-              }}
-            >
-              Add Plot
-            </Button>
-          </Box>
+          <Button variant="contained" startIcon={<Add />} onClick={openAddDialog}>
+            Add Plot
+          </Button>
         </Box>
-      </Paper>
+      </Box>
 
-      <TableContainer
-        id="plot-table-container"
-        component={Paper}
-        sx={{
-          maxHeight: 'calc(100vh - 250px)',
-          borderRadius: 2,
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-          overflow: 'auto', 
-          '& .MuiTable-root': {
-            borderCollapse: 'collapse',
-          }
-        }}
-      >
-        <Table stickyHeader size="small">
+      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+        <Table stickyHeader sx={{ '& td, & th': { border: '1px solid #000' } }}>
           <TableHead>
             <TableRow>
-              {[
-                { label: 'Plot No', align: 'left', width: 'auto' },
-                { label: 'Colony', align: 'left', width: 'auto' },
-                { label: 'Holder/Owner', align: 'left', width: 'auto' },
-                { label: 'Area', align: 'left', width: 'auto' },
-                { label: 'Asking', align: 'left', width: 'auto' },
-                { label: 'Sold', align: 'left', width: 'auto' },
-                { label: 'Total', align: 'left', width: 'auto' },
-                { label: 'Due', align: 'left', width: 'auto' },
-                { label: 'Facing', align: 'left', width: 'auto' },
-                { label: 'Status', align: 'center', width: 'auto' },
-                { label: 'Actions', align: 'right', width: 'auto' }
-              ].map((column) => (
-                <TableCell
-                  key={column.label}
-                  align={column.align}
-                  sx={{
-                    bgcolor: '#41980a',
-                    color: '#FFFFFF',
-                    fontWeight: 800,
-                    fontSize: '0.65rem',
-                    textTransform: 'uppercase',
-                    py: 1,
-                    px: 0.5,
-                    borderRight: '1px solid rgba(255,255,255,0.2)',
-                    '&:last-child': { borderRight: 'none' },
-                    zIndex: 10,
-                    lineHeight: 1.1
-                  }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Plot No</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Colony</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Khatoni Holders / Owners</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Area (Gaj)</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Asking Price/Gaj</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Sold Price/Gaj</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Total Price</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Remaining Payment</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Facing</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Status</TableCell>
+              <TableCell sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', fontWeight: 'bold', border: '1px solid #000' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -5759,65 +5641,39 @@ const PlotManagement = () => {
                 const displayTotalPrice = finalTotalPrice || plot.totalPrice;
 
                 return (
-                  <TableRow
-                    key={plot._id}
-                    hover
-                    sx={{
-                      '&:hover': { bgcolor: '#f8fafc !important' },
-                      transition: 'background-color 0.2s',
-                      '& td': { 
-                        borderRight: '1px solid #e2e8f0',
-                        py: 0.5,
-                        px: 0.5,
-                        fontSize: '0.75rem'
-                      },
-                      '& td:last-child': { borderRight: 'none' }
-                    }}
-                  >
-                    <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{plot.plotNo}</TableCell>
-                    <TableCell sx={{ color: '#64748b', fontSize: '0.7rem' }}>{plot.colonyId?.name.toUpperCase()}</TableCell>
+                  <TableRow key={plot._id} hover>
+                    <TableCell>{plot.plotNo}</TableCell>
+                    <TableCell>{plot.colonyId?.name.toUpperCase()}</TableCell>
                     <TableCell>
                       {plot.ownerType === 'khatoniHolder' ? (
-                        <Chip
-                          label="Khatoni"
-                          size="small"
-                          sx={{
-                            height: 20,
-                            fontSize: '0.65rem',
-                            bgcolor: '#e0f2fe',
-                            color: '#0369a1',
-                            fontWeight: 700
-                          }}
-                        />
+                        <Chip label="Khatoni Holder" size="small" color="info" />
                       ) : (
-                        <Chip
-                          label="Owner"
-                          size="small"
-                          sx={{
-                            height: 20,
-                            fontSize: '0.65rem',
-                            bgcolor: '#f1f5f9',
-                            color: '#475569',
-                            fontWeight: 700
-                          }}
-                        />
+                        <Chip label="Owner" size="small" />
                       )}
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>{Number(plot.areaGaj).toFixed(3)}</TableCell>
-                    <TableCell sx={{ color: '#64748b' }}>₹{Number(plot.pricePerGaj).toLocaleString()}</TableCell>
+                    <TableCell>{Number(plot.areaGaj).toFixed(3)}</TableCell>
+                    <TableCell>₹{Number(plot.pricePerGaj).toLocaleString()}</TableCell>
                     <TableCell>
                       {finalPricePerGaj ? (
-                        <Typography sx={{ fontWeight: 700, color: '#41980a' }}>
-                          ₹{Number(finalPricePerGaj).toLocaleString()}
-                        </Typography>
+                        <Chip
+                          label={`₹${Number(finalPricePerGaj).toLocaleString()}`}
+                          size="small"
+                          color="success"
+                        />
                       ) : (
                         <Typography variant="body2" color="text.secondary">-</Typography>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Typography sx={{ fontWeight: 800, color: '#1e293b' }}>
-                        ₹{Number(displayTotalPrice).toLocaleString()}
-                      </Typography>
+                      <strong>₹{Number(displayTotalPrice).toLocaleString()}</strong>
+                      {/* {plot.finalPrice && (
+                        <Chip 
+                          label="Final" 
+                          size="small" 
+                          color="success" 
+                          sx={{ ml: 1 }}
+                        />
+                      )} */}
                     </TableCell>
                     <TableCell>
                       {(() => {
@@ -5825,11 +5681,11 @@ const PlotManagement = () => {
                         const remaining = displayTotalPrice - paidAmount;
                         return (
                           <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: remaining > 0 ? '#ef4444' : '#41980a' }}>
+                            <Typography variant="body2" fontWeight={600} color={remaining > 0 ? 'error.main' : 'success.main'}>
                               ₹{Number(remaining).toLocaleString()}
                             </Typography>
                             {paidAmount > 0 && (
-                              <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', mt: -0.5 }}>
+                              <Typography variant="caption" color="text.secondary">
                                 Paid: ₹{Number(paidAmount).toLocaleString()}
                               </Typography>
                             )}
@@ -5837,26 +5693,27 @@ const PlotManagement = () => {
                         );
                       })()}
                     </TableCell>
-                    <TableCell sx={{ color: '#64748b', fontSize: '0.7rem' }}>{getFacingLabel(plot.facing)}</TableCell>
-                    <TableCell align="center">
+                    <TableCell>{getFacingLabel(plot.facing)}</TableCell>
+                    <TableCell>
                       <Chip
                         label={plot.status.toUpperCase()}
+                        color={getStatusColor(plot.status)}
                         size="small"
-                        sx={{
-                          ...getStatusStyle(plot.status),
-                          fontWeight: 800,
-                          fontSize: '0.65rem',
-                          height: 24,
-                          borderRadius: '4px'
-                        }}
+                        sx={getStatusStyle(plot.status)}
                       />
                     </TableCell>
-                    <TableCell align="right">
-                      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
                         <IconButton
                           size="small"
-                          sx={{ color: '#64748b', '&:hover': { color: '#0ea5e9', bgcolor: '#f0f9ff' } }}
+                          color="info"
                           onClick={() => {
+                            console.log('=== VIEWING PLOT DATA ===')
+                            console.log('Full Plot:', plot)
+                            console.log('Dimensions:', plot.dimensions)
+                            console.log('Side Measurements:', plot.sideMeasurements)
+                            console.log('Commission Percentage:', plot.commissionPercentage)
+                            console.log('Commission Amount:', plot.commissionAmount)
                             setViewingPlot(plot)
                             setViewDialogOpen(true)
                           }}
@@ -5866,16 +5723,32 @@ const PlotManagement = () => {
                         </IconButton>
                         <IconButton
                           size="small"
-                          sx={{ color: '#64748b', '&:hover': { color: '#41980a', bgcolor: '#f0fdf4' } }}
+                          color="primary"
                           onClick={() => openEditDialog(plot)}
                           title="Edit Plot"
                         >
                           <Edit fontSize="small" />
                         </IconButton>
-
                         <IconButton
                           size="small"
-                          sx={{ color: '#64748b', '&:hover': { color: '#ef4444', bgcolor: '#fef2f2' } }}
+                          color="success"
+                          onClick={() => {
+                            setPaymentPlot(plot)
+                            setPaymentData({
+                              amount: '',
+                              mode: '',
+                              date: new Date().toISOString().split('T')[0],
+                              notes: ''
+                            })
+                            setPaymentDialogOpen(true)
+                          }}
+                          title="Add Payment"
+                        >
+                          <Payment fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
                           onClick={() => handleDeletePlot(plot._id)}
                           title="Delete Plot"
                         >
@@ -5897,7 +5770,6 @@ const PlotManagement = () => {
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={[20, 50, 100]}
-          sx={{ borderTop: '1px solid #cbd5e1' }}
         />
       </TableContainer>
 
@@ -5924,55 +5796,7 @@ const PlotManagement = () => {
           )}
         </Box>
       </Dialog>
-
-      {/* Admin Password Confirmation Dialog - Plot Delete */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog(prev => ({ ...prev, open: false }))} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#f44336', color: 'white', fontWeight: 'bold' }}>
-          🔒 Admin Password Required
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Enter your admin password to confirm plot deletion. This action cannot be undone.
-          </Typography>
-          <TextField
-            fullWidth
-            label="Admin Password"
-            type={deleteDialog.showPwd ? 'text' : 'password'}
-            value={deleteDialog.password}
-            onChange={(e) => setDeleteDialog(prev => ({ ...prev, password: e.target.value }))}
-            onKeyDown={(e) => e.key === 'Enter' && confirmDeletePlot()}
-            autoFocus
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setDeleteDialog(prev => ({ ...prev, showPwd: !prev.showPwd }))}>
-                    {deleteDialog.showPwd ? <Visibility fontSize="small" /> : <Visibility fontSize="small" />}
-                  </IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button
-            variant="outlined"
-            onClick={() => setDeleteDialog({ open: false, plotId: null, password: '', loading: false, showPwd: false })}
-            disabled={deleteDialog.loading}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={confirmDeletePlot}
-            disabled={deleteDialog.loading || !deleteDialog.password}
-          >
-            {deleteDialog.loading ? 'Verifying...' : 'Delete Plot'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
-
   )
 }
 
