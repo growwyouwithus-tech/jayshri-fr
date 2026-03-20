@@ -149,8 +149,10 @@ const MainLayout = () => {
         { text: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' },
       ],
       'Agent': [
-        { text: 'My Sales', icon: <Receipt />, path: '/agent/dashboard' },
-        { text: 'Commissions', icon: <TrendingUp />, path: '/agent/commissions' },
+        { text: 'Dashboard', icon: <DashboardIcon />, path: '/agent/dashboard' },
+        { text: 'My Commissions', icon: <TrendingUp />, path: '/agent/commissions' },
+        { text: 'My Properties', icon: <Home />, path: '/agent/properties' },
+        { text: 'My Customers', icon: <People />, path: '/agent/customers' },
       ],
     }
 

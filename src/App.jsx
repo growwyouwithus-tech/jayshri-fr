@@ -51,8 +51,12 @@ import LawyerDashboard from './pages/lawyer/LawyerDashboard'
 import RegistryList from './pages/lawyer/RegistryList'
 
 // Agent Pages
+import AgentLayout from './components/layouts/AgentLayout'
 import AgentDashboard from '@/pages/agent/AgentDashboard'
 import AgentCommissions from '@/pages/agent/AgentCommissions'
+import AgentProperties from '@/pages/agent/AgentProperties'
+import AgentCustomers from '@/pages/agent/AgentCustomers'
+import AgentProfile from '@/pages/agent/AgentProfile'
 import Profile from '@/pages/Profile'
 import Notifications from '@/pages/Notifications'
 
@@ -164,12 +168,6 @@ function App() {
           <Route path="registry" element={<RoleRoute roles={['Lawyer']}><RegistryList /></RoleRoute>} />
         </Route>
 
-        {/* Agent Routes */}
-        <Route path="/agent">
-          <Route index element={<Navigate to="/agent/dashboard" replace />} />
-          <Route path="dashboard" element={<RoleRoute roles={['Agent']}><AgentDashboard /></RoleRoute>} />
-          <Route path="commissions" element={<RoleRoute roles={['Agent']}><AgentCommissions /></RoleRoute>} />
-        </Route>
 
         {/* Customer Routes - Public Access */}
         <Route path="/customer">
@@ -188,6 +186,16 @@ function App() {
           </RoleRoute>
         </PrivateRoute>
       } />
+
+      {/* Agent Standalone Routes */}
+      <Route path="/agent" element={<PrivateRoute><RoleRoute roles={['Agent']}><AgentLayout /></RoleRoute></PrivateRoute>}>
+        <Route index element={<Navigate to="/agent/dashboard" replace />} />
+        <Route path="dashboard" element={<AgentDashboard />} />
+        <Route path="commissions" element={<AgentCommissions />} />
+        <Route path="properties" element={<AgentProperties />} />
+        <Route path="customers" element={<AgentCustomers />} />
+        <Route path="profile" element={<AgentProfile />} />
+      </Route>
 
       {/* Public Customer Routes */}
       <Route path="/customer">
