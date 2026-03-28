@@ -223,7 +223,8 @@ const MainLayout = () => {
 
     // Calculator
     if (hasPermission('colony_read') || hasPermission('colonies_read') || hasPermission('calculator_read')) {
-      dynamicItems.push({ text: 'Calculator', icon: <Calculate />, path: '/admin/calculator' })
+      dynamicItems.push({ text: 'Plot Calculator', icon: <Calculate />, path: '/admin/calculator' })
+      dynamicItems.push({ text: 'Customer Calculator', icon: <Receipt />, path: '/admin/customer-calculator' })
     }
 
     // Kisan Payment
