@@ -11,44 +11,46 @@ import {
   FormControlLabel,
   Divider,
 } from '@mui/material';
-import { Print as PrintIcon, Save as SaveIcon } from '@mui/icons-material';
+import { Print as PrintIcon, Save as SaveIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+
+const initialFormData = {
+  // Client section
+  clientName: '',
+  clientCode: '',
+  address1: '',
+  address2: '',
+  nominee: '',
+  mobileNo: '',
+  relation: '',
+  referralCode: '',
+
+  // Plot & Government Value section
+  colonyName: '',
+  marketPrice: '',
+  totalPrice: '',
+  plotNo: '',
+  khasraNo: '',
+  dim1: '', dim2: '', dim3: '', dim4: '',
+  direction: '',
+  dirS: false, dirW: false, dirE: false, dirN: false,
+  totalPriceExtra: '', // (Effect Corner 20/10% extra)
+
+  // Tehsil section
+  circlePrice: '', // Gov Price
+  priceInMtr: '',
+  plcCorner: false,
+  plcPark: false,
+  plcBigRoad: false,
+  roadAbove9m: false,
+  road9m: false,
+  gender: 'male', // male or female
+  advFee: '',
+  totalAPay: '',
+  totalBPay: '',
+};
 
 const CustomerCalculator = () => {
-  const [formData, setFormData] = useState({
-    // Client section
-    clientName: '',
-    clientCode: '',
-    address1: '',
-    address2: '',
-    nominee: '',
-    mobileNo: '',
-    relation: '',
-    referralCode: '',
-
-    // Plot & Government Value section
-    colonyName: '',
-    marketPrice: '',
-    totalPrice: '',
-    plotNo: '',
-    khasraNo: '',
-    dim1: '', dim2: '', dim3: '', dim4: '',
-    direction: '',
-    dirS: false, dirW: false, dirE: false, dirN: false,
-    totalPriceExtra: '', // (Effect Corner 20/10% extra)
-
-    // Tehsil section
-    circlePrice: '', // Gov Price
-    priceInMtr: '',
-    plcCorner: false,
-    plcPark: false,
-    plcBigRoad: false,
-    roadAbove9m: false,
-    road9m: false,
-    gender: 'male', // male or female
-    advFee: '',
-    totalAPay: '',
-    totalBPay: '',
-  });
+  const [formData, setFormData] = useState(initialFormData);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -70,8 +72,21 @@ const CustomerCalculator = () => {
     // Area in Sq.Yards (Gaj)
     const avgLen = (d1 + d2) / 2;
     const avgWid = (d3 + d4) / 2;
-    const areaGaj = (avgLen * avgWid) / 9;
-    const areaMtr = areaGaj * 0.836127;
+    const rawAreaGaj = (avgLen * avgWid) / 9;
+    const areaGaj = parseFloat(rawAreaGaj.toFixed(2));
+    
+    // Area in Sq.Meters
+    const rawAreaMtr = areaGaj * 0.836127;
+    const areaMtr = parseFloat(rawAreaMtr.toFixed(2));
+
+    const marketPrice = parseFloat(formData.marketPrice) || 0;
+    const topTotalPrice = marketPrice * areaGaj;
+
+    let extraPerc = 0;
+    if (formData.plcCorner) extraPerc += 0.20;
+    if (formData.plcPark) extraPerc += 0.10;
+    const hasCornerOrPark = formData.plcCorner || formData.plcPark;
+    const topTotalPriceExtra = hasCornerOrPark ? topTotalPrice * (1 + extraPerc) : '';
 
     const govPrice = parseFloat(formData.circlePrice) || 0;
     const priceInMtr = govPrice ? (govPrice / 0.836127).toFixed(2) : '';
@@ -81,7 +96,7 @@ const CustomerCalculator = () => {
 
     // PLC Extra Plot Per (20%)
     const cornerExtra = formData.plcCorner ? (govValue * 0.20) : 0;
-    
+
     // Road Above 9m (1000 per gaj extra)
     const roadExtra = formData.roadAbove9m ? (1000 * areaGaj) : 0;
 
@@ -100,6 +115,8 @@ const CustomerCalculator = () => {
     return {
       areaGaj: areaGaj.toFixed(2),
       areaMtr: areaMtr.toFixed(2),
+      topTotalPrice: topTotalPrice > 0 ? topTotalPrice.toFixed(2) : '',
+      topTotalPriceExtra: topTotalPriceExtra !== '' ? topTotalPriceExtra.toFixed(2) : '',
       priceInMtr,
       cornerExtra: cornerExtra.toFixed(2),
       roadExtra: roadExtra.toFixed(2),
@@ -111,6 +128,10 @@ const CustomerCalculator = () => {
   }, [formData]);
 
   const handlePrint = () => window.print();
+
+  const handleRefresh = () => {
+    setFormData(initialFormData);
+  };
 
   const boxStyle = {
     '& .MuiOutlinedInput-root': {
@@ -129,33 +150,33 @@ const CustomerCalculator = () => {
     fontWeight: 700,
     textDecoration: 'underline',
     textAlign: 'center',
-    mb: 3,
-    fontSize: '24px'
+    mb: 1.5,
+    fontSize: '20px'
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }} className="calculator-root">
+    <Container maxWidth="md" sx={{ py: 1 }} className="calculator-root">
       <Paper
         elevation={0}
         className="print-container"
         sx={{
-          p: 4,
+          p: 2,
           backgroundColor: '#fff',
           border: '1px solid #ccc',
-          minHeight: '1100px',
           width: '100%',
           position: 'relative'
         }}
       >
         {/* Buttons at Top Right */}
         <Box sx={{ position: 'absolute', top: 20, right: 20, display: 'flex', gap: 1 }} className="no-print">
-          <Button variant="contained" size="small" startIcon={<SaveIcon />} sx={{ bgcolor: '#1a237e' }}>Save</Button>
-          <Button variant="contained" size="small" startIcon={<PrintIcon />} sx={{ bgcolor: '#1a237e' }} onClick={handlePrint}>Print</Button>
+          <Button variant="contained" startIcon={<RefreshIcon sx={{ fontSize: '16px !important' }} />} sx={{ bgcolor: '#d32f2f', textTransform: 'none', height: '28px', fontSize: '12px', px: 1.5, boxShadow: 'none' }} onClick={handleRefresh}>Refresh</Button>
+          <Button variant="contained" startIcon={<SaveIcon sx={{ fontSize: '16px !important' }} />} sx={{ bgcolor: '#1a237e', textTransform: 'none', height: '28px', fontSize: '12px', px: 1.5, boxShadow: 'none' }}>Save</Button>
+          <Button variant="contained" startIcon={<PrintIcon sx={{ fontSize: '16px !important' }} />} sx={{ bgcolor: '#1a237e', textTransform: 'none', height: '28px', fontSize: '12px', px: 1.5, boxShadow: 'none' }} onClick={handlePrint}>Print</Button>
         </Box>
 
         {/* SECTION 1: CLINT INFORMATION */}
         <Typography sx={{ ...titleStyle, color: '#d32f2f' }}>Clint Information & form</Typography>
-        
+
         <Grid container spacing={2}>
           <Grid item xs={7}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
@@ -175,7 +196,7 @@ const CustomerCalculator = () => {
               <TextField sx={{ ...boxStyle, width: '220px' }} size="small" name="mobileNo" value={formData.mobileNo} onChange={handleChange} />
             </Box>
           </Grid>
-          
+
           <Grid item xs={5} sx={{ pl: 2, borderLeft: '1px solid #ccc' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
               <Typography sx={{ minWidth: '100px', fontSize: '14px', fontWeight: 500 }}>Clint Code</Typography>
@@ -196,22 +217,22 @@ const CustomerCalculator = () => {
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 3, borderColor: '#ccc' }} />
+        <Divider sx={{ my: 1.5, borderColor: '#ccc' }} />
 
         {/* SECTION 2: PLOT & GOVERNMENT VALUE */}
         <Typography sx={{ ...titleStyle, color: '#d32f2f' }}>Plot & Government Value</Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
               <Typography sx={{ minWidth: '120px', fontSize: '14px', fontWeight: 500 }}>Colony Name</Typography>
               <TextField fullWidth size="small" name="colonyName" value={formData.colonyName} onChange={handleChange} sx={boxStyle} />
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
               <Typography sx={{ minWidth: '120px', fontSize: '14px', fontWeight: 500 }}>Plot No</Typography>
               <TextField fullWidth size="small" name="plotNo" value={formData.plotNo} onChange={handleChange} sx={boxStyle} />
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
               <Typography sx={{ minWidth: '120px', fontSize: '14px', fontWeight: 500 }}>Plot Dimention</Typography>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 {['dim1', 'dim2', 'dim3', 'dim4'].map(d => (
@@ -219,24 +240,24 @@ const CustomerCalculator = () => {
                 ))}
               </Box>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
               <Typography sx={{ minWidth: '120px', fontSize: '14px', fontWeight: 500 }}>Total Plot in Sq.yard</Typography>
               <TextField sx={{ ...boxStyle, width: '180px' }} size="small" value={calcs.areaGaj} readOnly />
             </Box>
           </Grid>
 
           <Grid item xs={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
               <Typography sx={{ minWidth: '100px', fontSize: '14px', fontWeight: 500 }}>Market Price</Typography>
               <TextField sx={{ ...boxStyle, width: '80px' }} size="small" name="marketPrice" value={formData.marketPrice} onChange={handleChange} />
               <Typography sx={{ minWidth: '80px', fontSize: '14px', textAlign: 'right', fontWeight: 500 }}>Total Price</Typography>
-              <TextField sx={{ ...boxStyle, width: '100px' }} size="small" name="totalPrice" value={formData.totalPrice} onChange={handleChange} />
+              <TextField sx={{ ...boxStyle, width: '100px' }} size="small" value={calcs.topTotalPrice} readOnly />
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
               <Typography sx={{ minWidth: '100px', fontSize: '14px', fontWeight: 500 }}>Khasra No</Typography>
               <TextField fullWidth size="small" name="khasraNo" value={formData.khasraNo} onChange={handleChange} sx={boxStyle} />
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
               <Typography sx={{ minWidth: '80px', fontSize: '14px', fontWeight: 500 }}>Direction</Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: 1 }}>
                 {['S', 'W', 'E', 'N'].map(dir => (
@@ -254,34 +275,29 @@ const CustomerCalculator = () => {
                 <TextField fullWidth size="small" name="direction" value={formData.direction} onChange={handleChange} sx={boxStyle} />
               </Box>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mt: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%', justifyContent: 'flex-end' }}>
-                <Box sx={{ textAlign: 'right', mr: 1 }}>
-                  <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>Total Price</Typography>
-                  <Typography sx={{ fontSize: '10px', color: '#666' }}>(Efect Corner 20/10%extra)</Typography>
-                </Box>
-                <TextField sx={{ ...boxStyle, width: '180px' }} size="small" name="totalPriceExtra" value={formData.totalPriceExtra} onChange={handleChange} />
-              </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
+              <Typography sx={{ minWidth: '150px', fontSize: '14px', fontWeight: 500 }}>Total Plot in Meter</Typography>
+              <TextField sx={{ ...boxStyle, width: '100px' }} size="small" value={calcs.areaMtr} readOnly />
             </Box>
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 3, borderColor: '#ccc' }} />
+        <Divider sx={{ my: 1.5, borderColor: '#ccc' }} />
 
         {/* SECTION 3: TEHSIL */}
         <Typography sx={{ ...titleStyle, color: '#d32f2f' }}>Tehsil</Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={6}>
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                 <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>Circle Price/Gov Price</Typography>
                 <TextField sx={{ ...boxStyle, width: '100px' }} size="small" name="circlePrice" value={formData.circlePrice} onChange={handleChange} />
               </Box>
-              <Typography sx={{ fontSize: '10px', color: '#666' }}>(Efect above 9 mtr 1000 extra,Corner 20%extra)</Typography>
+              {/* <Typography sx={{ fontSize: '10px', color: '#666' }}>(Efect above 9 mtr 1000 extra,Corner 20%extra)</Typography> */}
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 1.5 }}>
               <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>PLC</Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <Typography fontSize="12px">Cornr</Typography>
@@ -293,7 +309,7 @@ const CustomerCalculator = () => {
               </Box>
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 1.5 }}>
               <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>Road</Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <Typography fontSize="12px">Road Above 9 mtr</Typography>
@@ -303,9 +319,9 @@ const CustomerCalculator = () => {
               </Box>
             </Box>
 
-            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography sx={{ fontSize: '12px', fontWeight: 600 }}>Like</Typography>
-              <TextField fullWidth size="small" readOnly value="Corner 20%, Park 10%, Big Road/Above 9mtr 1000extra" sx={boxStyle} />
+              {/* <TextField fullWidth size="small" readOnly value="Corner 20%, Park 10%, Big Road/Above 9mtr 1000extra" sx={boxStyle} /> */}
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -319,7 +335,15 @@ const CustomerCalculator = () => {
               <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Price in Mtr.</Typography>
               <TextField sx={{ ...boxStyle, width: '180px' }} size="small" value={calcs.priceInMtr} readOnly />
             </Box>
-            
+
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, justifyContent: 'flex-end' }}>
+              <Box sx={{ textAlign: 'right', mr: 1 }}>
+                <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>Total Price</Typography>
+                <Typography sx={{ fontSize: '10px', color: '#666' }}>(Efect Corner 20/10%extra)</Typography>
+              </Box>
+              <TextField sx={{ ...boxStyle, width: '180px' }} size="small" value={calcs.topTotalPriceExtra} readOnly />
+            </Box>
+
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1, justifyContent: 'flex-end' }}>
               <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Male7%/ Female6%</Typography>
               <Box sx={{ display: 'flex', borderRadius: 0, overflow: 'hidden', border: '1px solid #777', height: '32px' }}>
@@ -352,19 +376,19 @@ const CustomerCalculator = () => {
               </Box>
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1, justifyContent: 'flex-end' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1, justifyContent: 'flex-end' }}>
               <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Stamp</Typography>
               <TextField sx={{ ...boxStyle, width: '180px' }} size="small" value={calcs.stamp} readOnly />
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1, justifyContent: 'flex-end' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1, justifyContent: 'flex-end' }}>
               <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Receipt</Typography>
               <TextField sx={{ ...boxStyle, width: '180px' }} size="small" value={calcs.receipt} readOnly />
             </Box>
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 6, pt: 3, borderTop: '1px solid #ccc' }}>
+        <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid #ccc' }}>
           <Grid container justifyContent="flex-end">
             <Grid item xs={12} md={8}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2, justifyContent: 'flex-end' }}>
@@ -387,18 +411,35 @@ const CustomerCalculator = () => {
       <style>
         {`
           @media print {
-            body { margin: 0; padding: 0; }
+            /* Hide Sidebar, Header, and other UI elements */
+            .MuiAppBar-root, .MuiDrawer-root, nav, .no-print { 
+              display: none !important; 
+            }
+            
+            /* Reset main content layout */
+            #main-content {
+              margin: 0 !important;
+              padding: 0 !important;
+              width: 100% !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+            }
+
+            body { margin: 0; padding: 0; background: #fff; }
+            
             .print-container {
               border: none !important;
               padding: 0 !important;
               margin: 0 !important;
               width: 100% !important;
               box-shadow: none !important;
+              min-height: auto !important;
             }
-            .no-print { display: none !important; }
+
             @page {
               size: A4;
-              margin: 10mm;
+              margin: 5mm;
             }
           }
           .calculator-root input[type=number]::-webkit-inner-spin-button, 
