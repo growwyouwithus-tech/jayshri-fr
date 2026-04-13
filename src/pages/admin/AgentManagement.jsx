@@ -14,7 +14,8 @@ import {
     MenuItem,
     Chip
 } from '@mui/material'
-import { Search } from '@mui/icons-material'
+import { Search, WhatsApp, Call } from '@mui/icons-material'
+import { IconButton } from '@mui/material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -41,7 +42,7 @@ const AgentManagement = () => {
             })
 
             // Fetch plots to calculate plot numbers and commission amounts
-            const { data: plotsData } = await axios.get('/plots')
+            const { data: plotsData } = await axios.get('/plots?limit=10000')
             console.log('Plots data:', plotsData) // Debug log
 
             // Handle different response structures
@@ -165,7 +166,32 @@ const AgentManagement = () => {
                                     <TableRow key={agent._id}>
                                         <TableCell align="center">{index + 1}</TableCell>
                                         <TableCell>{agent.name}</TableCell>
-                                        <TableCell>{agent.phone || 'N/A'}</TableCell>
+                                        <TableCell>
+                                            <Box display="flex" alignItems="center" justifyContent="space-between">
+                                                <Typography variant="body2">{agent.phone || 'N/A'}</Typography>
+                                                {agent.phone && agent.phone !== 'N/A' && (
+                                                    <Box display="flex" gap={0.5}>
+                                                        <IconButton
+                                                            size="small"
+                                                            sx={{ color: '#25D366', p: 0.5 }}
+                                                            component="a"
+                                                            href={`https://wa.me/${agent.phone.replace(/[^0-9]/g, '')}`}
+                                                            target="_blank"
+                                                        >
+                                                            <WhatsApp sx={{ fontSize: 18 }} />
+                                                        </IconButton>
+                                                        <IconButton
+                                                            size="small"
+                                                            sx={{ color: '#1976D2', p: 0.5 }}
+                                                            component="a"
+                                                            href={`tel:${agent.phone}`}
+                                                        >
+                                                            <Call sx={{ fontSize: 18 }} />
+                                                        </IconButton>
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        </TableCell>
                                         <TableCell>
                                             <Box display="flex" gap={0.5} flexWrap="wrap">
                                                 {agent.plotNumbers && agent.plotNumbers.length > 0 ? (

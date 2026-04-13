@@ -88,11 +88,11 @@ const CustomerCalculator = () => {
     const hasCornerOrPark = formData.plcCorner || formData.plcPark;
     const topTotalPriceExtra = hasCornerOrPark ? topTotalPrice * (1 + extraPerc) : '';
 
-    const govPrice = parseFloat(formData.circlePrice) || 0;
-    const priceInMtr = govPrice ? (govPrice / 0.836127).toFixed(2) : '';
+    const govPricePerMtr = parseFloat(formData.circlePrice) || 0;
+    const totalGovPriceInMtr = govPricePerMtr * areaMtr;
 
-    // Gov Value Base
-    let govValue = govPrice * areaGaj;
+    // Gov Value Base (Circle Price is in Mtr)
+    let govValue = totalGovPriceInMtr;
 
     // PLC Extra Plot Per (20%)
     const cornerExtra = formData.plcCorner ? (govValue * 0.20) : 0;
@@ -117,7 +117,7 @@ const CustomerCalculator = () => {
       areaMtr: areaMtr.toFixed(2),
       topTotalPrice: topTotalPrice > 0 ? topTotalPrice.toFixed(2) : '',
       topTotalPriceExtra: topTotalPriceExtra !== '' ? topTotalPriceExtra.toFixed(2) : '',
-      priceInMtr,
+      priceInMtr: totalGovPriceInMtr > 0 ? totalGovPriceInMtr.toFixed(2) : '',
       cornerExtra: cornerExtra.toFixed(2),
       roadExtra: roadExtra.toFixed(2),
       finalGovValue: finalGovValue.toFixed(2),
@@ -331,8 +331,8 @@ const CustomerCalculator = () => {
           </Grid>
 
           <Grid item xs={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1, justifyContent: 'flex-end' }}>
-              <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Price in Mtr.</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1, justifyContent: 'flex-end' }}>
+              <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>Total Price in Mtr.</Typography>
               <TextField sx={{ ...boxStyle, width: '180px' }} size="small" value={calcs.priceInMtr} readOnly />
             </Box>
 
@@ -341,7 +341,7 @@ const CustomerCalculator = () => {
                 <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>Total Price</Typography>
                 <Typography sx={{ fontSize: '10px', color: '#666' }}>(Efect Corner 20/10%extra)</Typography>
               </Box>
-              <TextField sx={{ ...boxStyle, width: '180px' }} size="small" value={calcs.topTotalPriceExtra} readOnly />
+              <TextField sx={{ ...boxStyle, width: '180px' }} size="small" value={calcs.finalGovValue} readOnly />
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1, justifyContent: 'flex-end' }}>

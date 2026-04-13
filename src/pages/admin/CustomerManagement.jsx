@@ -13,7 +13,8 @@ import {
     TextField,
     MenuItem
 } from '@mui/material'
-import { Search } from '@mui/icons-material'
+import { Search, WhatsApp, Call } from '@mui/icons-material'
+import { IconButton } from '@mui/material'
 import axios from '@/api/axios'
 import toast from 'react-hot-toast'
 
@@ -220,7 +221,30 @@ const CustomerManagement = () => {
                                     <TableCell>
                                         {customer.plots?.map(p => p.plotNo).join(', ') || '-'}
                                     </TableCell>
-                                    <TableCell>{customer.phone}</TableCell>
+                                    <TableCell>
+                                        <Box display="flex" alignItems="center" justifyContent="space-between">
+                                            <Typography variant="body2">{customer.phone}</Typography>
+                                            <Box display="flex" gap={0.5}>
+                                                <IconButton
+                                                    size="small"
+                                                    sx={{ color: '#25D366', p: 0.5 }}
+                                                    component="a"
+                                                    href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}`}
+                                                    target="_blank"
+                                                >
+                                                    <WhatsApp sx={{ fontSize: 18 }} />
+                                                </IconButton>
+                                                <IconButton
+                                                    size="small"
+                                                    sx={{ color: '#1976D2', p: 0.5 }}
+                                                    component="a"
+                                                    href={`tel:${customer.phone}`}
+                                                >
+                                                    <Call sx={{ fontSize: 18 }} />
+                                                </IconButton>
+                                            </Box>
+                                        </Box>
+                                    </TableCell>
                                 </TableRow>
                             ))
                         )}
