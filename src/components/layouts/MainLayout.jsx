@@ -46,6 +46,7 @@ import {
   Work,
   CheckCircle,
   Close,
+  Chat,
 } from '@mui/icons-material'
 import { logout } from '@/store/slices/authSlice'
 import toast from 'react-hot-toast'
@@ -250,6 +251,11 @@ const MainLayout = () => {
     // Advocates
     if (roleName === 'Admin' || roleName === 'Manager') {
       dynamicItems.push({ text: 'Advocates', icon: <Work />, path: '/admin/advocates' })
+    }
+
+    // Contact Messages
+    if (roleName === 'Admin' || roleName === 'Manager') {
+      dynamicItems.push({ text: 'Contact Messages', icon: <Chat />, path: '/admin/contact-messages' })
     }
 
     // Settings

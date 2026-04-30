@@ -44,6 +44,7 @@ import AgentManagement from './pages/admin/AgentManagement'
 import AdvocateManagement from './pages/admin/AdvocateManagement'
 import CustomerManagement from './pages/admin/CustomerManagement'
 import CustomerCalculator from './pages/admin/CustomerCalculator'
+import ContactMessages from './pages/admin/ContactMessages'
 
 // Lawyer Pages
 import LawyerDashboard from './pages/lawyer/LawyerDashboard'
@@ -135,6 +136,7 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin">
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="contact-messages" element={<RoleRoute roles={['Admin', 'Manager']}><ContactMessages /></RoleRoute>} />
           <Route path="dashboard" element={<RoleRoute roles={['Admin', 'Manager', 'Colony Manager']}><AdminDashboard /></RoleRoute>} />
           <Route path="colonies" element={<RoleRoute roles={['Admin', 'Manager']}><ColonyManagement /></RoleRoute>} />
           <Route path="plots" element={<RoleRoute roles={['Admin', 'Manager', 'Colony Manager']} permissions={['plot_read', 'plots_read', 'plot_create', 'plots_create']}><PlotManagement /></RoleRoute>} />
